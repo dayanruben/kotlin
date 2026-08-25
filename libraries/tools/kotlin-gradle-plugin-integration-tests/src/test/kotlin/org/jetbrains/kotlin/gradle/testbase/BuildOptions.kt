@@ -24,6 +24,7 @@ import java.io.File
 import java.nio.file.Path
 import java.util.*
 import kotlin.io.path.absolute
+import kotlin.io.path.absolutePathString
 import kotlin.io.path.invariantSeparatorsPathString
 
 val DEFAULT_LOG_LEVEL = LogLevel.INFO
@@ -62,7 +63,7 @@ data class BuildOptions(
     val languageApiVersion: String? = null,
     val freeArgs: List<String> = emptyList(),
     val statisticsForceValidation: Boolean = true,
-    val enableJvmUnsafeIncrementalCompilationForMultiplatform: Boolean? = null,
+    val enableJvmIncrementalCompilationOfCommonSources: Boolean? = null,
     val enableJsUnsafeIncrementalCompilationForMultiplatform: Boolean? = null,
     val enableWasmUnsafeIncrementalCompilationForMultiplatform: Boolean? = null,
     val enableMonotonousIncrementalCompileSetExpansion: Boolean? = null,
@@ -102,6 +103,7 @@ data class BuildOptions(
     val jvmClasspathMetadata: Boolean? = null,
     val separateCompilation: Boolean? = null,
     val expandTypeAliasesInClasspathSnapshots: Boolean? = null,
+    val fusReportDirectory: () -> Path? = { null }
 ) {
     enum class ConfigurationCacheValue {
 
@@ -311,8 +313,8 @@ data class BuildOptions(
             arguments.add("-Pkotlin.test.languageVersion=$languageVersion")
         }
 
-        if (enableJvmUnsafeIncrementalCompilationForMultiplatform != null) {
-            arguments.add("-Pkotlin.internal.jvm.enableUnsafeOptimizationsForMultiplatform=$enableJvmUnsafeIncrementalCompilationForMultiplatform")
+        if (enableJvmIncrementalCompilationOfCommonSources != null) {
+            arguments.add("-Pkotlin.jvm.enableIncrementalCompilationOfCommonSources=$enableJvmIncrementalCompilationOfCommonSources")
         }
 
         if (enableJsUnsafeIncrementalCompilationForMultiplatform != null) {
@@ -385,6 +387,10 @@ data class BuildOptions(
 
         if (generateCompilerRefIndex != null) {
             arguments.add("-Pkotlin.compiler.generateCompilerRefIndex=$generateCompilerRefIndex")
+        }
+
+        fusReportDirectory()?.let {
+            arguments.add("-Pkotlin.session.logger.root.path=${it.absolutePathString()}")
         }
 
         arguments.addAll(freeArgs)

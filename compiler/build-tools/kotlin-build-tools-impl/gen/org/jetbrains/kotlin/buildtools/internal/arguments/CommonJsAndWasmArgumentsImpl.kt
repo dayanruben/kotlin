@@ -50,16 +50,16 @@ import org.jetbrains.kotlin.buildtools.`internal`.arguments.CommonJsAndWasmArgum
 import org.jetbrains.kotlin.buildtools.`internal`.arguments.CommonJsAndWasmArgumentsImpl.Companion.X_IR_PRODUCE_KLIB_FILE
 import org.jetbrains.kotlin.buildtools.`internal`.arguments.CommonJsAndWasmArgumentsImpl.Companion.X_IR_PROPERTY_LAZY_INITIALIZATION
 import org.jetbrains.kotlin.buildtools.`internal`.arguments.CommonJsAndWasmArgumentsImpl.Companion.X_STRICT_IMPLICIT_EXPORT_TYPES
+import org.jetbrains.kotlin.buildtools.`internal`.arguments.enums.JsIrDiagnosticMode
+import org.jetbrains.kotlin.buildtools.`internal`.arguments.enums.JsMainCallMode
+import org.jetbrains.kotlin.buildtools.`internal`.arguments.enums.SourceMapEmbedSources
+import org.jetbrains.kotlin.buildtools.`internal`.arguments.enums.SourceMapNamesPolicy
 import org.jetbrains.kotlin.buildtools.api.CompilerArgumentsParseException
 import org.jetbrains.kotlin.buildtools.api.KotlinReleaseVersion
 import org.jetbrains.kotlin.buildtools.api.arguments.CommonJsAndWasmArguments
 import org.jetbrains.kotlin.buildtools.api.arguments.CommonJsAndWasmCompilerKlibArguments
 import org.jetbrains.kotlin.buildtools.api.arguments.CommonJsAndWasmCompilerLinkingArguments
 import org.jetbrains.kotlin.buildtools.api.arguments.ExperimentalCompilerArgument
-import org.jetbrains.kotlin.buildtools.api.arguments.enums.JsIrDiagnosticMode
-import org.jetbrains.kotlin.buildtools.api.arguments.enums.JsMainCallMode
-import org.jetbrains.kotlin.buildtools.api.arguments.enums.SourceMapEmbedSources
-import org.jetbrains.kotlin.buildtools.api.arguments.enums.SourceMapNamesPolicy
 import org.jetbrains.kotlin.cli.common.arguments.CommonJsAndWasmCompilerArguments
 import org.jetbrains.kotlin.compilerRunner.toArgumentStrings as compilerToArgumentStrings
 import org.jetbrains.kotlin.config.KotlinCompilerVersion.VERSION as KC_VERSION
@@ -80,17 +80,23 @@ internal abstract class CommonJsAndWasmArgumentsImpl(
   @Suppress("UNCHECKED_CAST")
   public operator fun <V> `get`(key: CommonJsAndWasmArgument<V>): V = optionsMap[key.id] as V
 
-  private operator fun <V> `set`(key: CommonJsAndWasmArgument<V>, `value`: V) {
+  public operator fun <V> `set`(key: CommonJsAndWasmArgument<V>, `value`: V) {
     optionsMap[key.id] = `value`
   }
 
   public operator fun contains(key: CommonJsAndWasmArgument<*>): Boolean = key.id in optionsMap
 
+  private operator fun `get`(key: String): Any? = CommonJsAndWasmArgumentValueAdapter.toApi(optionsMap[key])
+
+  private operator fun `set`(key: String, `value`: Any?) {
+    optionsMap[key] = CommonJsAndWasmArgumentValueAdapter.toImpl(`value`)
+  }
+
   @Suppress("UNCHECKED_CAST")
   @UseFromImplModuleRestricted
   override operator fun <V> `get`(key: CommonJsAndWasmArguments.CommonJsAndWasmArgument<V>): V {
     check(key.id in optionsMap) { "Argument ${key.id} is not set and has no default value" }
-    return optionsMap[key.id] as V
+    return this[key.id] as V
   }
 
   @UseFromImplModuleRestricted
@@ -98,14 +104,14 @@ internal abstract class CommonJsAndWasmArgumentsImpl(
     if (key.availableSinceVersion > KotlinReleaseVersion(2, 5, 0)) {
       throw IllegalStateException("${key.id} is available only since ${key.availableSinceVersion}")
     }
-    optionsMap[key.id] = `value`
+    this[key.id] = `value`
   }
 
   @Suppress("UNCHECKED_CAST")
   @UseFromImplModuleRestricted
   override operator fun <V> `get`(key: CommonJsAndWasmCompilerKlibArguments.CommonJsAndWasmCompilerKlibArgument<V>): V {
     check(key.id in optionsMap) { "Argument ${key.id} is not set and has no default value" }
-    return optionsMap[key.id] as V
+    return this[key.id] as V
   }
 
   @UseFromImplModuleRestricted
@@ -113,14 +119,14 @@ internal abstract class CommonJsAndWasmArgumentsImpl(
     if (key.availableSinceVersion > KotlinReleaseVersion(2, 5, 0)) {
       throw IllegalStateException("${key.id} is available only since ${key.availableSinceVersion}")
     }
-    optionsMap[key.id] = `value`
+    this[key.id] = `value`
   }
 
   @Suppress("UNCHECKED_CAST")
   @UseFromImplModuleRestricted
   override operator fun <V> `get`(key: CommonJsAndWasmCompilerLinkingArguments.CommonJsAndWasmCompilerLinkingArgument<V>): V {
     check(key.id in optionsMap) { "Argument ${key.id} is not set and has no default value" }
-    return optionsMap[key.id] as V
+    return this[key.id] as V
   }
 
   @UseFromImplModuleRestricted
@@ -128,7 +134,7 @@ internal abstract class CommonJsAndWasmArgumentsImpl(
     if (key.availableSinceVersion > KotlinReleaseVersion(2, 5, 0)) {
       throw IllegalStateException("${key.id} is available only since ${key.availableSinceVersion}")
     }
-    optionsMap[key.id] = `value`
+    this[key.id] = `value`
   }
 
   abstract override fun build(): CommonJsAndWasmArgumentsImpl

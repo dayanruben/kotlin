@@ -305,8 +305,8 @@ class BuildReportsIT : KGPBaseTest() {
 
     val nativeBuildExpectedMetrics = arrayOf(
         CustomBuildTimeMetric.createIfDoesNotExistAndReturn("InlineFunctionSerializationPreProcessing", IR_PRE_LOWERING),
-        CustomBuildTimeMetric.createIfDoesNotExistAndReturn("ValidateIrBeforeLowering", IR_LOWERING),
-        CustomBuildTimeMetric.createIfDoesNotExistAndReturn("ValidateIrAfterLowering", IR_LOWERING),
+        CustomBuildTimeMetric.createIfDoesNotExistAndReturn("IrValidationBeforeLoweringsKlibSecondStagePhase", IR_LOWERING),
+        CustomBuildTimeMetric.createIfDoesNotExistAndReturn("IrValidationAfterLoweringsSecondStagePhase", IR_LOWERING),
         CustomBuildTimeMetric.createIfDoesNotExistAndReturn("llvm-default.AlwaysInlinerPass", BACKEND),
         CustomBuildTimeMetric.createIfDoesNotExistAndReturn("InlineFunctionSerializationPreProcessing", IR_PRE_LOWERING),
         RUN_COMPILATION_IN_WORKER,
@@ -697,16 +697,18 @@ class BuildReportsIT : KGPBaseTest() {
             projectName = "simpleProject",
             gradleVersion = gradleVersion,
         ) {
-            assertNoErrorFilesCreated {
-                build("compileKotlin", buildOptions = defaultBuildOptions.copy(logLevel = LogLevel.DEBUG)) {
-                    assertNoErrorFileCreatedInOutput()
-                }
-                val kotlinFile = kotlinSourcesDir().resolve("helloWorld.kt")
-                kotlinFile.modify { it.replace("ArrayList", "skjfghsjk") }
-                buildAndFail("compileKotlin", buildOptions = defaultBuildOptions.copy(logLevel = LogLevel.DEBUG)) {
-                    assertNoErrorFileCreatedInOutput()
-                }
-            }
+            validateFusDirectory(
+                "compileKotlin",
+                buildAction = BuildActions.build,
+                buildOptions = defaultBuildOptions.copy(logLevel = LogLevel.DEBUG)
+            )
+            val kotlinFile = kotlinSourcesDir().resolve("helloWorld.kt")
+            kotlinFile.modify { it.replace("ArrayList", "skjfghsjk") }
+            validateFusDirectory(
+                "compileKotlin",
+                buildAction = BuildActions.buildAndFail,
+                buildOptions = defaultBuildOptions.copy(logLevel = LogLevel.DEBUG)
+            )
         }
     }
 
@@ -1043,11 +1045,11 @@ class BuildReportsIT : KGPBaseTest() {
             build("linkDebugExecutableHost", "-Pkotlin.build.report.json.directory=${projectPath.resolve("report").pathString}") {
                 validateJsonReport(
                     taskName = null, NATIVE_IN_PROCESS,
-                    CustomBuildTimeMetric.createIfDoesNotExistAndReturn("ValidateIrBeforeLowering", IR_LOWERING),
+                    CustomBuildTimeMetric.createIfDoesNotExistAndReturn("IrValidationBeforeLoweringsKlibSecondStagePhase", IR_LOWERING),
                     CustomBuildTimeMetric.createIfDoesNotExistAndReturn("TestProcessor", IR_LOWERING),
-                    CustomBuildTimeMetric.createIfDoesNotExistAndReturn("Autobox", IR_LOWERING),
+                    CustomBuildTimeMetric.createIfDoesNotExistAndReturn("Autoboxing", IR_LOWERING),
                     CustomBuildTimeMetric.createIfDoesNotExistAndReturn("ConstructorsLowering", IR_LOWERING),
-                    CustomBuildTimeMetric.createIfDoesNotExistAndReturn("ValidateIrAfterLowering", IR_LOWERING),
+                    CustomBuildTimeMetric.createIfDoesNotExistAndReturn("IrValidationAfterLoweringsSecondStagePhase", IR_LOWERING),
                     CustomBuildTimeMetric.createIfDoesNotExistAndReturn("UpgradeCallableReferences", IR_PRE_LOWERING),
                     KlibSizeMetric.createIfDoesNotExistAndReturn("KLIB directory cumulative size"),
                     KlibSizeMetric.createIfDoesNotExistAndReturn("KLIB directory cumulative size/IR (main)"),

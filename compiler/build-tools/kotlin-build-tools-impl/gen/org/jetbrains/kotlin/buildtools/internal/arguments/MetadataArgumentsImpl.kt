@@ -36,11 +36,11 @@ import org.jetbrains.kotlin.buildtools.`internal`.arguments.MetadataArgumentsImp
 import org.jetbrains.kotlin.buildtools.`internal`.arguments.MetadataArgumentsImpl.Companion.X_LEGACY_METADATA_JAR_K2
 import org.jetbrains.kotlin.buildtools.`internal`.arguments.MetadataArgumentsImpl.Companion.X_REFINES_PATHS
 import org.jetbrains.kotlin.buildtools.`internal`.arguments.MetadataArgumentsImpl.Companion.X_TARGET_PLATFORM
+import org.jetbrains.kotlin.buildtools.`internal`.arguments.enums.MetadataTargetPlatform
 import org.jetbrains.kotlin.buildtools.api.CompilerArgumentsParseException
 import org.jetbrains.kotlin.buildtools.api.KotlinReleaseVersion
 import org.jetbrains.kotlin.buildtools.api.arguments.ExperimentalCompilerArgument
 import org.jetbrains.kotlin.buildtools.api.arguments.MetadataArguments
-import org.jetbrains.kotlin.buildtools.api.arguments.enums.MetadataTargetPlatform
 import org.jetbrains.kotlin.cli.common.arguments.CommonToolArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2MetadataCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
@@ -64,17 +64,23 @@ internal class MetadataArgumentsImpl(
   @Suppress("UNCHECKED_CAST")
   public operator fun <V> `get`(key: MetadataArgument<V>): V = optionsMap[key.id] as V
 
-  private operator fun <V> `set`(key: MetadataArgument<V>, `value`: V) {
+  public operator fun <V> `set`(key: MetadataArgument<V>, `value`: V) {
     optionsMap[key.id] = `value`
   }
 
   public operator fun contains(key: MetadataArgument<*>): Boolean = key.id in optionsMap
 
+  private operator fun `get`(key: String): Any? = MetadataArgumentValueAdapter.toApi(optionsMap[key])
+
+  private operator fun `set`(key: String, `value`: Any?) {
+    optionsMap[key] = MetadataArgumentValueAdapter.toImpl(`value`)
+  }
+
   @Suppress("UNCHECKED_CAST")
   @UseFromImplModuleRestricted
   override operator fun <V> `get`(key: MetadataArguments.MetadataArgument<V>): V {
     check(key.id in optionsMap) { "Argument ${key.id} is not set and has no default value" }
-    return optionsMap[key.id] as V
+    return this[key.id] as V
   }
 
   @UseFromImplModuleRestricted
@@ -82,7 +88,7 @@ internal class MetadataArgumentsImpl(
     if (key.availableSinceVersion > KotlinReleaseVersion(2, 5, 0)) {
       throw IllegalStateException("${key.id} is available only since ${key.availableSinceVersion}")
     }
-    optionsMap[key.id] = `value`
+    this[key.id] = `value`
   }
 
   override fun deepCopy(): MetadataArgumentsImpl = MetadataArgumentsImpl(argumentValidationErrors.toSet(), restrictedArgViolations.toList(), argumentParseDiagnostics.copy()).also { newArgs -> newArgs.applyCompilerArguments(toCompilerArguments()) }

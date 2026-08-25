@@ -45,15 +45,15 @@ import org.jetbrains.kotlin.buildtools.`internal`.arguments.JsArgumentsImpl.Comp
 import org.jetbrains.kotlin.buildtools.`internal`.arguments.JsArgumentsImpl.Companion.X_PLATFORM_ARGUMENTS_IN_MAIN_FUNCTION
 import org.jetbrains.kotlin.buildtools.`internal`.arguments.JsArgumentsImpl.Companion.X_SUSPEND_LAMBDA_EXPORTING
 import org.jetbrains.kotlin.buildtools.`internal`.arguments.JsArgumentsImpl.Companion.X_TYPED_ARRAYS
+import org.jetbrains.kotlin.buildtools.`internal`.arguments.enums.JsEcmaVersion
+import org.jetbrains.kotlin.buildtools.`internal`.arguments.enums.JsIrDiagnosticMode
+import org.jetbrains.kotlin.buildtools.`internal`.arguments.enums.JsModuleKind
 import org.jetbrains.kotlin.buildtools.api.CompilerArgumentsParseException
 import org.jetbrains.kotlin.buildtools.api.KotlinReleaseVersion
 import org.jetbrains.kotlin.buildtools.api.arguments.ExperimentalCompilerArgument
 import org.jetbrains.kotlin.buildtools.api.arguments.JsCompilerArguments
 import org.jetbrains.kotlin.buildtools.api.arguments.JsCompilerKlibArguments
 import org.jetbrains.kotlin.buildtools.api.arguments.JsCompilerLinkingArguments
-import org.jetbrains.kotlin.buildtools.api.arguments.enums.JsEcmaVersion
-import org.jetbrains.kotlin.buildtools.api.arguments.enums.JsIrDiagnosticMode
-import org.jetbrains.kotlin.buildtools.api.arguments.enums.JsModuleKind
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.cli.common.arguments.validateArgumentsAllErrors
@@ -80,17 +80,23 @@ internal class JsArgumentsImpl(
   @Suppress("UNCHECKED_CAST")
   public operator fun <V> `get`(key: JsArgument<V>): V = optionsMap[key.id] as V
 
-  private operator fun <V> `set`(key: JsArgument<V>, `value`: V) {
+  public operator fun <V> `set`(key: JsArgument<V>, `value`: V) {
     optionsMap[key.id] = `value`
   }
 
   public operator fun contains(key: JsArgument<*>): Boolean = key.id in optionsMap
 
+  private operator fun `get`(key: String): Any? = JsArgumentValueAdapter.toApi(optionsMap[key])
+
+  private operator fun `set`(key: String, `value`: Any?) {
+    optionsMap[key] = JsArgumentValueAdapter.toImpl(`value`)
+  }
+
   @Suppress("UNCHECKED_CAST")
   @UseFromImplModuleRestricted
   override operator fun <V> `get`(key: JsCompilerArguments.JsCompilerArgument<V>): V {
     check(key.id in optionsMap) { "Argument ${key.id} is not set and has no default value" }
-    return optionsMap[key.id] as V
+    return this[key.id] as V
   }
 
   @UseFromImplModuleRestricted
@@ -98,14 +104,14 @@ internal class JsArgumentsImpl(
     if (key.availableSinceVersion > KotlinReleaseVersion(2, 5, 0)) {
       throw IllegalStateException("${key.id} is available only since ${key.availableSinceVersion}")
     }
-    optionsMap[key.id] = `value`
+    this[key.id] = `value`
   }
 
   @Suppress("UNCHECKED_CAST")
   @UseFromImplModuleRestricted
   override operator fun <V> `get`(key: JsCompilerKlibArguments.JsCompilerKlibArgument<V>): V {
     check(key.id in optionsMap) { "Argument ${key.id} is not set and has no default value" }
-    return optionsMap[key.id] as V
+    return this[key.id] as V
   }
 
   @UseFromImplModuleRestricted
@@ -113,14 +119,14 @@ internal class JsArgumentsImpl(
     if (key.availableSinceVersion > KotlinReleaseVersion(2, 5, 0)) {
       throw IllegalStateException("${key.id} is available only since ${key.availableSinceVersion}")
     }
-    optionsMap[key.id] = `value`
+    this[key.id] = `value`
   }
 
   @Suppress("UNCHECKED_CAST")
   @UseFromImplModuleRestricted
   override operator fun <V> `get`(key: JsCompilerLinkingArguments.JsCompilerLinkingArgument<V>): V {
     check(key.id in optionsMap) { "Argument ${key.id} is not set and has no default value" }
-    return optionsMap[key.id] as V
+    return this[key.id] as V
   }
 
   @UseFromImplModuleRestricted
@@ -128,7 +134,7 @@ internal class JsArgumentsImpl(
     if (key.availableSinceVersion > KotlinReleaseVersion(2, 5, 0)) {
       throw IllegalStateException("${key.id} is available only since ${key.availableSinceVersion}")
     }
-    optionsMap[key.id] = `value`
+    this[key.id] = `value`
   }
 
   override fun deepCopy(): JsArgumentsImpl = JsArgumentsImpl(argumentValidationErrors.toSet(), restrictedArgViolations.toList(), argumentParseDiagnostics.copy()).also { newArgs -> newArgs.applyCompilerArguments(toCompilerArguments()) }

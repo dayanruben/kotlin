@@ -89,8 +89,11 @@ public enum SEALED_SealedType: KotlinRuntimeSupport.SealedType {
     }
 }
 open class ABSTRACT_CLASS: KotlinRuntime.KotlinBase {
-    package init() {
-        fatalError()
+    public init() {
+        precondition(Self.self != main.ABSTRACT_CLASS.self, "main.ABSTRACT_CLASS is an abstract class and cannot be instantiated directly")
+        let __kt = _kotlinAllocInstanceForSwiftSubclass(Self.self)
+        super.init(__externalRCRefUnsafe: __kt, options: .asBoundBridge);
+        { __root___ABSTRACT_CLASS_init_initialize__TypesOfArguments__Swift_UnsafeMutableRawPointer__(__kt); return () }()
     }
     package override init(
         __externalRCRefUnsafe: Swift.UnsafeMutableRawPointer?,
@@ -379,7 +382,12 @@ public final class Foo: KotlinRuntime.KotlinBase {
 }
 open class GENERIC_CLASS: KotlinRuntime.KotlinBase {
     public init() {
-        let __kt = __root___GENERIC_CLASS_init_allocate()
+         let __kt: Swift.UnsafeMutableRawPointer!
+         if Self.self == main.GENERIC_CLASS.self {
+             __kt = __root___GENERIC_CLASS_init_allocate()
+         } else {
+             __kt = _kotlinAllocInstanceForSwiftSubclass(Self.self)
+         }
         super.init(__externalRCRefUnsafe: __kt, options: .asBoundBridge);
         { __root___GENERIC_CLASS_init_initialize__TypesOfArguments__Swift_UnsafeMutableRawPointer__(__kt); return () }()
     }
@@ -392,7 +400,12 @@ open class GENERIC_CLASS: KotlinRuntime.KotlinBase {
 }
 open class INHERITANCE_GENERIC: main.GENERIC_CLASS {
     public override init() {
-        let __kt = __root___INHERITANCE_GENERIC_init_allocate()
+         let __kt: Swift.UnsafeMutableRawPointer!
+         if Self.self == main.INHERITANCE_GENERIC.self {
+             __kt = __root___INHERITANCE_GENERIC_init_allocate()
+         } else {
+             __kt = _kotlinAllocInstanceForSwiftSubclass(Self.self)
+         }
         super.init(__externalRCRefUnsafe: __kt, options: .asBoundBridge);
         { __root___INHERITANCE_GENERIC_init_initialize__TypesOfArguments__Swift_UnsafeMutableRawPointer__(__kt); return () }()
     }
@@ -1032,27 +1045,12 @@ extension ExportedKotlinPackages.intersection_overrides {
     }
     public protocol __Foo: KotlinRuntimeSupport._KotlinBridgeable {
     }
-    open class AbstractBaz: KotlinRuntime.KotlinBase, ExportedKotlinPackages.intersection_overrides.Foo, ExportedKotlinPackages.intersection_overrides.__Foo, ExportedKotlinPackages.intersection_overrides.Bar, ExportedKotlinPackages.intersection_overrides.__Bar {
-        open var baz: Swift.Int32 {
-            get {
-                if Self.self == ExportedKotlinPackages.intersection_overrides.AbstractBaz.self {
-                    return intersection_overrides_AbstractBaz_baz_get(self.__externalRCRef())
-                } else {
-                    fatalError("Cannot invoke the inherited implementation of abstract property 'ExportedKotlinPackages.intersection_overrides.AbstractBaz.baz': a Swift subclass must override it and must not call super.")
-                }
-            }
-        }
-        open var fooBar: Swift.Int32 {
-            get {
-                if Self.self == ExportedKotlinPackages.intersection_overrides.AbstractBaz.self {
-                    return intersection_overrides_AbstractBaz_fooBar_get(self.__externalRCRef())
-                } else {
-                    fatalError("Cannot invoke the inherited implementation of abstract property 'ExportedKotlinPackages.intersection_overrides.AbstractBaz.fooBar': a Swift subclass must override it and must not call super.")
-                }
-            }
-        }
-        package init() {
-            fatalError()
+    open class AbstractBazFoo: ExportedKotlinPackages.intersection_overrides.Baz {
+        public override init() {
+            precondition(Self.self != ExportedKotlinPackages.intersection_overrides.AbstractBazFoo.self, "ExportedKotlinPackages.intersection_overrides.AbstractBazFoo is an abstract class and cannot be instantiated directly")
+            let __kt = _kotlinAllocInstanceForSwiftSubclass(Self.self)
+            super.init(__externalRCRefUnsafe: __kt, options: .asBoundBridge);
+            { intersection_overrides_AbstractBazFoo_init_initialize__TypesOfArguments__Swift_UnsafeMutableRawPointer__(__kt); return () }()
         }
         package override init(
             __externalRCRefUnsafe: Swift.UnsafeMutableRawPointer?,
@@ -1061,29 +1059,74 @@ extension ExportedKotlinPackages.intersection_overrides {
             super.init(__externalRCRefUnsafe: __externalRCRefUnsafe, options: options);
         }
     }
-    public final class Baz: KotlinRuntime.KotlinBase, ExportedKotlinPackages.intersection_overrides.Foo, ExportedKotlinPackages.intersection_overrides.__Foo, ExportedKotlinPackages.intersection_overrides.Bar, ExportedKotlinPackages.intersection_overrides.__Bar {
-        public var bar: Swift.String {
+    open class AbstractFooBar: KotlinRuntime.KotlinBase, ExportedKotlinPackages.intersection_overrides.Foo, ExportedKotlinPackages.intersection_overrides.__Foo, ExportedKotlinPackages.intersection_overrides.Bar, ExportedKotlinPackages.intersection_overrides.__Bar {
+        open var baz: Swift.Int32 {
             get {
-                return intersection_overrides_Baz_bar_get(self.__externalRCRef())
+                if Self.self == ExportedKotlinPackages.intersection_overrides.AbstractFooBar.self {
+                    return intersection_overrides_AbstractFooBar_baz_get(self.__externalRCRef())
+                } else {
+                    fatalError("Cannot invoke the inherited implementation of abstract property 'ExportedKotlinPackages.intersection_overrides.AbstractFooBar.baz': a Swift subclass must override it and must not call super.")
+                }
             }
         }
-        public var baz: Swift.Int32 {
+        open var fooBar: Swift.Int32 {
+            get {
+                if Self.self == ExportedKotlinPackages.intersection_overrides.AbstractFooBar.self {
+                    return intersection_overrides_AbstractFooBar_fooBar_get(self.__externalRCRef())
+                } else {
+                    fatalError("Cannot invoke the inherited implementation of abstract property 'ExportedKotlinPackages.intersection_overrides.AbstractFooBar.fooBar': a Swift subclass must override it and must not call super.")
+                }
+            }
+        }
+        public init() {
+            precondition(Self.self != ExportedKotlinPackages.intersection_overrides.AbstractFooBar.self, "ExportedKotlinPackages.intersection_overrides.AbstractFooBar is an abstract class and cannot be instantiated directly")
+            let __kt = _kotlinAllocInstanceForSwiftSubclass(Self.self)
+            super.init(__externalRCRefUnsafe: __kt, options: .asBoundBridge);
+            { intersection_overrides_AbstractFooBar_init_initialize__TypesOfArguments__Swift_UnsafeMutableRawPointer__(__kt); return () }()
+        }
+        package override init(
+            __externalRCRefUnsafe: Swift.UnsafeMutableRawPointer?,
+            options: KotlinRuntime.KotlinBaseConstructionOptions
+        ) {
+            super.init(__externalRCRefUnsafe: __externalRCRefUnsafe, options: options);
+        }
+    }
+    open class Baz: KotlinRuntime.KotlinBase, ExportedKotlinPackages.intersection_overrides.Foo, ExportedKotlinPackages.intersection_overrides.__Foo, ExportedKotlinPackages.intersection_overrides.Bar, ExportedKotlinPackages.intersection_overrides.__Bar {
+        open var bar: Swift.String {
+            get {
+                if Self.self == ExportedKotlinPackages.intersection_overrides.Baz.self {
+                    return intersection_overrides_Baz_bar_get(self.__externalRCRef())
+                } else {
+                    return intersection_overrides_Baz_bar_get_direct(self.__externalRCRef())
+                }
+            }
+        }
+        public final var baz: Swift.Int32 {
             get {
                 return intersection_overrides_Baz_baz_get(self.__externalRCRef())
             }
         }
-        public var foo: Swift.String {
+        open var foo: Swift.String {
             get {
-                return intersection_overrides_Baz_foo_get(self.__externalRCRef())
+                if Self.self == ExportedKotlinPackages.intersection_overrides.Baz.self {
+                    return intersection_overrides_Baz_foo_get(self.__externalRCRef())
+                } else {
+                    return intersection_overrides_Baz_foo_get_direct(self.__externalRCRef())
+                }
             }
         }
-        public var fooBar: Swift.Int32 {
+        public final var fooBar: Swift.Int32 {
             get {
                 return intersection_overrides_Baz_fooBar_get(self.__externalRCRef())
             }
         }
         public init() {
-            let __kt = intersection_overrides_Baz_init_allocate()
+             let __kt: Swift.UnsafeMutableRawPointer!
+             if Self.self == ExportedKotlinPackages.intersection_overrides.Baz.self {
+                 __kt = intersection_overrides_Baz_init_allocate()
+             } else {
+                 __kt = _kotlinAllocInstanceForSwiftSubclass(Self.self)
+             }
             super.init(__externalRCRefUnsafe: __kt, options: .asBoundBridge);
             { intersection_overrides_Baz_init_initialize__TypesOfArguments__Swift_UnsafeMutableRawPointer__(__kt); return () }()
         }
@@ -1176,16 +1219,16 @@ extension ExportedKotlinPackages.why_we_need_module_names {
         return main.CLASS_WITH_SAME_NAME.__createClassWrapper(externalRCRef: why_we_need_module_names_foo())
     }
 }
-@_cdecl("intersection_overrides_AbstractBaz_baz_get__reverse_swift")
-package func intersection_overrides_AbstractBaz_baz_get__reverse_swift(_ `self`: Swift.UnsafeMutableRawPointer) -> Swift.Int32 {
-    let _self = ExportedKotlinPackages.intersection_overrides.AbstractBaz.__createClassWrapper(externalRCRef: `self`)!
+@_cdecl("intersection_overrides_AbstractFooBar_baz_get__reverse_swift")
+package func intersection_overrides_AbstractFooBar_baz_get__reverse_swift(_ `self`: Swift.UnsafeMutableRawPointer) -> Swift.Int32 {
+    let _self = ExportedKotlinPackages.intersection_overrides.AbstractFooBar.__createClassWrapper(externalRCRef: `self`)!
     let _result: Swift.Int32 = _self.baz
     return _result
 }
 
-@_cdecl("intersection_overrides_AbstractBaz_fooBar_get__reverse_swift")
-package func intersection_overrides_AbstractBaz_fooBar_get__reverse_swift(_ `self`: Swift.UnsafeMutableRawPointer) -> Swift.Int32 {
-    let _self = ExportedKotlinPackages.intersection_overrides.AbstractBaz.__createClassWrapper(externalRCRef: `self`)!
+@_cdecl("intersection_overrides_AbstractFooBar_fooBar_get__reverse_swift")
+package func intersection_overrides_AbstractFooBar_fooBar_get__reverse_swift(_ `self`: Swift.UnsafeMutableRawPointer) -> Swift.Int32 {
+    let _self = ExportedKotlinPackages.intersection_overrides.AbstractFooBar.__createClassWrapper(externalRCRef: `self`)!
     let _result: Swift.Int32 = _self.fooBar
     return _result
 }
@@ -1201,6 +1244,20 @@ package func intersection_overrides_Bar_bar_get__reverse_swift(_ `self`: Swift.U
 package func intersection_overrides_Bar_baz_get__reverse_swift(_ `self`: Swift.UnsafeMutableRawPointer) -> Swift.Int32 {
     let _self = KotlinRuntime.KotlinBase.__createProtocolWrapper(externalRCRef: `self`, conformsTo: ExportedKotlinPackages.intersection_overrides.Bar.Type.self) as! any ExportedKotlinPackages.intersection_overrides.Bar
     let _result: Swift.Int32 = _self.baz
+    return _result
+}
+
+@_cdecl("intersection_overrides_Baz_bar_get__reverse_swift")
+package func intersection_overrides_Baz_bar_get__reverse_swift(_ `self`: Swift.UnsafeMutableRawPointer) -> Swift.String {
+    let _self = ExportedKotlinPackages.intersection_overrides.Baz.__createClassWrapper(externalRCRef: `self`)!
+    let _result: Swift.String = _self.bar
+    return _result
+}
+
+@_cdecl("intersection_overrides_Baz_foo_get__reverse_swift")
+package func intersection_overrides_Baz_foo_get__reverse_swift(_ `self`: Swift.UnsafeMutableRawPointer) -> Swift.String {
+    let _self = ExportedKotlinPackages.intersection_overrides.Baz.__createClassWrapper(externalRCRef: `self`)!
+    let _result: Swift.String = _self.foo
     return _result
 }
 

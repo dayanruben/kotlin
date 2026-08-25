@@ -38,7 +38,7 @@ import java.nio.file.Paths
 @ExtendWith(BrokenMacosTestInterceptor::class)
 @OsCondition(allowRunningOnMacosOnCI = true)
 abstract class KGPBaseTest {
-    open val defaultBuildOptions = BuildOptions()
+    open val defaultBuildOptions = BuildOptions(fusReportDirectory = { workingDir.resolve("fus-report") })
 
     @TempDir
     lateinit var workingDir: Path
