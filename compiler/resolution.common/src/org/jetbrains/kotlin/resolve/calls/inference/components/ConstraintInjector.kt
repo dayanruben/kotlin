@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.resolve.calls.inference.model.*
 import org.jetbrains.kotlin.resolve.calls.inference.model.ConstraintKind.*
 import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.types.model.*
+import org.jetbrains.kotlin.util.OnlyForDefaultLanguageFeatureDisabled
 import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.popLast
@@ -475,12 +476,12 @@ class ConstraintInjector(
             /**
              * @see Constraint.forceInflexibilityForUpperTypeAtDirectIncorporation
              */
-            isFromFlexibleNotEqualityPosition: Boolean
+            isUpperConstraintMadeFlexibleNotEqualityPosition: Boolean
         ) =
             addConstraint(
                 typeVariable, superType, UPPER,
                 isFromNullabilityConstraint = false, isNoInfer,
-                isFromFlexibleTypeVariablePositionAtUpperConstraint = isFromFlexibleNotEqualityPosition,
+                isFromFlexibleTypeVariablePositionAtUpperConstraint = isUpperConstraintMadeFlexibleNotEqualityPosition,
             )
 
         override fun addLowerConstraint(
@@ -654,6 +655,7 @@ class ConstraintInjector(
         override val approximatorCaches: TypeApproximatorCachesPerConfiguration
             get() = c.approximatorCaches
 
+        @OnlyForDefaultLanguageFeatureDisabled(LanguageFeature.EliminateSecondKindIncorporation)
         override fun getVariablesWithConstraintsContainingGivenTypeVariable(
             variableConstructorMarker: TypeConstructorMarker
         ): Collection<VariableWithConstraints> =

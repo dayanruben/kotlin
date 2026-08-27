@@ -543,7 +543,7 @@ enum class LanguageFeature(
     // kind does not run at all, so this one has no effect.
     // TODO: Remove it once EliminateSecondKindIncorporation is being released under 2.5
     EnhancementsOfSecondIncorporationKind25(KOTLIN_2_5, "KT-85879"),
-    EliminateSecondKindIncorporation(sinceVersion = KOTLIN_2_5, issue = "KT-86022"),
+    EliminateSecondKindIncorporation(sinceVersion = KOTLIN_2_5, issue = "KT-85879"),
     NoWhenBranchMatchedExceptionWithMessage(KOTLIN_2_5, sinceApiVersion = ApiVersion.KOTLIN_2_5, issue = "KT-86518"),
     NameBasedDestructuring(sinceVersion = KOTLIN_2_5, "KT-19627"),
     JsAllowExportingAnnotationClasses(sinceVersion = KOTLIN_2_5, "KT-85599"),
@@ -610,11 +610,6 @@ enum class LanguageFeature(
 
     // Only used for compiling the commonizer's support library with numeric expect classes.
     AllowExpectValueClassesWithNoPrimaryConstructor(sinceVersion = null, forcesPreReleaseBinaries = true, issue = "KT-69909", enabledInLatestLVTests = false),
-
-    // Just a safety mechanism to revert the change in inference behavior that was required for a performance problem fix.
-    // If no problems are reported about it, can be removed after a couple of releases.
-    // NB: Currently, leads to regression KT-82132
-    DisableSimplificationOfFlexibleUpperConstraintWithDnnLowerBound(sinceVersion = null, "KT-52283", enabledInLatestLVTests = false),
 
     PreciseSimplificationToFlexibleLowerConstraint(sinceVersion = null, "KT-78621", enabledInLatestLVTests = false), // TODO: consider dropping in 2.5 timeframe (KT-84664)
     DiscriminateSuspendInOverloadResolution(sinceVersion = null, "KT-23610", enabledInLatestLVTests = false), // Postponed because of KT-82869

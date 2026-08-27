@@ -47,7 +47,7 @@ abstract class TypeCheckerStateForConstraintSystem(
          * If we're processing T! <: SomeType case, but not T! = SomeType
          * @see Constraint.forceInflexibilityForUpperTypeAtDirectIncorporation
          */
-        isFromFlexibleNotEqualityPosition: Boolean = false,
+        isUpperConstraintMadeFlexibleNotEqualityPosition: Boolean = false,
     )
 
     abstract fun addLowerConstraint(
@@ -446,9 +446,6 @@ abstract class TypeCheckerStateForConstraintSystem(
         }
     }
 
-    private val simplifyFlexibleUpperConstraintWithDnnBoundToNullable: Boolean =
-        extensionTypeContext.simplifyFlexibleUpperConstraintWithDnnBoundToNullable()
-
     /**
      * T! <: Foo <=> T <: Foo!
      * T? <: Foo <=> T <: Foo && Nothing? <: Foo
@@ -462,34 +459,29 @@ abstract class TypeCheckerStateForConstraintSystem(
     ): Boolean = with(extensionTypeContext) {
         val typeVariableLowerBound = typeVariable.lowerBoundIfFlexible()
 
-        var isFromFlexible = false
-
-        val simplifiedSuperType = if (typeVariable.isFlexible()) {
-            if (typeVariableLowerBound.isDefinitelyNotNullType() && simplifyFlexibleUpperConstraintWithDnnBoundToNullable) {
-                // This is the legacy behavior typically disabled in K2 because the LF is turned off and has no sinceVersion.
-                superType.withNullability(true)
-            } else if (superType.isRigidType()) {
-                createTrivialFlexibleTypeOrSelf(superType).also {
-                    isFromFlexible = it is FlexibleTypeMarker
-                }
-            } else {
-                superType
-            }
-        } else if (typeVariableLowerBound.isDefinitelyNotNullType()) {
-            superType.withNullability(true)
-        } else {
-            superType
+        val newUpperConstraintType = when {
+            // T & Any <: Foo <=> T <: Foo?
+            // T & Any .. T? <: Foo <=> T <: Foo?
+            typeVariableLowerBound.isDefinitelyNotNullType() -> superType.withNullability(true)
+            // T..T? <: Foo => T <: Foo!
+            // Generally, this rule doesn't look correct, for example because substitution [T=Foo?] should lead
+            // to CS violation as Foo?..Foo? is simplified as Foo? which is not a subtype of Foo.
+            // But otherwise, it leads to some breaking changes and a matter of investigation at (KT-88593)
+            typeVariable.isFlexible() -> createTrivialFlexibleTypeOrSelf(superType)
+            else -> superType
         }
 
+        val isUpperConstraintMadeFlexible = superType.isRigidType() && newUpperConstraintType.isFlexible()
+
         addUpperConstraint(
-            typeVariableLowerBound.typeConstructor(), simplifiedSuperType, isNoInfer,
-            isFromFlexibleNotEqualityPosition = isFromFlexible && !isEqualityConstraintForFlexibleTypeVariable
+            typeVariableLowerBound.typeConstructor(), newUpperConstraintType, isNoInfer,
+            isUpperConstraintMadeFlexibleNotEqualityPosition = isUpperConstraintMadeFlexible && !isEqualityConstraintForFlexibleTypeVariable
         )
 
         // T? <: Type
         if (typeVariableLowerBound.isMarkedNullable()) {
             // T? <: F (or F! or F?)
-            val supertypeIsTypeVariable = simplifiedSuperType.anyBound(::isMyTypeVariable)
+            val supertypeIsTypeVariable = newUpperConstraintType.anyBound(::isMyTypeVariable)
             // This only happens for EliminateSecondKindIncorporation because previously such nullability constraints have been
             // introduced via `insideOtherConstraint` which is turned off with this feature.
             //
@@ -497,18 +489,18 @@ abstract class TypeCheckerStateForConstraintSystem(
             // But in case of flexible version, might be even harmful (see javaFunctionParamNullability.kt test)
             if (supertypeIsTypeVariable
                 && languageVersionSettings.supportsFeature(LanguageFeature.EliminateSecondKindIncorporation)
-                && !simplifiedSuperType.upperBoundIfFlexible().isMarkedNullable()
+                && !newUpperConstraintType.upperBoundIfFlexible().isMarkedNullable()
             ) {
                 // For T? <: F => add Nothing? <: F
                 simplifyLowerConstraint(
-                    typeVariable = simplifiedSuperType,
+                    typeVariable = newUpperConstraintType,
                     subType = nullableNothingType(),
                     isNoInfer,
                     isFromNullabilityConstraint = true
                 )
             }
 
-            return supertypeIsTypeVariable || isSubtypeOfByTypeChecker(nullableNothingType(), simplifiedSuperType)
+            return supertypeIsTypeVariable || isSubtypeOfByTypeChecker(nullableNothingType(), newUpperConstraintType)
         }
 
         return true

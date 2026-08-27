@@ -43,6 +43,9 @@ import kotlin.test.fail
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
+private const val defaultGradleDaemonMemoryLimitInMb = 2048
+private const val defaultKotlinDaemonMemoryLimitInMb = 512
+
 /**
  * Create a new test project.
  *
@@ -63,8 +66,8 @@ fun KGPBaseTest.project(
     enableOfflineMode: Boolean = false,
     addHeapDumpOptions: Boolean = true,
     enableGradleDebug: EnableGradleDebug = EnableGradleDebug.AUTO,
-    enableGradleDaemonMemoryLimitInMb: Int? = 512,
-    enableKotlinDaemonMemoryLimitInMb: Int? = 256,
+    enableGradleDaemonMemoryLimitInMb: Int? = defaultGradleDaemonMemoryLimitInMb,
+    enableKotlinDaemonMemoryLimitInMb: Int? = defaultKotlinDaemonMemoryLimitInMb,
     kotlinDaemonIdleTimeout: Duration? = 1.minutes,
     projectPathAdditionalSuffix: String = "",
     buildJdk: File? = null,
@@ -145,8 +148,8 @@ fun KGPBaseTest.nativeProject(
     dependencyManagement: DependencyManagement = DependencyManagement.DefaultDependencyManagement(),
     addHeapDumpOptions: Boolean = true,
     enableGradleDebug: EnableGradleDebug = EnableGradleDebug.AUTO,
-    enableGradleDaemonMemoryLimitInMb: Int? = 512,
-    enableKotlinDaemonMemoryLimitInMb: Int? = 256,
+    enableGradleDaemonMemoryLimitInMb: Int? = defaultGradleDaemonMemoryLimitInMb,
+    enableKotlinDaemonMemoryLimitInMb: Int? = defaultKotlinDaemonMemoryLimitInMb,
     kotlinDaemonIdleTimeout: Duration? = 1.minutes,
     projectPathAdditionalSuffix: String = "",
     buildJdk: File? = null,
@@ -694,12 +697,14 @@ private fun commonBuildSetup(
     kotlinDaemonDebugPort: Int? = null,
 ): List<String> {
     val gradleJvmOptions = collectGradleJvmOptions(
-        enableGradleDaemonMemoryLimitInMb,
+        buildOptions.gradleDaemonMemoryLimitInMb ?: enableGradleDaemonMemoryLimitInMb,
         buildOptions.fileLeaksReportFile,
         connectSubprocessVMToDebugger,
         addHeapDumpOptions,
     )
-    val kotlinDaemonJvmArgs = collectKotlinJvmArgs(enableKotlinDaemonMemoryLimitInMb, kotlinDaemonDebugPort)
+    val kotlinDaemonJvmArgs = collectKotlinJvmArgs(
+        buildOptions.kotlinDaemonMemoryLimitInMb ?: enableKotlinDaemonMemoryLimitInMb, kotlinDaemonDebugPort
+    )
 
     /**
      * Encloses each argument into double quotes to properly handle values with whitespaces based on [enclose] value
@@ -771,6 +776,7 @@ private fun collectGradleJvmOptions(
     }
     // Limiting Gradle daemon heap size to reduce memory pressure on CI agents
     if (enableGradleDaemonMemoryLimitInMb != null) {
+        add("-XX:+UseG1GC")
         add("-Xmx${enableGradleDaemonMemoryLimitInMb}m")
         addAll(heapShrinkingJvmOptions)
     }
