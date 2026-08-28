@@ -10,8 +10,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
+import kotlin.SubclassOptInRequired;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.psi.psiUtil.KtPsiUtilKt;
 
 /**
  * Base implementation of {@link KtExpression} that may be backed either by the AST tree or by a stub.
@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.psi.psiUtil.KtPsiUtilKt;
  *
  * @param <T> the type of stub backing this element
  */
+@SubclassOptInRequired(markerClass = KtImplementationDetail.class)
 public abstract class KtExpressionImplStub<T extends StubElement<?>> extends KtElementImplStub<T> implements KtExpression {
     @KtImplementationDetail
     public KtExpressionImplStub(@NotNull T stub, @NotNull IElementType nodeType) {
@@ -50,12 +51,5 @@ public abstract class KtExpressionImplStub<T extends StubElement<?>> extends KtE
     @NotNull
     public PsiElement rawReplace(@NotNull PsiElement newElement) {
         return super.replace(newElement);
-    }
-
-    @Override
-    public PsiElement getParent() {
-        @SuppressWarnings("deprecation")
-        PsiElement substitute = KtPsiUtilKt.getParentSubstitute(this);
-        return substitute != null ? substitute : super.getParent();
     }
 }
