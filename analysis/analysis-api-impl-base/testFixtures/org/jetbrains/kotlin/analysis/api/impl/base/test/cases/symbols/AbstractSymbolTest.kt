@@ -543,6 +543,7 @@ private data class PointerWithRenderedSymbol(
  *
  * The property must not be used to hide some errors.
  */
+context(_: KaSession)
 private val KaSymbol.supportsOnlyPsiBasedPointersByDesign: Boolean
     get() = when (this) {
         is KaFileSymbol,
@@ -550,11 +551,33 @@ private val KaSymbol.supportsOnlyPsiBasedPointersByDesign: Boolean
         is KaAnonymousObjectSymbol,
         is KaAnonymousFunctionSymbol,
         is KaLocalVariableSymbol,
+            // Destructuring declarations could be non-local and restorable in scripts.
+            // But now they are all local and PSI-only.
+            // Can be reconsidered after KT-61451/KT-76360
+        is KaDestructuringDeclarationSymbol
             -> true
+
+        is KaReceiverParameterSymbol
+            -> owningCallableSymbol.supportsOnlyPsiBasedPointersByDesign
+
+        is KaContextParameterSymbol
+            // Do not restore pointers for dangling / invalid context parameters
+            -> containingDeclaration !is KaNamedFunctionSymbol
+                && containingDeclaration !is KaAnonymousFunctionSymbol
+                && containingDeclaration !is KaKotlinPropertySymbol
 
         is KaNamedFunctionSymbol,
         is KaPropertySymbol,
+        is KaTypeAliasSymbol,
             -> location == KaSymbolLocation.LOCAL
+
+        is KaNamedClassSymbol -> {
+            when (location) {
+                KaSymbolLocation.LOCAL -> true
+                KaSymbolLocation.CLASS -> classId == null && origin != KaSymbolOrigin.PLUGIN
+                else -> false
+            }
+        }
 
         else -> false
     }

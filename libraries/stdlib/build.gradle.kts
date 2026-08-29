@@ -1,5 +1,6 @@
 import org.gradle.jvm.tasks.Jar
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+import org.jetbrains.kotlin.gradle.dsl.JvmDefaultMode
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinCommonCompilerOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmCompilerOptions
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinWasmWasiTargetDsl
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrLink
 import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile
 import org.jetbrains.kotlin.gradle.tasks.Kotlin2JsCompile
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompileCommon
 import org.jetbrains.kotlin.gradle.tasks.UsesKotlinJavaToolchain
 import org.jetbrains.kotlin.library.KOTLIN_JS_STDLIB_NAME
 import org.jetbrains.kotlin.library.KOTLIN_WASM_STDLIB_NAME
@@ -25,7 +27,6 @@ import kotlin.io.path.copyTo
 
 plugins {
     id("common-configuration")
-    id("test-federation-convention")
     id("com.autonomousapps.dependency-analysis")
     kotlin("multiplatform")
     `maven-publish`
@@ -100,11 +101,13 @@ kotlin {
         compilations {
             all {
                 compileTaskProvider.configure {
+                    this as KotlinCompileCommon
+                    @Suppress("DEPRECATION")
+                    moduleName = "kotlin-stdlib-common"
                     compilerOptions {
                         freeCompilerArgs.set(
                             listOfNotNull(
                                 "-Xallow-kotlin-package",
-                                "-module-name", "kotlin-stdlib-common",
                                 "-Xexpect-actual-classes",
                                 "-Xexplicit-api=strict",
                                 diagnosticNamesArg,
@@ -147,11 +150,11 @@ kotlin {
                     compilerOptions {
                         moduleName = "kotlin-stdlib"
                         jvmTarget = JvmTarget.JVM_1_8
+                        jvmDefault = JvmDefaultMode.DISABLE
                         // providing exhaustive list of args here
                         freeCompilerArgs.set(
                             listOfNotNull(
                                 "-Xjdk-release=6",
-                                "-jvm-default=disable",
                                 "-Xallow-kotlin-package",
                                 "-Xexpect-actual-classes",
                                 "-Xmultifile-parts-inherit",
@@ -179,10 +182,10 @@ kotlin {
                     compilerOptions {
                         moduleName = "kotlin-stdlib-jdk7"
                         jvmTarget = JvmTarget.JVM_1_8
+                        jvmDefault = JvmDefaultMode.DISABLE
                         freeCompilerArgs.set(
                             listOfNotNull(
                                 "-Xjdk-release=7",
-                                "-jvm-default=disable",
                                 "-Xallow-kotlin-package",
                                 "-Xexpect-actual-classes",
                                 "-Xmultifile-parts-inherit",
@@ -202,10 +205,10 @@ kotlin {
                 compileTaskProvider.configure {
                     compilerOptions {
                         moduleName = "kotlin-stdlib-jdk8"
+                        jvmDefault = JvmDefaultMode.DISABLE
                         freeCompilerArgs.set(
                             listOfNotNull(
                                 "-Xallow-kotlin-package",
-                                "-jvm-default=disable",
                                 "-Xmultifile-parts-inherit",
                                 "-Xno-new-java-annotation-targets",
                                 "-Xexplicit-api=strict",
@@ -569,6 +572,7 @@ kotlin {
             }
             languageSettings {
                 optIn("kotlin.wasm.unsafe.UnsafeWasmMemoryApi")
+                optIn("kotlin.wasm.ExperimentalWasmInterop")
             }
         }
         val wasmWasiTest = getByName("wasmWasiTest") {

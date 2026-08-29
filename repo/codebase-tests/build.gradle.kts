@@ -3,10 +3,8 @@ import org.jetbrains.kotlin.testFederation.smokeTestConfig
 
 plugins {
     id("common-configuration")
-    id("test-federation-convention")
     id("com.autonomousapps.dependency-analysis")
     kotlin("jvm")
-    id("project-tests-convention")
 }
 
 dependencies {
@@ -25,7 +23,7 @@ dependencies {
 
     testImplementation(testFixtures("org.jetbrains.kotlin:repo-test-fixtures"))
     testImplementation("org.jetbrains.kotlin:test-federation-convention")
-    testImplementation(testFederationRuntime)
+    testImplementation(project(":repo:test-runtime"))
     testImplementation("org.jetbrains.kotlin:buildsrc-compat") {
         isTransitive = false
     }

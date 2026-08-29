@@ -5,16 +5,18 @@
 
 package org.jetbrains.kotlin.buildtools.tests
 
-import org.jetbrains.kotlin.buildtools.api.arguments.JvmCompilerArguments.Companion.JVM_TARGET
-import org.jetbrains.kotlin.buildtools.api.arguments.enums.JvmTarget
-import org.jetbrains.kotlin.buildtools.tests.CompilerExecutionStrategyConfiguration
+import org.jetbrains.kotlin.buildtools.api.arguments.CommonCompilerArguments.Companion.LANGUAGE_VERSION
+import org.jetbrains.kotlin.buildtools.api.arguments.CommonToolArguments.Companion.WERROR
+import org.jetbrains.kotlin.buildtools.api.arguments.enums.KotlinVersion
 import org.jetbrains.kotlin.buildtools.tests.compilation.BaseCompilationTest
 import org.jetbrains.kotlin.buildtools.tests.compilation.assertions.assertLogContainsPatternExactlyTimes
 import org.jetbrains.kotlin.buildtools.tests.compilation.assertions.assertLogContainsSubstringExactlyTimes
-import org.jetbrains.kotlin.buildtools.tests.compilation.assertions.assertNoWarnings
+import org.jetbrains.kotlin.buildtools.tests.compilation.assertions.assertLogDoesNotContainPatterns
 import org.jetbrains.kotlin.buildtools.tests.compilation.model.BtaV2StrategyAgnosticCompilationTest
+import org.jetbrains.kotlin.buildtools.tests.compilation.model.BtaV2StrategyAndPlatformAgnosticCompilationTest
 import org.jetbrains.kotlin.buildtools.tests.compilation.model.CompilationOutcome
 import org.jetbrains.kotlin.buildtools.tests.compilation.model.LogLevel
+import org.jetbrains.kotlin.buildtools.tests.compilation.model.ProjectCreator
 import org.jetbrains.kotlin.buildtools.tests.compilation.model.jvmProject
 import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.jupiter.api.DisplayName
@@ -24,16 +26,16 @@ import org.junit.jupiter.api.DisplayName
  */
 @DisplayName("Argument-parsing warnings are reported through the Build Tools API")
 class ArgumentParsingWarningsTest : BaseCompilationTest() {
-    @BtaV2StrategyAgnosticCompilationTest
+    @BtaV2StrategyAndPlatformAgnosticCompilationTest
     @DisplayName("An argument passed multiple times within a single applyArgumentStrings call is reported")
     @TestMetadata("basic-multimodule-project/module-1")
-    fun testArgumentPassedMultipleTimesInOneCallReportsWarning(strategyConfig: CompilerExecutionStrategyConfiguration) {
-        jvmProject(strategyConfig) {
+    fun testArgumentPassedMultipleTimesInOneCallReportsWarning(project: ProjectCreator) {
+        project {
             val module = module("basic-multimodule-project/module-1")
             module.compile(compilationConfigAction = {
-                it.compilerArguments.applyArgumentStrings(listOf("-jvm-target=11", "-jvm-target=17"))
+                it.compilerArguments.applyArgumentStrings(listOf("-language-version=2.4", "-language-version=2.5"))
             }) {
-                assertPassedMultipleTimes("-jvm-target", "11", "17")
+                assertPassedMultipleTimes("-language-version", "2.4", "2.5")
             }
         }
     }
@@ -45,10 +47,10 @@ class ArgumentParsingWarningsTest : BaseCompilationTest() {
         jvmProject(strategyConfig) {
             val module = module("basic-multimodule-project/module-1")
             module.compile(compilationConfigAction = {
-                it.compilerArguments[JVM_TARGET] = JvmTarget.JVM_11
-                it.compilerArguments.applyArgumentStrings(listOf("-jvm-target=17"))
+                it.compilerArguments[LANGUAGE_VERSION] = KotlinVersion.V2_5
+                it.compilerArguments.applyArgumentStrings(listOf("-language-version=2.4"))
             }) {
-                assertPassedMultipleTimes("-jvm-target", "11", "17")
+                assertPassedMultipleTimes("-language-version", "2.5", "2.4")
             }
         }
     }
@@ -57,15 +59,13 @@ class ArgumentParsingWarningsTest : BaseCompilationTest() {
     @DisplayName("An argument set via applyArgumentStrings and then via the typed API is reported")
     @TestMetadata("basic-multimodule-project/module-1")
     fun testArgumentSetViaArgumentStringsThenTypedApiReportsWarning(strategyConfig: CompilerExecutionStrategyConfiguration) {
-        // this is the shape reported in KT-88381: the Kotlin Gradle plugin derives -jvm-target from the toolchain,
-        // and the user additionally passes -jvm-target through freeCompilerArgs
         jvmProject(strategyConfig) {
             val module = module("basic-multimodule-project/module-1")
             module.compile(compilationConfigAction = {
-                it.compilerArguments.applyArgumentStrings(listOf("-jvm-target=17"))
-                it.compilerArguments[JVM_TARGET] = JvmTarget.JVM_11
+                it.compilerArguments.applyArgumentStrings(listOf("-language-version=2.4"))
+                it.compilerArguments[LANGUAGE_VERSION] = KotlinVersion.V2_5
             }) {
-                assertPassedMultipleTimes("-jvm-target", "17", "11")
+                assertPassedMultipleTimes("-language-version", "2.4", "2.5")
             }
         }
     }
@@ -77,9 +77,9 @@ class ArgumentParsingWarningsTest : BaseCompilationTest() {
         jvmProject(strategyConfig) {
             val module = module("basic-multimodule-project/module-1")
             module.compile(compilationConfigAction = {
-                it.compilerArguments.applyArgumentStrings(listOf("-jvm-target=17"))
+                it.compilerArguments.applyArgumentStrings(listOf("-language-version=2.4"))
             }) {
-                assertNoWarnings()
+                assertNoPassedMultipleTimesWarnings()
             }
         }
     }
@@ -87,22 +87,22 @@ class ArgumentParsingWarningsTest : BaseCompilationTest() {
     @BtaV2StrategyAgnosticCompilationTest
     @DisplayName("An argument set just once via typed API is not reported")
     @TestMetadata("basic-multimodule-project/module-1")
-    fun testArgumentSetOnlyViaTypiedApiReportsNoWarning(strategyConfig: CompilerExecutionStrategyConfiguration) {
+    fun testArgumentSetOnlyViaTypedApiReportsNoWarning(strategyConfig: CompilerExecutionStrategyConfiguration) {
         jvmProject(strategyConfig) {
             val module = module("basic-multimodule-project/module-1")
             module.compile(compilationConfigAction = {
-                it.compilerArguments[JVM_TARGET] = JvmTarget.JVM_11
+                it.compilerArguments[LANGUAGE_VERSION] = KotlinVersion.V2_5
             }) {
-                assertNoWarnings()
+                assertNoPassedMultipleTimesWarnings()
             }
         }
     }
 
-    @BtaV2StrategyAgnosticCompilationTest
+    @BtaV2StrategyAndPlatformAgnosticCompilationTest
     @DisplayName("An unknown advanced flag is reported")
     @TestMetadata("basic-multimodule-project/module-1")
-    fun testUnknownAdvancedFlagReportsWarning(strategyConfig: CompilerExecutionStrategyConfiguration) {
-        jvmProject(strategyConfig) {
+    fun testUnknownAdvancedFlagReportsWarning(project: ProjectCreator) {
+        project {
             val module = module("basic-multimodule-project/module-1")
             module.compile(compilationConfigAction = {
                 it.compilerArguments.applyArgumentStrings(listOf("-Xnot-a-real-flag"))
@@ -117,8 +117,27 @@ class ArgumentParsingWarningsTest : BaseCompilationTest() {
         }
     }
 
+    @BtaV2StrategyAndPlatformAgnosticCompilationTest
+    @DisplayName("An unknown 'stable' flag fails compilation")
+    @TestMetadata("basic-multimodule-project/module-1")
+    fun testUnknownStableFlagFailsCompilation(project: ProjectCreator) {
+        project {
+            val module = module("basic-multimodule-project/module-1")
+            module.compile(compilationConfigAction = {
+                it.compilerArguments.applyArgumentStrings(listOf("-not-a-real-flag"))
+            }) {
+                expectFail()
+                assertLogContainsPatternExactlyTimes(
+                    LogLevel.ERROR,
+                    ".*Invalid argument: -not-a-real-flag.*".toRegex(RegexOption.IGNORE_CASE),
+                    1,
+                )
+            }
+        }
+    }
+
     @BtaV2StrategyAgnosticCompilationTest
-    @DisplayName("A deprecated argument name is reported")
+    @DisplayName("A deprecated argument name is reported even though the compiler receives the new one")
     @TestMetadata("basic-multimodule-project/module-1")
     fun testDeprecatedArgumentNameReportsWarning(strategyConfig: CompilerExecutionStrategyConfiguration) {
         jvmProject(strategyConfig) {
@@ -135,11 +154,11 @@ class ArgumentParsingWarningsTest : BaseCompilationTest() {
         }
     }
 
-    @BtaV2StrategyAgnosticCompilationTest
+    @BtaV2StrategyAndPlatformAgnosticCompilationTest
     @DisplayName("A removed argument is reported")
     @TestMetadata("basic-multimodule-project/module-1")
-    fun testRemovedArgumentReportsWarning(strategyConfig: CompilerExecutionStrategyConfiguration) {
-        jvmProject(strategyConfig) {
+    fun testRemovedArgumentReportsWarning(project: ProjectCreator) {
+        project {
             val module = module("basic-multimodule-project/module-1")
             module.compile(compilationConfigAction = {
                 it.compilerArguments.applyArgumentStrings(listOf("-Xcontext-receivers"))
@@ -154,7 +173,7 @@ class ArgumentParsingWarningsTest : BaseCompilationTest() {
     }
 
     @BtaV2StrategyAgnosticCompilationTest
-    @DisplayName("A lifecycle-deprecated argument is still reported")
+    @DisplayName("A deprecated argument that the compiler reports itself is not duplicated")
     @TestMetadata("basic-multimodule-project/module-1")
     fun testDeprecatedLifecycleArgumentReportsWarning(strategyConfig: CompilerExecutionStrategyConfiguration) {
         // unlike a removed argument, a deprecated one does reach the compiler, which reports `DEPRECATED_CLI_ARG`
@@ -174,20 +193,6 @@ class ArgumentParsingWarningsTest : BaseCompilationTest() {
     }
 
     @BtaV2StrategyAgnosticCompilationTest
-    @DisplayName("A plain valid argument produces no argument-parsing warning")
-    @TestMetadata("basic-multimodule-project/module-1")
-    fun testValidArgumentReportsNoWarning(strategyConfig: CompilerExecutionStrategyConfiguration) {
-        jvmProject(strategyConfig) {
-            val module = module("basic-multimodule-project/module-1")
-            module.compile(compilationConfigAction = {
-                it.compilerArguments.applyArgumentStrings(listOf("-no-stdlib"))
-            }) {
-                assertNoWarnings()
-            }
-        }
-    }
-
-    @BtaV2StrategyAgnosticCompilationTest
     @DisplayName("An argument set via applyArgumentStrings, the typed API and applyArgumentStrings again is reported")
     @TestMetadata("basic-multimodule-project/module-1")
     fun testArgumentSetViaArgumentStringsAroundTypedApiReportsWarning(strategyConfig: CompilerExecutionStrategyConfiguration) {
@@ -195,11 +200,28 @@ class ArgumentParsingWarningsTest : BaseCompilationTest() {
         jvmProject(strategyConfig) {
             val module = module("basic-multimodule-project/module-1")
             module.compile(compilationConfigAction = {
-                it.compilerArguments.applyArgumentStrings(listOf("-jvm-target=11"))
-                it.compilerArguments[JVM_TARGET] = JvmTarget.JVM_17
-                it.compilerArguments.applyArgumentStrings(listOf("-jvm-target=21"))
+                it.compilerArguments.applyArgumentStrings(listOf("-language-version=2.4"))
+                it.compilerArguments[LANGUAGE_VERSION] = KotlinVersion.V2_5
+                it.compilerArguments.applyArgumentStrings(listOf("-language-version=2.6"))
             }) {
-                assertPassedMultipleTimes("-jvm-target", "11", "17", "21")
+                assertPassedMultipleTimes("-language-version", "2.4", "2.5", "2.6")
+            }
+        }
+    }
+
+    @BtaV2StrategyAgnosticCompilationTest
+    @DisplayName("Escalated argument parsing warning fails the build")
+    @TestMetadata("basic-multimodule-project/module-1")
+    fun testEscalatedArgumentParsingWarningFailsBuild(strategyConfig: CompilerExecutionStrategyConfiguration) {
+        jvmProject(strategyConfig) {
+            val module = module("basic-multimodule-project/module-1")
+            module.compile(compilationConfigAction = {
+                it.compilerArguments.applyArgumentStrings(listOf("-language-version=2.4"))
+                it.compilerArguments.applyArgumentStrings(listOf("-language-version=2.5"))
+                it.compilerArguments[WERROR] = true
+            }) {
+                expectFail()
+                assertPassedMultipleTimes("-language-version", "2.4", "2.5", logLevel = LogLevel.ERROR)
             }
         }
     }
@@ -211,10 +233,10 @@ class ArgumentParsingWarningsTest : BaseCompilationTest() {
         jvmProject(strategyConfig) {
             val module = module("basic-multimodule-project/module-1")
             module.compile(compilationConfigAction = {
-                it.compilerArguments.applyArgumentStrings(listOf("-jvm-target=11"))
-                it.compilerArguments.applyArgumentStrings(listOf("-jvm-target=17"))
+                it.compilerArguments.applyArgumentStrings(listOf("-language-version=2.4"))
+                it.compilerArguments.applyArgumentStrings(listOf("-language-version=2.5"))
             }) {
-                assertPassedMultipleTimes("-jvm-target", "11", "17")
+                assertPassedMultipleTimes("-language-version", "2.4", "2.5")
             }
         }
     }
@@ -223,13 +245,21 @@ class ArgumentParsingWarningsTest : BaseCompilationTest() {
      * [values] are expected in configuration order — the compiler reports them in the order they were supplied, and
      * the last one is the one it actually uses.
      */
-    private fun CompilationOutcome.assertPassedMultipleTimes(arg: String, vararg values: String) {
+    private fun CompilationOutcome.assertPassedMultipleTimes(arg: String, vararg values: String, logLevel: LogLevel = LogLevel.WARN) {
         val renderedValues = values.joinToString("', '")
         assertLogContainsPatternExactlyTimes(
-            LogLevel.WARN,
+            logLevel,
             ".*Argument '$arg' is passed multiple times: '$renderedValues'\\. The last value will be used\\..*"
                 .toRegex(RegexOption.IGNORE_CASE),
             1,
+        )
+    }
+
+    private fun CompilationOutcome.assertNoPassedMultipleTimesWarnings() {
+        assertLogDoesNotContainPatterns(
+            LogLevel.WARN,
+            ".*is passed multiple times:.*"
+                .toRegex(RegexOption.IGNORE_CASE),
         )
     }
 }

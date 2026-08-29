@@ -3,10 +3,8 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 plugins {
     id("common-configuration")
-    id("test-federation-convention")
     id("com.autonomousapps.dependency-analysis")
     kotlin("jvm")
-    id("project-tests-convention")
     id("test-inputs-check")
 }
 
@@ -91,13 +89,5 @@ projectTests {
         skipInLocalBuild = false,
     ) {
         systemProperty("kotlin.unsafe.mem.test.mode", "jdk25")
-
-        // `UnsafeBasedMemoryAccess` is also tested in this task, so this flag is needed to suppress warnings.
-        // See also https://openjdk.org/jeps/498.
-        jvmArgs("--sun-misc-unsafe-memory-access=allow")
-
-        // `MemorySegmentMemoryAccess` uses "restricted" FFM APIs, so this flag is needed to suppress warnings.
-        // See also https://openjdk.org/jeps/454.
-        jvmArgs("--enable-native-access=ALL-UNNAMED")
     }
 }

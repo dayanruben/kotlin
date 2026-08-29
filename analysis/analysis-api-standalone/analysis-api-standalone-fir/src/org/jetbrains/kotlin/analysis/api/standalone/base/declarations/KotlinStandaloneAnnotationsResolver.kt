@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2025 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2026 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -15,14 +15,10 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.parentOrNull
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.utils.filterIsInstanceAnd
 
 /**
- * This implementation works only for FQN annotations usages (`@foo.Bar` instead of `@Bar`).
- * It does not perform the full resolve of the annotation call, but it checks whether the annotation
- * with such FQN is present in the [scope] with [KotlinDeclarationProvider].
- *
- * Required for and used only in the test infrastructure.
+ * This implementation doesn't perform the full resolve of the annotation call,
+ * but it checks whether the annotation with such FQN is present in the [scope] with [KotlinDeclarationProvider].
  */
 private class KotlinStandaloneAnnotationsResolver(
     private val project: Project,
@@ -72,26 +68,30 @@ private class KotlinStandaloneAnnotationsResolver(
         return FqName.fromSegments(allQualifiers)
     }
 
-    private fun KtTypeReference.resolveAnnotationClassIds(candidates: MutableSet<ClassId> = mutableSetOf()): Set<ClassId> {
+    private fun KtTypeReference.resolveAnnotationClassIds(
+        candidates: MutableSet<ClassId> = mutableSetOf(),
+        visitedClassIds: MutableSet<ClassId> = mutableSetOf(),
+    ): Set<ClassId> {
         val annotationTypeElement = typeElement as? KtUserType
         val referencedName = annotationTypeElement?.referencedFqName() ?: return emptySet()
         if (referencedName.isRoot) return emptySet()
 
         if (!referencedName.parent().isRoot) {
             // we assume here that the annotation is used by its fully-qualified name
-            return buildSet { referencedName.resolveToClassIds(this) }
+            referencedName.resolveToClassIds(candidates, visitedClassIds)
+            return candidates
         }
 
         val targetName = referencedName.shortName()
         for (import in containingKtFile.importDirectives) {
             val importedName = import.importedFqName ?: continue
             when {
-                import.isAllUnder -> importedName.child(targetName).resolveToClassIds(candidates)
-                importedName.shortName() == targetName -> importedName.resolveToClassIds(candidates)
+                import.isAllUnder -> importedName.child(targetName).resolveToClassIds(candidates, visitedClassIds)
+                importedName.shortName() == targetName -> importedName.resolveToClassIds(candidates, visitedClassIds)
             }
         }
 
-        containingKtFile.packageFqName.child(targetName).resolveToClassIds(candidates)
+        containingKtFile.packageFqName.child(targetName).resolveToClassIds(candidates, visitedClassIds)
         return candidates
     }
 
@@ -112,15 +112,23 @@ private class KotlinStandaloneAnnotationsResolver(
         }
     }
 
-    fun FqName.resolveToClassIds(to: MutableSet<ClassId>) {
-        toClassIdSequence().mapNotNullTo(to) { classId ->
-            val classes = declarationProvider.getAllClassesByClassId(classId)
-            val typeAliases = declarationProvider.getAllTypeAliasesByClassId(classId)
-            typeAliases.singleOrNull()?.getTypeReference()?.resolveAnnotationClassIds(to)
+    fun FqName.resolveToClassIds(to: MutableSet<ClassId>, visitedClassIds: MutableSet<ClassId>) {
+        for (classId in toClassIdSequence()) {
+            // The same class id may be provided by several declarations, e.g., by a source declaration and by a library
+            // declaration shadowed by it. The resolver is allowed to report false positives, so every declaration
+            // contributes instead of only an unambiguous one
+            //
+            // Type aliases may form a cycle in erroneous code, so every class id is expanded at most once.
+            // Expanding it again cannot contribute anything new anyway
+            if (visitedClassIds.add(classId)) {
+                for (typeAlias in declarationProvider.getAllTypeAliasesByClassId(classId)) {
+                    typeAlias.getTypeReference()?.resolveAnnotationClassIds(to, visitedClassIds)
+                }
+            }
 
-            val annotations = classes.filterIsInstanceAnd<KtClass> { it.isAnnotation() }
-            annotations.singleOrNull()?.let {
-                classId
+            val classes = declarationProvider.getAllClassesByClassId(classId)
+            if (classes.any { it is KtClass && it.isAnnotation() }) {
+                to += classId
             }
         }
     }

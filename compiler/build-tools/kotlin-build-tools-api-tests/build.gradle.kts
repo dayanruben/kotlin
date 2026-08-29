@@ -2,11 +2,9 @@ import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 
 plugins {
     id("common-configuration")
-    id("test-federation-convention")
     kotlin("jvm")
     `jvm-test-suite`
     id("test-symlink-transformation")
-    id("project-tests-convention")
     id("test-inputs-check")
 }
 
@@ -96,7 +94,7 @@ dependencies {
     compileOnly(project(":compiler:build-tools:kotlin-build-tools-api"))
     compileOnly(project(":compiler:build-tools:kotlin-build-tools-compat"))
     api(testFixtures(project(":compiler:test-infrastructure-utils"))) // for `@TestDataPath`/`@TestMetadata`
-    api(testFederationRuntime)
+    api(project(":repo:test-runtime"))
 
     api(platform(libs.junit.bom))
     compileOnly(libs.junit.jupiter.engine)
