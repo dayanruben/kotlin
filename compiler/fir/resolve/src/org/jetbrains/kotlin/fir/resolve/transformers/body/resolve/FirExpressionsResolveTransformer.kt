@@ -932,8 +932,11 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
             isMarkedNullable = false
         )
 
-        val approximationIsNeeded =
-            resolutionMode !is ResolutionMode.ReceiverResolution && resolutionMode !is ResolutionMode.ContextDependent
+        val approximationIsNeeded = when (resolutionMode) {
+            is ResolutionMode.ReceiverResolution -> resolutionMode.forCallableReference
+            is ResolutionMode.ContextDependent -> false
+            else -> true
+        }
 
         val integerOperatorCall = buildIntegerLiteralOperatorCall {
             source = originalCall.source
@@ -1188,7 +1191,7 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
         val expression = incrementDecrementExpression.expression.transformSingle(transformer, ContextIndependent)
 
         @OptIn(FirImplementationDetail::class)
-        if (expression is FirQualifiedAccessExpression) expression.replaceSource(expression.source?.fakeElement(fakeSourceKind))
+        if (expression is FirQualifiedAccessExpression) expression.replaceSource(expression.source?.fakeElement(fakeSourceKind.forPrimaryReceiver))
 
         val desugaredSource = incrementDecrementExpression.source?.fakeElement(fakeSourceKind)
         val receiverVariableSource = incrementDecrementExpression.source?.fakeElement(fakeSourceKind.forReceiverVariable)
