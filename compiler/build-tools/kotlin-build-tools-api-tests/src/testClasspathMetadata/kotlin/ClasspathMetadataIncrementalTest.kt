@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.buildtools.tests.compilation
 
 import org.jetbrains.kotlin.buildtools.api.BaseIncrementalCompilationConfiguration.Companion.UNSAFE_INCREMENTAL_COMPILATION_FOR_MULTIPLATFORM
+import org.jetbrains.kotlin.buildtools.api.KotlinToolchains
 import org.jetbrains.kotlin.buildtools.api.arguments.ExperimentalCompilerArgument
 import org.jetbrains.kotlin.buildtools.api.jvm.JvmSnapshotBasedIncrementalCompilationConfiguration
 import org.jetbrains.kotlin.buildtools.api.jvm.operations.JvmCompilationOperation
@@ -14,10 +15,13 @@ import org.jetbrains.kotlin.buildtools.tests.compilation.assertions.assertNoComp
 import org.jetbrains.kotlin.buildtools.tests.compilation.model.BtaV2StrategyAgnosticCompilationTest
 import org.jetbrains.kotlin.buildtools.tests.compilation.scenario.Scenario
 import org.jetbrains.kotlin.buildtools.tests.compilation.scenario.jvmScenario
+import org.jetbrains.kotlin.buildtools.tests.compilation.util.btaClassloader
 import org.jetbrains.kotlin.buildtools.tests.compilation.util.compile
 import org.jetbrains.kotlin.buildtools.tests.compilation.util.execute
 import org.jetbrains.kotlin.test.TestMetadata
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Test
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 
@@ -119,6 +123,21 @@ internal class ClasspathMetadataIncrementalTest : BaseCompilationTest() {
             module.compile(setOf("commonMain/com/example/one/bar.kt"))
         }
     }
+
+    @BtaV2StrategyAgnosticCompilationTest
+    @DisplayName("KT-88997: incremental compilation of a common source using an expect fake override with an intermediate fragment")
+    @TestMetadata("expect-fake-override-metadata")
+    fun testExpectFakeOverrideWithIntermediateFragment(strategyConfig: CompilerExecutionStrategyConfiguration) {
+        jvmScenario(strategyConfig) {
+            val module = expectFakeOverrideModule()
+            module.execute("JvmKt", "fakeOverrideResult=initial")
+
+            module.replaceFileWithVersion("commonMain/fakeOverrideResult.kt", "change")
+
+            module.compile(setOf("commonMain/fakeOverrideResult.kt"))
+            module.execute("JvmKt", "fakeOverrideResult=common")
+        }
+    }
 }
 
 private typealias JvmScenario = Scenario<JvmCompilationOperation.Builder, JvmSnapshotBasedIncrementalCompilationConfiguration.Builder>
@@ -153,6 +172,24 @@ private fun JvmScenario.metadataHeaderMergeModule() = module(
 @OptIn(ExperimentalCompilerArgument::class)
 private fun JvmScenario.twoCommonModulesModule() = module(
     "two-common-modules",
+    compilationConfigAction = configureKmpJvmFragments(enableClasspathMetadata = true),
+    icOptionsConfigAction = {
+        it[UNSAFE_INCREMENTAL_COMPILATION_FOR_MULTIPLATFORM] = true
+    },
+)
+
+@OptIn(ExperimentalCompilerArgument::class)
+private fun JvmScenario.expectFakeOverrideModule() = module(
+    "expect-fake-override-metadata",
+    compilationConfigAction = configureKmpJvmFragments(enableClasspathMetadata = true),
+    icOptionsConfigAction = {
+        it[UNSAFE_INCREMENTAL_COMPILATION_FOR_MULTIPLATFORM] = true
+    },
+)
+
+@OptIn(ExperimentalCompilerArgument::class)
+private fun JvmScenario.expectFakeOverrideModuleNoIntermediate() = module(
+    "expect-fake-override-metadata-no-intermediate",
     compilationConfigAction = configureKmpJvmFragments(enableClasspathMetadata = true),
     icOptionsConfigAction = {
         it[UNSAFE_INCREMENTAL_COMPILATION_FOR_MULTIPLATFORM] = true

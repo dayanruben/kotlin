@@ -1,4 +1,4 @@
-import org.jetbrains.kotlin.build.foreign.CheckForeignClassUsageTask
+import org.jetbrains.kotlin.build.foreign.registerForeignClassUsageTasks
 import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
 
 plugins {
@@ -9,8 +9,6 @@ plugins {
     id("kotlin-git.gradle-build-conventions.foreign-class-usage-checker")
     id("test-inputs-check")
 }
-
-project.configureJvmToolchain(JdkMajorVersion.JDK_1_8)
 
 dependencies {
     api(kotlinStdlib())
@@ -45,6 +43,6 @@ projectTests {
     )
 }
 
-val checkForeignClassUsage = tasks.register("checkForeignClassUsage", CheckForeignClassUsageTask::class) {
+registerForeignClassUsageTasks {
     outputFile = file("api/language-version-settings-api.foreign")
 }

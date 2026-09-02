@@ -36,6 +36,7 @@ kotlin {
                 "org.jetbrains.kotlin.gradle.ExternalKotlinTargetApi",
                 "org.jetbrains.kotlin.buildtools.api.ExperimentalBuildToolsApi",
                 "org.jetbrains.kotlin.gradle.ComposeKotlinGradlePluginApi",
+                "org.jetbrains.kotlin.gradle.export.ExperimentalExportDsl",
                 "org.jetbrains.kotlin.gradle.swiftexport.ExperimentalSwiftExportDsl",
                 "org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation",
                 "org.jetbrains.kotlin.gradle.ExperimentalJsTestDsl",
@@ -770,17 +771,14 @@ testFixturesCompilation.compileTaskProvider.configure {
 }
 testFixturesCompilation.enableKotlinSerializationPlugin()
 
-val functionalTestCompilation = kotlin.target.compilations.getByName("functionalTest")
-functionalTestCompilation.compileJavaTaskProvider.configure {
-    sourceCompatibility = JavaLanguageVersion.of(17).toString()
-    targetCompatibility = JavaLanguageVersion.of(17).toString()
-}
-functionalTestCompilation.compileTaskProvider.configure {
-    with(this as KotlinCompile) {
-        kotlinJavaToolchain.toolchain.use(project.getToolchainLauncherFor(JdkMajorVersion.JDK_17_0))
+jvmToolchains {
+    configureForSourceSet("functionalTest") {
+        jdkVersion = JdkMajorVersion.JDK_17_0
+        targetBytecodeVersion = JdkMajorVersion.JDK_17_0
     }
 }
 
+val functionalTestCompilation = kotlin.target.compilations.getByName("functionalTest")
 functionalTestCompilation.enableKotlinSerializationPlugin()
 functionalTestCompilation.associateWith(kotlin.target.compilations.getByName(gradlePluginVariantForFunctionalTests.sourceSetName))
 functionalTestCompilation.associateWith(kotlin.target.compilations.getByName("common"))

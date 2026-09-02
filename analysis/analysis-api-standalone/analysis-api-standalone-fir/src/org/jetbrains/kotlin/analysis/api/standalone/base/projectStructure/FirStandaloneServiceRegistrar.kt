@@ -33,7 +33,7 @@ import org.jetbrains.kotlin.library.components.KlibMetadataConstants.KLIB_METADA
 import org.jetbrains.kotlin.serialization.deserialization.METADATA_FILE_EXTENSION
 import org.jetbrains.kotlin.serialization.deserialization.builtins.BuiltInSerializerProtocol
 
-@OptIn(KaImplementationDetail::class)
+@KaImplementationDetail
 object FirStandaloneServiceRegistrar : AnalysisApiSimpleServiceRegistrar() {
     private const val PLUGIN_RELATIVE_PATH = "/META-INF/analysis-api/analysis-api-standalone-fir.xml"
 
@@ -80,9 +80,6 @@ object FirStandaloneServiceRegistrar : AnalysisApiSimpleServiceRegistrar() {
                 PluginException(errorMessage, cause, null)
             },
         )
-    }
-
-    override fun registerProjectExtensionPoints(project: MockProject) {
     }
 
     override fun registerProjectServices(project: MockProject) {

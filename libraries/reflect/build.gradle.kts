@@ -17,7 +17,9 @@ plugins {
     kotlin("jvm")
 }
 
-configureJvmToolchain(JdkMajorVersion.JDK_1_8)
+jvmToolchains {
+    targetBytecodeVersion = JdkMajorVersion.JDK_1_8
+}
 
 sourceSets {
     "main" {
@@ -147,6 +149,7 @@ class KotlinModuleShadowTransformer(private val logger: Logger) : ResourceTransf
             context.relocators.fold(content) { acc, relocator -> relocator.applyToSourceContent(acc) }
 
         logger.info("Transforming ${context.path}")
+        @Suppress("DEPRECATION") // KT-88445
         val metadata = KotlinModuleMetadata.read(context.inputStream.readBytes())
         val module = metadata.kmModule
 

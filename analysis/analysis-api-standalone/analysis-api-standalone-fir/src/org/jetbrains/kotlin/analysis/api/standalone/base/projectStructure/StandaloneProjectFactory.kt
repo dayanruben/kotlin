@@ -71,6 +71,7 @@ import org.picocontainer.PicoContainer
 import java.nio.file.Path
 import java.nio.file.Paths
 
+@KaImplementationDetail
 object StandaloneProjectFactory {
     fun createProjectEnvironment(
         projectDisposable: Disposable,
@@ -319,7 +320,7 @@ object StandaloneProjectFactory {
         // In contrast to `ClasspathRootsResolver.addModularRoots`, we do not need to handle automatic Java modules because JDK modules
         // aren't automatic.
         return javaModuleGraph.getAllDependencies(javaModuleFinder.computeDefaultRootModules()).flatMap { moduleName ->
-            val module = javaModuleFinder.findModule(moduleName) ?: return@flatMap emptyList<JavaRoot>()
+            val module = javaModuleFinder.findModule(moduleName) ?: return@flatMap emptyList()
             val result = module.getJavaModuleRoots()
             result
         }

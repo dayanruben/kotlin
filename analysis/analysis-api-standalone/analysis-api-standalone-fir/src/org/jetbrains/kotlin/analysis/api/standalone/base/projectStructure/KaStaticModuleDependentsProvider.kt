@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinModuleD
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.allDirectDependencies
 
-class KtStaticModuleDependentsProvider(private val modules: List<KaModule>) : KotlinModuleDependentsProviderBase() {
+internal class KtStaticModuleDependentsProvider(private val modules: List<KaModule>) : KotlinModuleDependentsProviderBase() {
     private val directDependentsByKtModule: Map<KaModule, Set<KaModule>> by lazy {
         // Direct dependencies should be computed lazily, because the built-ins module will be reachable via module dependencies. Getting
         // the built-ins module relies on the built-ins session, which may depend on services that are registered after
@@ -37,7 +37,7 @@ class KtStaticModuleDependentsProvider(private val modules: List<KaModule>) : Ko
 private inline fun buildDependentsMap(
     modules: List<KaModule>,
     getDependencies: (KaModule) -> Sequence<KaModule>,
-): Map<KaModule, MutableSet<KaModule>> = buildMap<KaModule, MutableSet<KaModule>> {
+): Map<KaModule, MutableSet<KaModule>> = buildMap {
     for (module in modules) {
         for (dependency in getDependencies(module)) {
             // `module` should not be part of its own dependents, per the contract of `KotlinModuleDependentsProvider`.
