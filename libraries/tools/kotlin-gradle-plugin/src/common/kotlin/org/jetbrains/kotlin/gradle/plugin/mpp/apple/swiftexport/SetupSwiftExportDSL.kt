@@ -18,6 +18,8 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.apple.registerEmbedSwiftExportTask
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.internal.initSwiftExportClasspathConfigurations
 import org.jetbrains.kotlin.gradle.plugin.mpp.export.EXPORT_EXTENSION_NAME
 import org.jetbrains.kotlin.gradle.plugin.mpp.export.ExportExtension
+import org.jetbrains.kotlin.gradle.plugin.mpp.export.SwiftExportConfigurationCompat
+import org.jetbrains.kotlin.gradle.plugin.mpp.export.tasks.locateOrRegisterSwiftExportMetadataTaskAndConsumableConfiguration
 
 internal object SwiftExportDSLConstants {
     const val SWIFT_EXPORT_EXTENSION_NAME = "swiftExport"
@@ -44,11 +46,25 @@ internal val SetUpSwiftExportAction = KotlinProjectSetupCoroutine {
 
     if (appleTargets.isEmpty()) return@KotlinProjectSetupCoroutine
 
+    // Runs before isSwiftExportXcodeIntegrationActivated()'s early return: publishing metadata is independent
+    // of the Xcode integration. AfterFinaliseDsl still precedes any afterEvaluate {} a build script registers,
+    // so configuring the DSL from there publishes nothing.
+    val swiftExportConfiguration = exportExtension.swiftExportConfiguration
+    if (swiftExportConfiguration.moduleName.isPresent || swiftExportConfiguration.rootPackage.isPresent) {
+        locateOrRegisterSwiftExportMetadataTaskAndConsumableConfiguration(swiftExportConfiguration)
+    }
+
     // The targets are awaited above, so the DSL is finalised by now and the activation is order-independent.
     if (!multiplatformExtension.isSwiftExportXcodeIntegrationActivated()) return@KotlinProjectSetupCoroutine
 
     initSwiftExportClasspathConfigurations()
-    registerSwiftExportPipeline(swiftExportExtension)
+    registerSwiftExportPipeline(
+        if (exportExtension.isSwiftExportConfigured) {
+            SwiftExportConfigurationCompat.from(exportExtension.swiftExportConfiguration, providers, objects)
+        } else {
+            SwiftExportConfigurationCompat.from(swiftExportExtension)
+        }
+    )
 }
 
 /**
@@ -76,21 +92,21 @@ internal fun KotlinMultiplatformExtension.isSwiftExportXcodeIntegrationActivated
 }
 
 private fun Project.registerSwiftExportPipeline(
-    swiftExportExtension: SwiftExportExtension,
+    swiftExportConfiguration: SwiftExportConfigurationCompat,
 ) {
     val environment = XcodeEnvironment(project)
 
     multiplatformExtension
         .supportedAppleTargets()
         .configureEach { target ->
-            setupSwiftExport(target, environment, swiftExportExtension)
+            setupSwiftExport(target, environment, swiftExportConfiguration)
         }
 }
 
 private fun Project.setupSwiftExport(
     target: KotlinNativeTarget,
     environment: XcodeEnvironment,
-    swiftExportExtension: SwiftExportExtension,
+    swiftExportConfiguration: SwiftExportConfigurationCompat,
 ) {
-    registerEmbedSwiftExportTask(target, environment, swiftExportExtension)
+    registerEmbedSwiftExportTask(target, environment, swiftExportConfiguration)
 }

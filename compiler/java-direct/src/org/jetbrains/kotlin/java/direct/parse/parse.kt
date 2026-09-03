@@ -8,7 +8,6 @@
 package org.jetbrains.kotlin.java.direct.parse
 
 import com.intellij.java.syntax.JavaSyntaxDefinition
-import com.intellij.java.syntax.parser.JavaParser
 import com.intellij.platform.syntax.lexer.performLexing
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory
@@ -29,13 +28,12 @@ fun parseJavaToSyntaxTreeBuilder(
         .withWhitespaceOrCommentBindingPolicy(JavaSyntaxDefinition.whitespaceOrCommentBindingPolicy)
         .build()
 
-    parse(LanguageLevel.HIGHEST, syntaxTreeBuilder)
+    parse(LanguageLevel.JDK_X, syntaxTreeBuilder)
     return syntaxTreeBuilder
 }
 
 fun parse(languageLevel: LanguageLevel, builder: SyntaxTreeBuilder) {
-    val parser = JavaParser(languageLevel)
-    parser.fileParser.parse(builder)
+    JavaSyntaxDefinition.parse(languageLevel, builder)
 }
 
 /**
