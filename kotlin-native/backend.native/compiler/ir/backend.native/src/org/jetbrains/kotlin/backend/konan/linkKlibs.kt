@@ -150,15 +150,13 @@ internal fun LinkKlibsContext.linkKlibs(
 
 private fun LinkKlibsContext.createIrLinker(moduleDescriptor: ModuleDescriptor, libraryToCacheModule: ModuleDescriptor?): KonanIrLinker {
     val symbolTable = symbolTable!!
-    val exportedDependencies = (moduleDescriptor.getExportedDependencies(config) + libraryToCacheModule?.let { listOf(it) }.orEmpty()).distinct()
+    val exportedDependencies = (config.loadedKlibs.exported + config.loadedKlibs.included + listOfNotNull(libraryToCacheModule?.kotlinLibrary)).toSet()
 
     val deserializationConfiguration = CommonCompilerDeserializationConfiguration(config.configuration.languageVersionSettings)
     val cInteropModuleDeserializerFactory = KonanCInteropModuleDeserializerFactory(
             deserializationConfiguration = deserializationConfiguration,
             cachedLibraries = config.cachedLibraries,
     )
-
-    val forwardDeclarationsModuleDescriptor = moduleDescriptor.allDependencyModules.firstOrNull { it.isForwardDeclarationModule }
 
     val friendModuleUniqueNames = config.loadedKlibs.friends.map { it.uniqueName }
     val includedModuleUniqueNames = config.loadedKlibs.included.map { it.uniqueName }
@@ -176,7 +174,6 @@ private fun LinkKlibsContext.createIrLinker(moduleDescriptor: ModuleDescriptor, 
             configuration = config.configuration,
             symbolTable = symbolTable,
             friendModules = friendModulesMap,
-            forwardModuleDescriptor = forwardDeclarationsModuleDescriptor,
             cInteropModuleDeserializerFactory = cInteropModuleDeserializerFactory,
             exportedDependencies = exportedDependencies,
             partialLinkageConfig = config.configuration.partialLinkageConfig,
@@ -198,9 +195,12 @@ private fun LinkKlibsContext.deserializeDependencies(moduleDescriptor: ModuleDes
                 && kotlinLibrary != config.libraryToCache?.klib
 
         when {
+            dependency.isForwardDeclarationModule ->
+                linker.createAndRegisterModuleDeserializer(dependency, null, { DeserializationStrategy.ALL })
             isFullyCachedLibrary && kotlinLibrary.isHeader -> linker.deserializeHeadersWithInlineBodies(dependency, kotlinLibrary)
             isFullyCachedLibrary -> linker.deserializeOnlyHeaderModule(dependency, kotlinLibrary)
-            else -> linker.deserializeIrModuleHeader(dependency, kotlinLibrary, dependency.name.asString())
+            kotlinLibrary != null -> linker.deserializeIrModuleHeader(dependency, kotlinLibrary)
+            else -> error("Unexpected kind of module dependency $dependency")
         }
     }
 }
@@ -213,7 +213,7 @@ private fun ensureCStructsAndEnumsAreLoadedForCaching(linker: KonanIrLinker, lib
     // resulting assembly code for the C structs and enums already available, without a need for any special processing.
     if (libraryToCacheModule?.kotlinLibrary?.isCInteropLibrary() == true) {
         val interopModuleDeserializer = linker.getOrCreateDeserializerForModule(libraryToCacheModule, libraryToCacheModule.kotlinLibrary,
-                { DeserializationStrategy.ONLY_REFERENCED }, libraryToCacheModule.name.asString())
+                { DeserializationStrategy.ONLY_REFERENCED })
         (interopModuleDeserializer as? KonanInteropModuleDeserializer)?.deserializeAllCStructsAndEnums()
     }
 }

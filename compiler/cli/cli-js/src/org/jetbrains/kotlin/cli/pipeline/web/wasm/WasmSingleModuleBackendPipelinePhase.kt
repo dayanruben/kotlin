@@ -5,12 +5,11 @@
 
 package org.jetbrains.kotlin.cli.pipeline.web.wasm
 
-import org.jetbrains.kotlin.backend.wasm.WasmIrModuleConfiguration
-import org.jetbrains.kotlin.backend.wasm.ic.IrFactoryImplForWasmIC
-import org.jetbrains.kotlin.backend.wasm.ic.WasmICContextSingleModule
-import org.jetbrains.kotlin.backend.wasm.ic.WasmIrProgramFragmentsSingleModule
-import org.jetbrains.kotlin.backend.wasm.ic.WasmModuleArtifactSingleModule
-import org.jetbrains.kotlin.backend.wasm.ic.WasmSrcFileArtifactSingleModule
+import org.jetbrains.kotlin.backend.wasm.ic.*
+import org.jetbrains.kotlin.cli.pipeline.PipelinePhase
+import org.jetbrains.kotlin.cli.pipeline.web.WasmIntermediatePipelineArtifact
+import org.jetbrains.kotlin.cli.pipeline.web.WebIncrementalCachePipelineArtifact
+import org.jetbrains.kotlin.cli.pipeline.web.WebIncrementalCachePreparationPipelinePhase
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.ir.backend.js.ModulesStructure
 import org.jetbrains.kotlin.library.isWasmStdlib
@@ -21,23 +20,11 @@ object WasmSingleModuleBackendPipelinePhase : WasmBackendPipelinePhase<
         WasmIrProgramFragmentsSingleModule,
         WasmICContextSingleModule,
         >() {
+    override val icCachePreparationPhase: WebIncrementalCachePreparationPipelinePhase<WasmModuleArtifactSingleModule, *>
+        get() = WasmSingleModuleIncrementalCachePreparationPipelinePhase
 
-    override fun compileIncrementally(
-        icCaches: List<WasmModuleArtifactSingleModule>,
-        configuration: CompilerConfiguration
-    ): List<WasmIrModuleConfiguration> = compileIncrementallySingleModule(icCaches, configuration)
-
-    override fun createIcContext(
-        allowIncompleteImplementations: Boolean,
-        skipLocalNames: Boolean,
-        skipCommentInstructions: Boolean,
-        skipLocations: Boolean
-    ): WasmICContextSingleModule = WasmICContextSingleModule(
-        allowIncompleteImplementations,
-        skipLocalNames,
-        skipCommentInstructions,
-        skipLocations,
-    )
+    override val incrementalBuildingPhase: PipelinePhase<WebIncrementalCachePipelineArtifact<WasmModuleArtifactSingleModule>, WasmIntermediatePipelineArtifact>
+        get() = WasmSingleModuleIncrementalBuildingPhase
 
     override fun createNonIncrementalCompiler(
         configuration: CompilerConfiguration,
