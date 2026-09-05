@@ -1,3 +1,5 @@
+// DUMP_KT_IR
+
 import lombok.EqualsAndHashCode
 
 @EqualsAndHashCode
@@ -36,6 +38,41 @@ object ObjectWithProperties {
 
 @EqualsAndHashCode
 class WithNullable(val a: String?, val b: Int)
+
+// A null property must not hash to what a present one can hash to: `0.hashCode()` and `"".hashCode()` are both
+// 0, so a null field hashing to 0 collided with them and made non-equal instances share a hash, KT-88532.
+@EqualsAndHashCode
+class SingleNullableInt(val optionalId: Int?)
+
+@EqualsAndHashCode
+class SingleNullableString(val optional: String?)
+
+// The same, on the path that folds several properties into `result`, not the single-property shortcut.
+@EqualsAndHashCode
+class TwoNullableInts(val first: Int?, val second: Int?)
+
+// An array property is compared and hashed by content, not by identity: Lombok routes one through
+// `java.util.Arrays`, deeply for an object array and shallowly for a primitive one, KT-88656.
+@EqualsAndHashCode
+class WithObjectArray(val array: Array<String>)
+
+@EqualsAndHashCode
+class WithPrimitiveArray(val array: IntArray)
+
+@EqualsAndHashCode
+class WithNestedArray(val array: Array<Array<String>>)
+
+@EqualsAndHashCode
+class WithNullableArray(val array: Array<String>?)
+
+// A `$`-prefixed name is generated or internal by convention, so Lombok leaves such a property out of the
+// class's identity unless it is explicitly opted in with `@EqualsAndHashCode.Include`, KT-88636.
+@EqualsAndHashCode
+class WithDollarPrefixedProperties(
+    val regular: String,
+    val `$excludedByDefault`: String,
+    @EqualsAndHashCode.Include val `$explicitlyIncluded`: String,
+)
 
 @EqualsAndHashCode
 class Empty
@@ -103,8 +140,52 @@ fun box(): String {
     // hashCode does not NPE on a null property
     WithNullable(null, 1).hashCode()
 
+    // KT-88532: `optionalId = 0` and `optionalId = null` are not equal, so they must not share a hash.
+    assertEquals(false, SingleNullableInt(0) == SingleNullableInt(null))
+    assertEquals(true, SingleNullableInt(0).hashCode() != SingleNullableInt(null).hashCode())
+
+    assertEquals(false, SingleNullableString("") == SingleNullableString(null))
+    assertEquals(true, SingleNullableString("").hashCode() != SingleNullableString(null).hashCode())
+
+    assertEquals(false, TwoNullableInts(0, 1) == TwoNullableInts(null, 1))
+    assertEquals(true, TwoNullableInts(0, 1).hashCode() != TwoNullableInts(null, 1).hashCode())
+
+    // Equal instances still agree, null properties included.
+    assertEquals(true, SingleNullableInt(null) == SingleNullableInt(null))
+    assertEquals(true, SingleNullableInt(null).hashCode() == SingleNullableInt(null).hashCode())
+    assertEquals(true, TwoNullableInts(null, null).hashCode() == TwoNullableInts(null, null).hashCode())
+
+    // KT-88656: equal contents in distinct array instances must compare equal and hash alike.
+    assertEquals(true, WithObjectArray(arrayOf("a", "b")) == WithObjectArray(arrayOf("a", "b")))
+    assertEquals(true, WithObjectArray(arrayOf("a", "b")).hashCode() == WithObjectArray(arrayOf("a", "b")).hashCode())
+    assertEquals(false, WithObjectArray(arrayOf("a", "b")) == WithObjectArray(arrayOf("a", "c")))
+
+    assertEquals(true, WithPrimitiveArray(intArrayOf(1, 2)) == WithPrimitiveArray(intArrayOf(1, 2)))
+    assertEquals(true, WithPrimitiveArray(intArrayOf(1, 2)).hashCode() == WithPrimitiveArray(intArrayOf(1, 2)).hashCode())
+    assertEquals(false, WithPrimitiveArray(intArrayOf(1, 2)) == WithPrimitiveArray(intArrayOf(1, 3)))
+
+    // A one-dimensional object array is already compared deeply, so a nested one needs nothing extra.
+    assertEquals(true, WithNestedArray(arrayOf(arrayOf("a"))) == WithNestedArray(arrayOf(arrayOf("a"))))
+    assertEquals(true, WithNestedArray(arrayOf(arrayOf("a"))).hashCode() == WithNestedArray(arrayOf(arrayOf("a"))).hashCode())
+    assertEquals(false, WithNestedArray(arrayOf(arrayOf("a"))) == WithNestedArray(arrayOf(arrayOf("b"))))
+
+    // `java.util.Arrays` accepts null itself, so a null array needs no separate guard.
+    assertEquals(true, WithNullableArray(null) == WithNullableArray(null))
+    assertEquals(true, WithNullableArray(null).hashCode() == WithNullableArray(null).hashCode())
+    assertEquals(false, WithNullableArray(null) == WithNullableArray(arrayOf("a")))
+
+    // KT-88636: only `$excludedByDefault` differs, so the instances stay equal; `$explicitlyIncluded` counts.
+    assertEquals(true, WithDollarPrefixedProperties("r", "a", "i") == WithDollarPrefixedProperties("r", "b", "i"))
+    assertEquals(
+        true,
+        WithDollarPrefixedProperties("r", "a", "i").hashCode() == WithDollarPrefixedProperties("r", "b", "i").hashCode()
+    )
+    assertEquals(false, WithDollarPrefixedProperties("r", "a", "i") == WithDollarPrefixedProperties("r", "a", "j"))
+    assertEquals(false, WithDollarPrefixedProperties("r", "a", "i") == WithDollarPrefixedProperties("s", "a", "i"))
+
     assertEquals(true, Empty() == Empty())
-    assertEquals(0, Empty().hashCode())
+    // The accumulator Lombok starts every `hashCode` from, with nothing folded into it.
+    assertEquals(1, Empty().hashCode())
 
     val cd1 = CallSuperDerived("x")
     val cd2 = CallSuperDerived("x")

@@ -33,13 +33,17 @@ import org.jetbrains.kotlin.lombok.LombokFirDiagnostics.ANNOTATION_HAS_NO_EFFECT
 import org.jetbrains.kotlin.lombok.LombokFirDiagnostics.ANNOTATION_IS_NOT_SUPPORTED
 import org.jetbrains.kotlin.lombok.LombokFirDiagnostics.DO_NOT_USE_GETTERS_IRRELEVANT
 import org.jetbrains.kotlin.lombok.LombokFirDiagnostics.EQUALS_OR_HASH_CODE_FUNCTIONS_ALREADY_EXIST
+import org.jetbrains.kotlin.lombok.LombokFirDiagnostics.EQUALS_OR_HASH_CODE_FUNCTIONS_ARE_FINAL_IN_SUPERCLASS
 import org.jetbrains.kotlin.lombok.LombokFirDiagnostics.EXCLUDE_AND_INCLUDE_MUTUALLY_EXCLUSIVE
+import org.jetbrains.kotlin.lombok.LombokFirDiagnostics.EXCLUDE_IS_REDUNDANT_FOR_DOLLAR_PREFIXED_PROPERTY
+import org.jetbrains.kotlin.lombok.LombokFirDiagnostics.EXCLUDE_IS_REDUNDANT_FOR_ONLY_EXPLICITLY_INCLUDED
 import org.jetbrains.kotlin.lombok.LombokFirDiagnostics.FLAG_USAGE_ERROR
 import org.jetbrains.kotlin.lombok.LombokFirDiagnostics.FLAG_USAGE_WARNING
 import org.jetbrains.kotlin.lombok.LombokFirDiagnostics.LOG_PROPERTY_ALREADY_EXISTS
 import org.jetbrains.kotlin.lombok.LombokFirDiagnostics.NO_ARGS_CONSTRUCTOR_ALREADY_EXISTS
 import org.jetbrains.kotlin.lombok.LombokFirDiagnostics.STATIC_CONSTRUCTOR_ALREADY_EXISTS
 import org.jetbrains.kotlin.lombok.LombokFirDiagnostics.CALL_SUPER_NOT_CALLED
+import org.jetbrains.kotlin.lombok.LombokFirDiagnostics.CALL_SUPER_TO_ANY_IS_POINTLESS
 import org.jetbrains.kotlin.lombok.LombokFirDiagnostics.TO_STRING_FUNCTION_ALREADY_EXISTS
 import org.jetbrains.kotlin.lombok.LombokFirDiagnostics.TO_STRING_FUNCTION_IS_FINAL_IN_SUPERCLASS
 import org.jetbrains.kotlin.lombok.LombokFirDiagnostics.NO_ARGS_CONSTRUCTOR_FORCE_REQUIRED
@@ -74,8 +78,11 @@ object LombokFirDiagnostics : KtDiagnosticsContainer() {
     val FLAG_USAGE_WARNING by warning1<KtAnnotationEntry, Name>()
     val FLAG_USAGE_ERROR by error1<KtAnnotationEntry, Name>()
     val EXCLUDE_AND_INCLUDE_MUTUALLY_EXCLUSIVE by error1<KtAnnotationEntry, Name>()
+    val EXCLUDE_IS_REDUNDANT_FOR_DOLLAR_PREFIXED_PROPERTY by warning1<KtAnnotationEntry, Name>()
+    val EXCLUDE_IS_REDUNDANT_FOR_ONLY_EXPLICITLY_INCLUDED by warning1<KtAnnotationEntry, Name>()
     val DO_NOT_USE_GETTERS_IRRELEVANT by warning0<KtExpression>()
     val CALL_SUPER_NOT_CALLED by warning2<KtAnnotationEntry, String, Name>()
+    val CALL_SUPER_TO_ANY_IS_POINTLESS by error1<KtExpression, String>()
 
     val TO_STRING_FUNCTION_ALREADY_EXISTS by warning0<KtAnnotationEntry>()
     val TO_STRING_FUNCTION_IS_FINAL_IN_SUPERCLASS by error1<KtAnnotationEntry, Name>()
@@ -83,6 +90,7 @@ object LombokFirDiagnostics : KtDiagnosticsContainer() {
     val NO_ARGS_CONSTRUCTOR_ALREADY_EXISTS by warning0<KtAnnotationEntry>()
     val STATIC_CONSTRUCTOR_ALREADY_EXISTS by warning2<KtAnnotationEntry, Name, Name>()
     val EQUALS_OR_HASH_CODE_FUNCTIONS_ALREADY_EXIST by error0<KtAnnotationEntry>()
+    val EQUALS_OR_HASH_CODE_FUNCTIONS_ARE_FINAL_IN_SUPERCLASS by error1<KtAnnotationEntry, Name>()
 
     val BUILDER_WILL_IGNORE_INITIALIZING_EXPRESSION by warning0<KtExpression>()
     val BUILDER_DEFAULT_REQUIRES_INITIALIZING_EXPRESSION by warning0<KtAnnotationEntry>()
@@ -142,8 +150,23 @@ object LombokFirDiagnosticsMessages : BaseDiagnosticRendererFactory() {
             CommonRenderers.NAME,
         )
         map.put(
+            CALL_SUPER_TO_ANY_IS_POINTLESS,
+            "Generating ''{0}'' with a supercall to ''Any'' is pointless: ''Any'' compares by identity.",
+            CommonRenderers.STRING,
+        )
+        map.put(
             EXCLUDE_AND_INCLUDE_MUTUALLY_EXCLUSIVE,
             "''@{0}.Exclude'' and ''@{0}.Include'' are mutually exclusive; the ''@Include'' annotation will be ignored.",
+            CommonRenderers.NAME,
+        )
+        map.put(
+            EXCLUDE_IS_REDUNDANT_FOR_DOLLAR_PREFIXED_PROPERTY,
+            "''@{0}.Exclude'' is not needed: a property whose name starts with ''$'' is not included anyway.",
+            CommonRenderers.NAME,
+        )
+        map.put(
+            EXCLUDE_IS_REDUNDANT_FOR_ONLY_EXPLICITLY_INCLUDED,
+            "''@{0}.Exclude'' is not needed: ''onlyExplicitlyIncluded'' is set, so this property is not included anyway.",
             CommonRenderers.NAME,
         )
         map.put(
@@ -168,6 +191,11 @@ object LombokFirDiagnosticsMessages : BaseDiagnosticRendererFactory() {
         map.put(
             EQUALS_OR_HASH_CODE_FUNCTIONS_ALREADY_EXIST,
             "Not generating 'equals' and 'hashCode': A method with one of those names already exists. (Either both or none of these methods will be generated)."
+        )
+        map.put(
+            EQUALS_OR_HASH_CODE_FUNCTIONS_ARE_FINAL_IN_SUPERCLASS,
+            "Cannot generate ''equals'' and ''hashCode'': one of them is final in ''{0}'' and cannot be overridden.",
+            CommonRenderers.NAME,
         )
         map.put(
             BUILDER_WILL_IGNORE_INITIALIZING_EXPRESSION,

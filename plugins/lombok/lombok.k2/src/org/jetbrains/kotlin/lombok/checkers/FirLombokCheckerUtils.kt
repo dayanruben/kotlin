@@ -14,8 +14,16 @@ import org.jetbrains.kotlin.fir.analysis.checkers.getAllowedAnnotationTargets
 import org.jetbrains.kotlin.fir.declarations.DirectDeclarationsAccess
 import org.jetbrains.kotlin.fir.declarations.FirRegularClass
 import org.jetbrains.kotlin.fir.declarations.toAnnotationClassId
+import org.jetbrains.kotlin.fir.declarations.utils.isFinal
 import org.jetbrains.kotlin.fir.expressions.FirAnnotation
-import org.jetbrains.kotlin.fir.resolve.getSuperClassSymbolOrAny
+import org.jetbrains.kotlin.fir.resolve.getSuperTypes
+import org.jetbrains.kotlin.fir.resolve.toRegularClassSymbol
+import org.jetbrains.kotlin.fir.scopes.FirContainingNamesAwareScope
+import org.jetbrains.kotlin.fir.scopes.impl.declaredMemberScope
+import org.jetbrains.kotlin.fir.scopes.processAllProperties
+import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.fir.types.lookupTagIfAny
 import org.jetbrains.kotlin.fir.types.resolvedType
 import org.jetbrains.kotlin.lombok.LombokFirDiagnostics
@@ -33,9 +41,11 @@ import org.jetbrains.kotlin.lombok.config.LombokConfigNames.ON_CONSTRUCTOR
 import org.jetbrains.kotlin.lombok.config.LombokConfigNames.ON_PARAM
 import org.jetbrains.kotlin.lombok.config.LombokConfigNames.REPLACES
 import org.jetbrains.kotlin.lombok.config.getAccessLevel
+import org.jetbrains.kotlin.lombok.generators.hasNonTrivialSuperclass
+import org.jetbrains.kotlin.lombok.generators.isExcludedByDollarPrefix
+import org.jetbrains.kotlin.lombok.generators.kotlin.findAnnotationOnPropertyOrField
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
 
 private class ImplementedAnnotationsInfo(
@@ -236,6 +246,88 @@ fun checkLombokAnnotations(annotations: List<FirAnnotation>, defaultTargets: Lis
 }
 
 /**
+ * Validates the `@Include`/`@Exclude` pair of [annotationClassId] - `@ToString` or `@EqualsAndHashCode` - on every
+ * property of [declaredMemberScope]. Both ids are derived from the outer one exactly as [LombokNames] derives
+ * them, so the pair can never be mismatched at a call site.
+ *
+ * [onlyExplicitlyIncluded] is the feature's resolved `onlyExplicitlyIncluded` - the annotation argument, or the
+ * `lombok.<feature>.onlyExplicitlyIncluded` setting where the argument is absent - as the generator resolves it,
+ * since that is what decides whether an `@Exclude` had anything left to exclude.
+ */
+context(context: CheckerContext, reporter: DiagnosticReporter)
+fun checkIncludeAndExcludeAnnotations(
+    declaredMemberScope: FirContainingNamesAwareScope,
+    annotationClassId: ClassId,
+    onlyExplicitlyIncluded: Boolean,
+) {
+    val includeClassId = annotationClassId.createNestedClassId(LombokNames.INCLUDE_NAME)
+    val excludeClassId = annotationClassId.createNestedClassId(LombokNames.EXCLUDE_NAME)
+    val annotationName = annotationClassId.shortClassName
+
+    declaredMemberScope.processAllProperties { variableSymbol ->
+        val property = variableSymbol as? FirPropertySymbol ?: return@processAllProperties
+        val includeAnnotation = property.findAnnotationOnPropertyOrField(includeClassId, context.session)
+        val excludeAnnotation = property.findAnnotationOnPropertyOrField(excludeClassId, context.session)
+
+        // Mirrors Lombok Java behaviour: "Having both @Exclude and @Include on a member generates a warning;
+        // the member will be excluded in this case."
+        if (includeAnnotation != null && excludeAnnotation != null) {
+            includeAnnotation.source?.let {
+                reporter.reportOn(it, LombokFirDiagnostics.EXCLUDE_AND_INCLUDE_MUTUALLY_EXCLUSIVE, annotationName)
+            }
+        }
+
+        // Both of Lombok's "The @Exclude annotation is not needed" warnings, reported independently of the clash
+        // above, exactly as Lombok does - but only one of them per property: `InclusionExclusionUtils` chains
+        // them with `else if` and puts `onlyExplicitlyIncluded` first, nothing being left for `$` to explain
+        // once the whole class is opt-in (KT-88655).
+        //
+        // Lombok has a third one for a static field, which has no counterpart here: only a Kotlin declaration
+        // reaches this checker, and none of those is static in the sense `@Exclude` would be redundant for.
+        if (excludeAnnotation != null) {
+            val redundancy = when {
+                onlyExplicitlyIncluded -> LombokFirDiagnostics.EXCLUDE_IS_REDUNDANT_FOR_ONLY_EXPLICITLY_INCLUDED
+                property.isExcludedByDollarPrefix -> LombokFirDiagnostics.EXCLUDE_IS_REDUNDANT_FOR_DOLLAR_PREFIXED_PROPERTY
+                else -> null
+            }
+
+            if (redundancy != null) {
+                excludeAnnotation.source?.let { reporter.reportOn(it, redundancy, annotationName) }
+            }
+        }
+    }
+}
+
+/**
+ * The closest superclass that declares a `final` function named by [functionNames] and accepted by [isCandidate],
+ * or `null` when nothing the generator produces would have to override a final member. Interfaces are skipped:
+ * they cannot declare one.
+ *
+ * A generated member overriding a final one is not caught by the platform - the plugin adds it after those checks
+ * have run - and the JVM then refuses to load the class with "overrides final method" (KT-88420, KT-88511), so
+ * `@ToString` and `@EqualsAndHashCode` have to look for one themselves.
+ */
+context(context: CheckerContext)
+fun FirRegularClass.findSuperclassWithFinalFunction(
+    functionNames: Set<Name>,
+    isCandidate: (FirNamedFunctionSymbol) -> Boolean,
+): FirRegularClassSymbol? {
+    return symbol.getSuperTypes(context.session, lookupInterfaces = false)
+        .firstNotNullOfOrNull { superType ->
+            superType.toRegularClassSymbol(context.session)?.let { superClassSymbol ->
+                val declaredMemberScope = context.session.declaredMemberScope(superClassSymbol, memberRequiredPhase = null)
+                var isFinal = false
+                for (functionName in functionNames) {
+                    declaredMemberScope.processFunctionsByName(functionName) {
+                        isFinal = isFinal || it.isFinal && isCandidate(it)
+                    }
+                }
+                superClassSymbol.takeIf { isFinal }
+            }
+        }
+}
+
+/**
  * Mirrors Lombok behavior: when `*.callSuper=warn` is configured and the
  * annotated class has a non-trivial superclass, warn that the generated function (`toString` or `equals`/`hashCode`) will
  * not chain to it.
@@ -247,9 +339,7 @@ fun checkCallSuper(
     declaration: FirRegularClass,
     functionNames: Set<Name>,
 ) {
-    if (callSuperMode == CallSuperMode.Warn &&
-        declaration.symbol.getSuperClassSymbolOrAny(context.session).let { it != null && it.classId != StandardClassIds.Any }
-    ) {
+    if (callSuperMode == CallSuperMode.Warn && declaration.symbol.hasNonTrivialSuperclass(context.session)) {
         reporter.reportOn(
             annotationInfo.annotation.source,
             LombokFirDiagnostics.CALL_SUPER_NOT_CALLED,
