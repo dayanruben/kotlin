@@ -2,13 +2,13 @@
 // ISSUE: KT-75844
 package myPack
 
-import myPack.<!CANNOT_ALL_UNDER_IMPORT_FROM_SINGLETON!>MyTarget<!>.*
+import myPack.MyTarget.ANNOTATION_CLASS
 
 object MyTarget {
     const val ANNOTATION_CLASS = 0
 }
 
-@Target(<!ARGUMENT_TYPE_MISMATCH!>ANNOTATION_CLASS<!>)
+@Target(<!AMBIGUOUS_ANNOTATION_ARGUMENT, ARGUMENT_TYPE_MISMATCH!>ANNOTATION_CLASS<!>)
 annotation class MyAnnotation
 
 /* GENERATED_FIR_TAGS: annotationDeclaration, const, integerLiteral, objectDeclaration, propertyDeclaration */
