@@ -545,6 +545,7 @@ enum class LanguageFeature(
     NoWhenBranchMatchedExceptionWithMessage(KOTLIN_2_5, sinceApiVersion = ApiVersion.KOTLIN_2_5, issue = "KT-86518"),
     NameBasedDestructuring(sinceVersion = KOTLIN_2_5, "KT-19627"),
     JsAllowExportingAnnotationClasses(sinceVersion = KOTLIN_2_5, "KT-85599"),
+    DnnTypeForUnboundedReifiedTypeParameters(KOTLIN_2_5, "KTLC-360", sinceApiVersion = ApiVersion.KOTLIN_2_5),
     JsAllowExportingStarProjection(sinceVersion = KOTLIN_2_5, "KT-83462"),
     AllowReturnsResultOfContract(sinceVersion = KOTLIN_2_5, sinceApiVersion = ApiVersion.KOTLIN_2_4, issue = "KT-85948", forcesPreReleaseBinaries = true),
     UnnamedLocalVariables(sinceVersion = KOTLIN_2_5, issue = "KT-74809"),
@@ -613,7 +614,6 @@ enum class LanguageFeature(
     AllowExpectValueClassesWithNoPrimaryConstructor(sinceVersion = null, forcesPreReleaseBinaries = true, issue = "KT-85824", enabledInLatestLVTests = false),
     AllowMultipleExpectsForSingleActual(sinceVersion = null, forcesPreReleaseBinaries = true, issue = "KT-88307", enabledInLatestLVTests = false),
 
-    PreciseSimplificationToFlexibleLowerConstraint(sinceVersion = null, "KT-78621", enabledInLatestLVTests = false), // TODO: consider dropping in 2.5 timeframe (KT-84664)
     DiscriminateSuspendInOverloadResolution(sinceVersion = null, "KT-23610", enabledInLatestLVTests = false), // Postponed because of KT-82869
 
     // Experimental features
@@ -626,7 +626,7 @@ enum class LanguageFeature(
     ProhibitAllMultipleDefaultsInheritedFromSupertypes(sinceVersion = null, enabledInProgressiveMode = false, issue = NO_ISSUE_SPECIFIED, enabledInLatestLVTests = false),
     FunctionalTypeWithExtensionAsSupertype(sinceVersion = null, "KT-73894", enabledInLatestLVTests = false),
     ContextReceivers(sinceVersion = null, NO_ISSUE_SPECIFIED, enabledInLatestLVTests = false),
-    StrictEquals(sinceVersion = null, sinceApiVersion = ApiVersion.KOTLIN_2_5, issue = "KT-83683", enabledInLatestLVTests = true),
+    StrictEquals(sinceVersion = null, sinceApiVersion = ApiVersion.KOTLIN_2_5, issue = "KT-83683", testOnly = true, enabledInLatestLVTests = true),
     CallableReferencesToContextual(sinceVersion = null, issue = "KT-54594", enabledInLatestLVTests = true),
     JavaSamConversionEqualsHashCode(sinceVersion = null, forcesPreReleaseBinaries = true, issue = "KT-19318", enabledInLatestLVTests = false),
     AllowAnyAsAnActualTypeForExpectInterface(sinceVersion = null, issue = "KT-79308", enabledInLatestLVTests = false),

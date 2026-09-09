@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.apple.registerEmbedSwiftExportTask
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.internal.initSwiftExportClasspathConfigurations
 import org.jetbrains.kotlin.gradle.plugin.mpp.export.EXPORT_EXTENSION_NAME
 import org.jetbrains.kotlin.gradle.plugin.mpp.export.ExportExtension
-import org.jetbrains.kotlin.gradle.plugin.mpp.export.SwiftExportConfigurationCompat
 import org.jetbrains.kotlin.gradle.plugin.mpp.export.tasks.locateOrRegisterSwiftExportMetadataTaskAndConsumableConfiguration
 
 internal object SwiftExportDSLConstants {
@@ -27,11 +26,11 @@ internal object SwiftExportDSLConstants {
 }
 
 internal val SetUpSwiftExportAction = KotlinProjectSetupCoroutine {
-    val swiftExportExtension = multiplatformExtension.swiftExportInternal
+    val legacySwiftExportExtension = multiplatformExtension.swiftExportInternal
 
     multiplatformExtension.addExtension(
         SwiftExportDSLConstants.SWIFT_EXPORT_EXTENSION_NAME,
-        swiftExportExtension
+        legacySwiftExportExtension
     )
 
     // TODO: Move to a more generic SetUpExportAction.
@@ -58,13 +57,7 @@ internal val SetUpSwiftExportAction = KotlinProjectSetupCoroutine {
     if (!multiplatformExtension.isSwiftExportXcodeIntegrationActivated()) return@KotlinProjectSetupCoroutine
 
     initSwiftExportClasspathConfigurations()
-    registerSwiftExportPipeline(
-        if (exportExtension.isSwiftExportConfigured) {
-            SwiftExportConfigurationCompat.from(exportExtension.swiftExportConfiguration, providers, objects)
-        } else {
-            SwiftExportConfigurationCompat.from(swiftExportExtension)
-        }
-    )
+    registerSwiftExportPipeline(legacySwiftExportExtension, exportExtension)
 }
 
 /**
@@ -86,27 +79,21 @@ internal fun KotlinMultiplatformExtension.isSwiftExportXcodeIntegrationActivated
 
     if (isSwiftExportRequested) return true
 
-    // TODO(KT-87989): Return false here once the legacy `swiftExport { }` DSL is deprecated. Until then projects that
-    //  never ask for Swift Export keep the integration that is set up for every project with Apple targets today.
+    // TODO(KT-89151): Return false here once the legacy `swiftExport { }` DSL is removed in Kotlin 2.7.
+    //  Un-registering `embedSwiftExportForXcode` now would silently break a project whose Xcode build phase
+    //  already invokes that task without a `swiftExport { }` block. Keep the integration until the DSL is gone.
     return true
 }
 
 private fun Project.registerSwiftExportPipeline(
-    swiftExportConfiguration: SwiftExportConfigurationCompat,
+    legacySwiftExportExtension: SwiftExportExtension,
+    exportExtension: ExportExtension,
 ) {
     val environment = XcodeEnvironment(project)
 
     multiplatformExtension
         .supportedAppleTargets()
         .configureEach { target ->
-            setupSwiftExport(target, environment, swiftExportConfiguration)
+            registerEmbedSwiftExportTask(target, environment, legacySwiftExportExtension, exportExtension)
         }
-}
-
-private fun Project.setupSwiftExport(
-    target: KotlinNativeTarget,
-    environment: XcodeEnvironment,
-    swiftExportConfiguration: SwiftExportConfigurationCompat,
-) {
-    registerEmbedSwiftExportTask(target, environment, swiftExportConfiguration)
 }

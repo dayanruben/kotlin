@@ -89,6 +89,8 @@ dependencies {
     testImplementation(project(":kotlin-gradle-plugin-idea"))
     testImplementation(testFixtures(project(":kotlin-gradle-plugin-idea")))
     testImplementation(project(":kotlin-gradle-plugin-idea-proto"))
+    // the IDE side of the Kotlin/JS browser debug session, used to drive the session in JsBrowserDebugSessionIT
+    testImplementation(project(":kotlin-gradle-plugin-idea-browser-debug"))
     testImplementation(project(":gradle:kotlin-gradle-ecosystem-plugin"))
     testImplementation(project(":kotlin-gradle-statistics"))
 
@@ -223,7 +225,7 @@ val maxParallelTestForks =
 
 // Must be in sync with TestVersions.kt KTI-1612
 val gradleVersions = listOf(
-    "7.4.2", // check org.jetbrains.kotlin.gradle.GradleCompatibilityIT.testIncompatibleGradleVersion
+    "8.13", // check org.jetbrains.kotlin.gradle.GradleCompatibilityIT.testIncompatibleGradleVersion
     "8.14.5",
     "9.0.0",
     "9.1.0",
@@ -561,9 +563,11 @@ tasks.withType<Test>().configureEach {
 
 excludeGradleEmbeddedStdlibFromTestTasksRuntimeClasspath()
 
-registerKgpTestCoverageDataVariant(
-    configurationName = "integrationTestCoverageDataElements",
-    suiteName = "integrationTest",
-    execFile = layout.buildDirectory.file("jacoco/coverage.exec"),
-    testTask = tasks.named("kgpAllParallelTests"),
-)
+if (!project.kotlinBuildProperties.hideExtraTestTasksInGradleIntegrationTests.get()) {
+    registerKgpTestCoverageDataVariant(
+        configurationName = "integrationTestCoverageDataElements",
+        suiteName = "integrationTest",
+        execFile = layout.buildDirectory.file("jacoco/coverage.exec"),
+        testTask = tasks.named("kgpAllParallelTests"),
+    )
+}

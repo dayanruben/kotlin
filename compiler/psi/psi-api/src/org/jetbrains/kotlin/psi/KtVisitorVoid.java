@@ -316,6 +316,11 @@ public class KtVisitorVoid extends KtVisitor<Void, Void> {
         super.visitSafeQualifiedExpression(expression, null);
     }
 
+    @KtExperimentalApi
+    public void visitErrorSafeQualifiedExpression(@NotNull KtErrorSafeQualifiedExpression expression) {
+        super.visitErrorSafeQualifiedExpression(expression, null);
+    }
+
     public void visitObjectLiteralExpression(@NotNull KtObjectLiteralExpression expression) {
         super.visitObjectLiteralExpression(expression, null);
     }
@@ -417,6 +422,11 @@ public class KtVisitorVoid extends KtVisitor<Void, Void> {
 
     public void visitIntersectionType(@NotNull KtIntersectionType intersectionType) {
         super.visitIntersectionType(intersectionType, null);
+    }
+
+    @KtExperimentalApi
+    public void visitUnionType(@NotNull KtUnionType unionType) {
+        super.visitUnionType(unionType, null);
     }
 
     public void visitTypeProjection(@NotNull KtTypeProjection typeProjection) {
@@ -911,6 +921,13 @@ public class KtVisitorVoid extends KtVisitor<Void, Void> {
         return null;
     }
 
+    @KtExperimentalApi
+    @Override
+    public Void visitErrorSafeQualifiedExpression(@NotNull KtErrorSafeQualifiedExpression expression, Void data) {
+        visitErrorSafeQualifiedExpression(expression);
+        return null;
+    }
+
     @Override
     public final Void visitObjectLiteralExpression(@NotNull KtObjectLiteralExpression expression, Void data) {
         visitObjectLiteralExpression(expression);
@@ -1048,6 +1065,13 @@ public class KtVisitorVoid extends KtVisitor<Void, Void> {
     @Override
     public Void visitIntersectionType(@NotNull KtIntersectionType intersectionType, Void data) {
         visitIntersectionType(intersectionType);
+        return null;
+    }
+
+    @KtExperimentalApi
+    @Override
+    public Void visitUnionType(@NotNull KtUnionType unionType, Void data) {
+        visitUnionType(unionType);
         return null;
     }
 

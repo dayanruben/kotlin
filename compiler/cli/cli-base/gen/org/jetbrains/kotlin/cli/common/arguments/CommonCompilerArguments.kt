@@ -151,6 +151,16 @@ This flag partially enables functionality of `-Xexplicit-api` flag, so please do
         }
 
     @Argument(
+        value = "-Xallow-pre-17-runtime-jdk",
+        description = "Temporarily allow running Kotlin compiler with JDK older than JDK 17. This option will not work starting Kotlin 2.5.20-Beta1. See https://jb.gg/kotlin-compiler-jdk-17-migration for more details.",
+    )
+    var allowPre17RuntimeJdk: Boolean = false
+        set(value) {
+            checkFrozen()
+            field = value
+        }
+
+    @Argument(
         value = "-Xallow-reified-type-in-catch",
         description = "Allow 'catch' parameters to have reified types.",
     )
@@ -356,17 +366,6 @@ Additionally enables measurements for User and CPU time for all targets. Note th
         }
 
     @Argument(
-        value = "-Xdirect-java-actualization",
-        description = "Enable experimental direct Java actualization support.",
-    )
-    @Enables(LanguageFeature.DirectJavaActualization)
-    var directJavaActualization: Boolean = false
-        set(value) {
-            checkFrozen()
-            field = value
-        }
-
-    @Argument(
         value = "-Xdisable-default-scripting-plugin",
         description = "Don't enable the scripting plugin by default.",
     )
@@ -481,17 +480,6 @@ It may only be used with specific checkers that are not enabled by default, and 
         description = "Enable incremental compilation.",
     )
     var incrementalCompilation: Boolean? = null
-        set(value) {
-            checkFrozen()
-            field = value
-        }
-
-    @Argument(
-        value = "-Xequality-bounds",
-        description = "Enable experimental support for `@EqualityBound` annotations in `equals` operators.",
-    )
-    @Enables(LanguageFeature.StrictEquals)
-    var equalityBounds: Boolean = false
         set(value) {
             checkFrozen()
             field = value
@@ -653,40 +641,6 @@ with bodies.""",
         }
 
     @Argument(
-        value = "-Xignore-const-optimization-errors",
-        description = "Ignore all compilation exceptions while optimizing some constant expressions.",
-    )
-    var ignoreConstOptimizationErrors: Boolean = false
-        set(value) {
-            checkFrozen()
-            field = value
-        }
-
-    @Argument(
-        value = "-Xinline-classes",
-        description = "Enable experimental inline classes.",
-    )
-    @Enables(LanguageFeature.InlineClasses)
-    var inlineClasses: Boolean = false
-        set(value) {
-            checkFrozen()
-            field = value
-        }
-
-    @all:Deprecated("")
-    @Argument(
-        value = "-Xintellij-plugin-root",
-        valueDescription = "<path>",
-        description = "Path to 'kotlin-compiler.jar' or the directory where the IntelliJ IDEA configuration files can be found.",
-        deprecatedVersion = "2.4.20",
-    )
-    var intellijPluginRoot: String? = null
-        set(value) {
-            checkFrozen()
-            field = if (value.isNullOrEmpty()) null else value
-        }
-
-    @Argument(
         value = "-Xintrinsic-const-evaluation",
         description = "Enables `IntrinsicConstEvaluation` language feature.`",
     )
@@ -790,30 +744,6 @@ with bodies.""",
     )
     @Enables(LanguageFeature.NestedTypeAliases)
     var nestedTypeAliases: Boolean = false
-        set(value) {
-            checkFrozen()
-            field = value
-        }
-
-    @Argument(
-        value = "-Xnew-inference",
-        description = "Enable the new experimental generic type inference algorithm.",
-    )
-    @Enables(LanguageFeature.NewInference)
-    @Enables(LanguageFeature.SamConversionPerArgument)
-    @Enables(LanguageFeature.FunctionReferenceWithDefaultValueAsOtherType)
-    @Enables(LanguageFeature.DisableCompatibilityModeForNewInference)
-    var newInference: Boolean = false
-        set(value) {
-            checkFrozen()
-            field = value
-        }
-
-    @Argument(
-        value = "-Xno-check-actual",
-        description = "Do not check for the presence of the 'actual' modifier in multiplatform projects.",
-    )
-    var noCheckActual: Boolean = false
         set(value) {
             checkFrozen()
             field = value
@@ -1039,42 +969,6 @@ with bodies.""",
         description = "Suppress warnings about outdated, inconsistent, or experimental language or API versions.",
     )
     var suppressVersionWarnings: Boolean = false
-        set(value) {
-            checkFrozen()
-            field = value
-        }
-
-    @all:Deprecated("Use '-Xwarning-level=<WARNING_NAME>:disabled' instead (and the same for other warnings).")
-    @Argument(
-        value = "-Xsuppress-warning",
-        valueDescription = "<WARNING_NAME>",
-        description = "Suppress specified warning module-wide.",
-        deprecatedVersion = "2.2.0",
-    )
-    var suppressedDiagnostics: Array<String> = emptyArray()
-        set(value) {
-            checkFrozen()
-            field = value
-        }
-
-    @Argument(
-        value = "-Xunrestricted-builder-inference",
-        description = "Eliminate builder inference restrictions, for example by allowing type variables to be returned from builder inference calls.",
-    )
-    @Enables(LanguageFeature.UnrestrictedBuilderInference)
-    var unrestrictedBuilderInference: Boolean = false
-        set(value) {
-            checkFrozen()
-            field = value
-        }
-
-    @all:Deprecated("")
-    @Argument(
-        value = "-Xuse-fir-experimental-checkers",
-        description = "Enable experimental frontend IR checkers that are not yet ready for production.",
-        deprecatedVersion = "2.2.20",
-    )
-    var useFirExperimentalCheckers: Boolean = false
         set(value) {
             checkFrozen()
             field = value

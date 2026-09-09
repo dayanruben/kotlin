@@ -733,28 +733,6 @@ internal object KotlinToolingDiagnostics {
         }
     }
 
-    object DeprecatedGradleVersionWarning : ToolingDiagnosticFactory(WARNING, DiagnosticGroup.Kgp.Deprecation) {
-        operator fun invoke(
-            currentGradleVersion: GradleVersion,
-            nextMinimumSupportedGradleVersion: GradleVersion,
-        ) = build {
-            title("Deprecated Gradle Version")
-                .description {
-                    """
-                    The used Gradle version ($currentGradleVersion) is deprecated and will not be supported in future Kotlin Gradle Plugin releases.
-                    The minimum supported Gradle version will become $nextMinimumSupportedGradleVersion in Kotlin 2.5.0.
-
-                    This warning can be suppressed in 'gradle.properties':
-                        ${KOTLIN_SUPPRESS_GRADLE_PLUGIN_WARNINGS_PROPERTY}=$id
-                    
-                    """.trimIndent()
-                }
-                .solution {
-                    "Please update the Gradle version to at least $nextMinimumSupportedGradleVersion."
-                }
-        }
-    }
-
     object IncompatibleAgpVersionTooLowFatalError : ToolingDiagnosticFactory(FATAL, DiagnosticGroup.Kgp.Misconfiguration) {
         operator fun invoke(
             androidGradlePluginVersionString: String,
@@ -1971,6 +1949,32 @@ internal object KotlinToolingDiagnostics {
         }
     }
 
+    internal object DeprecatedSwiftExportDsl : ToolingDiagnosticFactory(WARNING, DiagnosticGroup.Kgp.Deprecation) {
+        operator fun invoke() = build {
+            title("Deprecated 'swiftExport { }' DSL")
+                .description("The 'swiftExport { }' DSL is deprecated and will be removed in Kotlin 2.7.")
+                .solution(
+                    "Move the configuration to 'export { swift { } }'. Rename 'flattenPackage' to 'rootPackage' " +
+                            "and call 'xcodeIntegration()' to register the task that embeds Swift Export's " +
+                            "output into your Xcode project."
+                )
+                .documentationLink(URI("https://kotl.in/swift-export-dsl-migration"))
+        }
+    }
+
+    internal object ConflictingSwiftExportDsls : ToolingDiagnosticFactory(ERROR, DiagnosticGroup.Kgp.Misconfiguration) {
+        operator fun invoke(projectPath: String) = build {
+            title("Both Swift Export DSLs are configured")
+                .description(
+                    "Project '$projectPath' configures both the deprecated 'swiftExport { }' DSL and the " +
+                            "'export { swift { } }' DSL. Only one of them is applied, so part of the " +
+                            "configuration is silently ignored."
+                )
+                .solution("Remove the 'swiftExport { }' block and keep the configuration in 'export { swift { } }'.")
+                .documentationLink(URI("https://kotl.in/swift-export-dsl-migration"))
+        }
+    }
+
     object SwiftPMLocalPackageDirectoryNotFound : ToolingDiagnosticFactory(ERROR, DiagnosticGroup.Kgp.Misconfiguration) {
         operator fun invoke(resolvedPath: String, originalPath: String) = build {
             title("Local SwiftPM Package Directory Not Found")
@@ -2463,6 +2467,35 @@ internal object KotlinToolingDiagnostics {
                 .solution {
                     "Specify a path to an existing browser executable for runner '$runnerName'"
                 }
+        }
+    }
+
+    internal object JsBrowserTestDebugRequiresChromiumRunner : ToolingDiagnosticFactory(
+        predefinedSeverity = FATAL,
+        predefinedGroup = DiagnosticGroup.Kgp.Misconfiguration,
+    ) {
+        operator fun invoke(taskPath: String, runnerNames: List<String>) = build {
+            title { "Debugging Kotlin/JS browser tests requires a Chromium browser runner" }
+                .description {
+                    "The '$taskPath' task was launched with debugger. But none of $runnerNames is Chromium."
+                }
+                .solution { "Please configure a chromium() browser runner, or run the tests without a debugger" }
+                .documentationLink(URI("https://kotl.in/new-js-browser-test-dsl"))
+        }
+    }
+
+    internal object JsBrowserTestDebugUsesFirstChromiumRunner : ToolingDiagnosticFactory(
+        predefinedSeverity = WARNING,
+        predefinedGroup = DiagnosticGroup.Kgp.Misconfiguration,
+    ) {
+        operator fun invoke(taskPath: String, chromiumRunnerNames: List<String>) = build {
+            title { "Only the first Chromium browser runner is debugged" }
+                .description {
+                    "The '$taskPath' task was launched with debugger. But multiple Chromium runners $chromiumRunnerNames are configured. " +
+                            "Only the first one '${chromiumRunnerNames.first()}' is launched."
+                }
+                .solution { "To debug another runner, declare it as the first chromium() runner in the DSL block" }
+                .documentationLink(URI("https://kotl.in/new-js-browser-test-dsl"))
         }
     }
 

@@ -47,7 +47,6 @@ private val levelsToArgumentTransforms: Map<String, Map<String, ArgumentTransfor
             drop("Xplugin")
             drop("Xcompiler-plugin")
             drop("Xcompiler-plugin-order")
-            drop("Xintellij-plugin-root")
             drop("Xcommon-sources")
             restrict(
                 "Xenable-incremental-compilation",
@@ -60,13 +59,11 @@ private val levelsToArgumentTransforms: Map<String, Map<String, ArgumentTransfor
 
             // KMP related
             drop("Xmulti-platform")
-            drop("Xno-check-actual")
             drop("Xfragments")
             drop("Xfragment-sources")
             drop("Xfragment-refines")
             drop("Xfragment-dependency")
             drop("Xseparate-kmp-compilation")
-            drop("Xdirect-java-actualization")
             drop("Xfragment-friend-dependency")
 
             // "wrong" metadata in argument description - argument existed before, but was added to argument description in 2.3.0
@@ -75,6 +72,9 @@ private val levelsToArgumentTransforms: Map<String, Map<String, ArgumentTransfor
         }
         with(removedCommonCompilerArguments) {
             drop("Xuse-k2")
+            drop("Xdirect-java-actualization")
+            drop("Xintellij-plugin-root")
+            drop("Xno-check-actual")
         }
     })
     put(actualCommonToolsArguments.name, buildMap {
@@ -124,6 +124,7 @@ private val levelsToArgumentTransforms: Map<String, Map<String, ArgumentTransfor
 
             // KMP related
             drop("Xuse-metadata-on-incremental-classpath")
+            drop("Xdirect-java-actualization")
         }
         with(removedJvmCompilerArguments) {
             drop("Xuse-javac")
