@@ -1915,10 +1915,14 @@ internal object KotlinToolingDiagnostics {
     }
 
     object SwiftExportModuleResolutionError : ToolingDiagnosticFactory(ERROR, DiagnosticGroup.Kgp.Misconfiguration) {
-        operator fun invoke(modules: List<String>) = build {
+        /**
+         * @param modules the modules that were requested but not found, rendered for the user
+         * @param dsl the DSL snippet the request came from, so the message points at the right place
+         */
+        operator fun invoke(modules: List<String>, dsl: String = "swiftExport { export() }") = build {
             title("Swift Module Resolution Error")
                 .description {
-                    "The following modules specified in swiftExport { export() } were not found in the resolved components: ${
+                    "The following modules specified in $dsl were not found in the resolved components: ${
                         modules.joinToString(
                             ", "
                         )
@@ -1926,6 +1930,31 @@ internal object KotlinToolingDiagnostics {
                 }
                 .solution {
                     "Please check the module name and ensure it is correct."
+                }
+        }
+    }
+
+    /**
+     * FATAL because it is reported after `checkKotlinGradlePluginConfigurationErrors` has run, where an ERROR would
+     * only be logged.
+     */
+    object SwiftExportDuplicateModuleNames : ToolingDiagnosticFactory(FATAL, DiagnosticGroup.Kgp.Misconfiguration) {
+        /**
+         * @param duplicates final Swift module name to the components that produced it
+         */
+        operator fun invoke(duplicates: Map<String, List<String>>) = build {
+            title("Duplicate Swift Module Names")
+                .description {
+                    "The following Swift module names are produced by more than one module (compared ignoring case):\n" +
+                            duplicates.entries.joinToString("\n") { (moduleName, owners) ->
+                                "  '$moduleName': ${owners.joinToString(", ")}"
+                            }
+                }
+                .solution {
+                    "Give each module a distinct name with " +
+                            "export { swift { xcodeIntegration { configure(dependency) { moduleName = \"...\" } } } }. " +
+                            "If the collision is with the root module's own name, rename the root module instead with " +
+                            "export { swift { moduleName = \"...\" } }."
                 }
         }
     }
