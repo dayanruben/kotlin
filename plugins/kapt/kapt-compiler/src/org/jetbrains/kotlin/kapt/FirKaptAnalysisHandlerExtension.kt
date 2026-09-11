@@ -57,11 +57,6 @@ open class FirKaptAnalysisHandlerExtension(
             configuration,
         )
 
-        if (optionsBuilder.mode == AptMode.WITH_COMPILATION) {
-            logger.error("KAPT \"compile\" mode is not supported in Kotlin 2.x. Run kapt with -Kapt-mode=stubsAndApt and use kotlinc for the final compilation step.")
-            return false
-        }
-
         optionsBuilder.apply {
             projectBaseDir = projectBaseDir ?: project.basePath?.let(::File)
             val contentRoots = configuration.contentRoots
@@ -210,8 +205,11 @@ open class FirKaptAnalysisHandlerExtension(
             }
         }
 
-        saveStubs(kaptContext, kaptStubs)
-        saveIncrementalData(kaptContext, converter)
+        val [saveStubsTime] = measureTimeMillis { saveStubs(kaptContext, kaptStubs) }
+        logger.info { "Java stub saving took $saveStubsTime ms" }
+
+        val [saveIncrementalDataTime] = measureTimeMillis { saveIncrementalData(kaptContext) }
+        logger.info { "Incremental data saving took $saveIncrementalDataTime ms" }
     }
 
     protected open fun saveStubs(
@@ -225,28 +223,29 @@ open class FirKaptAnalysisHandlerExtension(
 
         val sourceFiles = mutableListOf<String>()
 
+        val packagePaths = HashMap<String, String>()
+        val packageDirs = HashMap<String, File>()
+
         for (kaptStub in stubs) {
             val stubFile = kaptStub.jtreeFile
             val className: String
             val packageName: String
-            val classFilePathWithoutExtension: String
             if (options.stubGenerationScheme == StubGenerationScheme.DIRECT) {
                 className = kaptStub.directSimpleClassName
                 packageName = kaptStub.directPackageName
-                classFilePathWithoutExtension = kaptStub.directClassFilePathWithoutExtension
             } else {
                 className = (stubFile.defs.first { it is JCTree.JCClassDecl } as JCTree.JCClassDecl).simpleName.toString()
                 packageName = stubFile.getPackageNameJava9Aware()?.toString() ?: ""
-                classFilePathWithoutExtension = if (packageName.isEmpty()) {
-                    className
-                } else {
-                    "${packageName.replace('.', '/')}/$className"
-                }
             }
 
-            val packageDir =
-                if (packageName.isEmpty()) options.stubsOutputDir else File(options.stubsOutputDir, packageName.replace('.', '/'))
-            packageDir.mkdirs()
+            val packagePath = packagePaths.getOrPut(packageName) { packageName.replace('.', '/') }
+            val classFilePathWithoutExtension = if (packageName.isEmpty()) className else "$packagePath/$className"
+
+            val packageDir = packageDirs.getOrPut(packageName) {
+                val dir = if (packageName.isEmpty()) options.stubsOutputDir else File(options.stubsOutputDir, packagePath)
+                dir.mkdirs()
+                dir
+            }
 
             val sourceFile = File(packageDir, "$className.java")
 
@@ -275,10 +274,7 @@ open class FirKaptAnalysisHandlerExtension(
         logger.info { "Source files: ${sourceFiles}" }
     }
 
-    protected open fun saveIncrementalData(
-        kaptContext: KaptContextForStubGeneration,
-        converter: KaptStubConverter,
-    ) {
+    protected open fun saveIncrementalData(kaptContext: KaptContextForStubGeneration) {
         val incrementalDataOutputDir = options.incrementalDataOutputDir ?: return
 
         val reportOutputFiles = kaptContext.configuration.reportOutputFiles
@@ -300,7 +296,7 @@ open class FirKaptAnalysisHandlerExtension(
     }
 
     protected open fun createProcessorLoader(): ProcessorLoader =
-        EfficientProcessorLoader(options, logger)
+        ProcessorLoaderImpl(options, logger)
 
     private fun KaptOptions.Builder.checkOptions(logger: KaptLogger, configuration: CompilerConfiguration): Boolean? {
         if (classesOutputDir == null && configuration.outputJar != null) {

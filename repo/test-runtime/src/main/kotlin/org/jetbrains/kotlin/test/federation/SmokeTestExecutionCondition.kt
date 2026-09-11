@@ -20,19 +20,20 @@ class SmokeTestExecutionCondition : ExecutionCondition {
         if (testFederationMode == TestFederationMode.Full) return enabled("'TestFederationMode.Full' is set")
 
         if (isAutoSmokeTest(context)) return enabled("Auto smoke test selected")
-        if (isSmokeTest(context)) return enabled("@${SmokeTest::class.java.simpleName}")
+        if (isMustRunAlways(context)) return enabled("@${MustRunAlways::class.java.simpleName}")
 
-        /* Check contract */
+        /* Select tests marked to run for one of the changed domains. */
         val changedDomains = testFederationChangedDomains
             ?: return disabled("Missing '${TEST_FEDERATION_CHANGED_DOMAINS_KEY}'")
         val contracts = changedDomains.filter { domain -> isContract(domain, context) }
         if (contracts.isNotEmpty()) return enabled("Contracts: ${contracts.joinToString(", ")}")
-        return disabled("Not a smoke test / Not a contract test")
+        return disabled("Not selected automatically / Not @MustRunAlways / Not a contract test")
     }
 }
 
 /**
- * Tests tasks can be configured so that a given percentage of tests are automatically selected as smoke tests.
+ * Selects an approximate percentage of tests using a hash of each test's identity.
+ * The same identity gives the same selection for a given percentage.
  */
 private fun isAutoSmokeTest(context: ExtensionContext): Boolean {
     if (autoSmokeTestPercentage <= 0) return false
@@ -43,8 +44,8 @@ private fun isAutoSmokeTest(context: ExtensionContext): Boolean {
     return (hashCode % 100).absoluteValue < autoSmokeTestPercentage
 }
 
-private fun isSmokeTest(context: ExtensionContext): Boolean =
+private fun isMustRunAlways(context: ExtensionContext): Boolean =
     "smoke" in context.tags
 
 private fun isContract(domain: Domain, context: ExtensionContext) =
-    "affectedBy:${domain.name}" in context.tags
+    "contract:${domain.name}" in context.tags

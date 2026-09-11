@@ -10,8 +10,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * This test is a 'PseudoTest'.
- * It will be executed by another test to verify if the contract and smoke test system works correctly.
+ * Provides tests with different selection annotations for the Test Federation functional tests.
+ * The functional tests run this class and check which tests ran.
  */
 class PseudoTest {
     @Test
@@ -21,13 +21,13 @@ class PseudoTest {
         }
     }
 
-    @SmokeTest
+    @MustRunAlways
     @Test
     fun `smoke test`() {
 
     }
 
-    @AffectedByJs
+    @MustRunOnChangesInJs
     @Test
     fun `js contract test`() {
         if (testFederationMode == TestFederationMode.Full) return
@@ -35,7 +35,7 @@ class PseudoTest {
         if (Domain.Js !in changed && autoSmokeTestPercentage == 0) error("Expected 'Js' in affected domains, but was: $changed")
     }
 
-    @AffectedByWasm
+    @MustRunOnChangesInWasm
     @Test
     fun `wasm contract test`() {
         if (testFederationMode == TestFederationMode.Full) return
@@ -43,7 +43,7 @@ class PseudoTest {
         if (Domain.Wasm !in changed && autoSmokeTestPercentage == 0) error("Expected 'Wasm' in affected domains, but was: $changed")
     }
 
-    @AffectedByGradle
+    @MustRunOnChangesInGradle
     @Test
     fun `gradle contract test`() {
         if (testFederationMode == TestFederationMode.Full) return

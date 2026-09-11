@@ -92,6 +92,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.jvm.JvmPrimitiveType
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.ConstantValueKind
+import org.jetbrains.kotlin.util.ArrayLiteralResolution
 import org.jetbrains.org.objectweb.asm.Opcodes
 import org.jetbrains.org.objectweb.asm.Type
 import org.jetbrains.org.objectweb.asm.tree.*
@@ -144,9 +145,6 @@ class KaptStubConverter(val kaptContext: KaptContextForStubGeneration, val gener
     // processing) stubs. Currently, it is mostly a marker for the known cases of potentially incorrect syntax rather than a public flag
     private val avoidIncorrectJavaCode = false
 
-    val bindings: Map<String, KaptJavaFileObject>
-        field = mutableMapOf<String, KaptJavaFileObject>()
-
     private val typeMapper = KaptTypeMapper
 
     val treeMaker = TreeMaker.instance(kaptContext.context) as KaptTreeMaker
@@ -157,7 +155,7 @@ class KaptStubConverter(val kaptContext: KaptContextForStubGeneration, val gener
 
     private val importsFromRoot by lazy(::collectImportsFromRootPackage)
 
-    private val compiledClassByName = kaptContext.compiledClasses.associateBy { it.name!! }
+    private val compiledClassByName = kaptContext.compiledClassByName
 
     private var done = false
 
@@ -321,10 +319,7 @@ class KaptStubConverter(val kaptContext: KaptContextForStubGeneration, val gener
             append(classText)
         }
 
-        KaptJavaFileObject(topLevel, classDeclaration).apply {
-            topLevel.sourcefile = this
-            bindings[clazz.name] = this
-        }
+        topLevel.sourcefile = KaptJavaFileObject(topLevel, classDeclaration)
 
         postProcess(topLevel)
 
@@ -939,9 +934,10 @@ class KaptStubConverter(val kaptContext: KaptContextForStubGeneration, val gener
     private fun evaluateFirExpression(initialExpression: FirExpression): Any? {
         val session = kaptContext.firSession!!
         val expression =
-            if (initialExpression is FirFunctionCall)
+            if (initialExpression is FirFunctionCall && withSession(session) { useArrayLiteralResolution() }) {
+                @OptIn(ArrayLiteralResolution::class)
                 FirArrayOfCallTransformer().transformFunctionCall(initialExpression, session)
-            else initialExpression
+            } else initialExpression
 
         val result = try {
             expression.evaluateAs<FirElement>(session)

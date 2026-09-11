@@ -7,42 +7,68 @@ package org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.internal
 
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ModuleVersionIdentifier
+import org.gradle.api.artifacts.component.ComponentIdentifier
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.artifacts.result.ResolvedArtifactResult
 import org.gradle.api.artifacts.result.ResolvedDependencyResult
 import org.gradle.api.provider.Provider
 import org.jetbrains.kotlin.gradle.plugin.diagnostics.KotlinToolingDiagnostics
+import org.jetbrains.kotlin.gradle.plugin.diagnostics.ToolingDiagnostic
 import org.jetbrains.kotlin.gradle.plugin.diagnostics.reportDiagnostic
+import org.jetbrains.kotlin.gradle.plugin.mpp.export.internal.SWIFT_EXPORT_METADATA_SCHEMA_VERSION
+import org.jetbrains.kotlin.gradle.plugin.mpp.export.internal.SwiftExportDeclaredModuleOptions
+import org.jetbrains.kotlin.gradle.plugin.mpp.export.internal.SwiftExportDependencySelector
+import org.jetbrains.kotlin.gradle.plugin.mpp.export.internal.SwiftExportMetadata
+import org.jetbrains.kotlin.gradle.plugin.mpp.export.internal.applySwiftExportConsumerOverrides
+import org.jetbrains.kotlin.gradle.plugin.mpp.export.internal.deserializeSwiftExportMetadata
 import org.jetbrains.kotlin.gradle.utils.LazyResolvedConfigurationWithArtifacts
 import java.io.File
 import java.io.Serializable
 
 /**
+ * KGP-side copy of `SwiftModuleExportMode`. The standalone type can't be used here: `swift-export-standalone` is
+ * `compileOnly` in KGP and this value is serialized into worker parameters. [SwiftExportAction] maps between the two.
+ */
+internal enum class SwiftExportedModuleMode {
+    /** The whole public API is translated. */
+    FULL,
+
+    /** Only what fully exported modules refer to is translated. */
+    TRANSITIVE,
+
+    /**
+     * Only the types other modules refer to are emitted, as empty stubs. The klib stays on the analysis path,
+     * so declarations in other modules that mention its types are still exported.
+     */
+    HIDDEN,
+}
+
+/**
  * Represents a module that will be exported to Swift.
  *
  * @property moduleName The name of the module in Swift
- * @property flattenPackage Optional package flattening configuration
+ * @property rootPackage Optional root package configuration, used for package flattening only with [SwiftExportedModuleMode.FULL]
  * @property artifact The artifact file containing the module
- * @property shouldBeFullyExported Whether this module was explicitly requested for export through the swiftExport { export("foo:bar") } DSL
+ * @property exportMode How Swift Export translates this module
  */
 internal interface SwiftExportedModule : Serializable {
     val moduleName: String
-    val flattenPackage: String?
+    val rootPackage: String?
     val artifact: File
-    val shouldBeFullyExported: Boolean
+    val exportMode: SwiftExportedModuleMode
 }
 
 internal fun createFullyExportedSwiftExportedModule(
     moduleName: String,
-    flattenPackage: String?,
+    rootPackage: String?,
     artifact: File,
 ): SwiftExportedModule {
     return SwiftExportedModuleImp(
         moduleName,
-        flattenPackage,
+        rootPackage,
         artifact,
-        true
+        SwiftExportedModuleMode.FULL
     )
 }
 
@@ -54,26 +80,54 @@ internal fun createTransitiveSwiftExportedModule(
         moduleName,
         null,
         artifact,
-        false
+        SwiftExportedModuleMode.TRANSITIVE
+    )
+}
+
+internal fun createHiddenSwiftExportedModule(
+    moduleName: String,
+    artifact: File,
+): SwiftExportedModule {
+    return SwiftExportedModuleImp(
+        moduleName,
+        null,
+        artifact,
+        SwiftExportedModuleMode.HIDDEN
     )
 }
 
 internal fun Project.collectModules(
     exportConfigurationProvider: Provider<LazyResolvedConfigurationWithArtifacts>,
     apiConfigurationProvider: Provider<LazyResolvedConfigurationWithArtifacts?>,
+    metadataConfigurationProvider: Provider<LazyResolvedConfigurationWithArtifacts?>,
     exportedModulesProvider: Provider<Set<SwiftExportedDependency>>,
-): Provider<List<SwiftExportedModule>> = exportConfigurationProvider
-    .map { exportConfiguration ->
-        val apiConfiguration = apiConfigurationProvider.orNull
-        return@map exportConfiguration to apiConfiguration
-    }
-    .zip(exportedModulesProvider) { (exportConfiguration, apiConfiguration), modules ->
-        project.swiftExportedModules(exportConfiguration, apiConfiguration, modules)
-    }
+    dependencyOptionsOverridesProvider: Provider<Map<SwiftExportDependencySelector, SwiftExportDeclaredModuleOptions>>,
+    rootModuleNameProvider: Provider<String>,
+): Provider<List<SwiftExportedModule>> = provider {
+    val exportConfiguration = exportConfigurationProvider.get()
+    val apiConfiguration = apiConfigurationProvider.orNull
+    val metadataConfiguration = metadataConfigurationProvider.orNull
+    val exportedModules = exportedModulesProvider.get()
+    val dependencyOptionsOverrides = dependencyOptionsOverridesProvider.get()
+    val rootModuleName = rootModuleNameProvider.get()
+
+    project.applySwiftExportConsumerOverrides(
+        modules = project.swiftExportedModules(
+            exportConfiguration = exportConfiguration,
+            apiConfiguration = apiConfiguration,
+            exportedModules = exportedModules,
+        ),
+        overrides = dependencyOptionsOverrides,
+        metadataByComponent = metadataConfiguration?.metadataByComponent(project::reportDiagnostic) ?: emptyMap(),
+        exportConfiguration = exportConfiguration,
+        apiConfiguration = apiConfiguration,
+        rootModuleName = rootModuleName,
+    )
+}
 
 private class ResolvedArtifactWithVersionIdentifier(
     val moduleVersion: ModuleVersionIdentifier,
-    val artifact: ResolvedArtifactResult
+    val artifact: ResolvedArtifactResult,
 ) : Serializable {
     private val artifactFilePath: String get() = artifact.file.absolutePath
 
@@ -91,13 +145,23 @@ private class ResolvedArtifactWithVersionIdentifier(
     }
 
     fun defaultExportedModuleName(): String {
-        return when (val componentId = artifact.id.componentIdentifier) {
-            is ProjectComponentIdentifier -> componentId.projectPath
-            is ModuleComponentIdentifier -> moduleVersion.inheritedName
-            else -> error("Unexpected component identifier type: ${componentId::class}")
-        }
+        val componentId = artifact.id.componentIdentifier
+        return defaultSwiftExportModuleName(componentId, moduleVersion)
+            ?: error("Unexpected component identifier type: ${componentId::class}")
     }
 }
+
+/**
+ * Default name of a fully exported module, before normalization: the project path for a project, the coordinates
+ * for an external module, `null` for anything else. Also used by the consumer overrides, so a promoted dependency
+ * is named like an `api` one.
+ */
+internal fun defaultSwiftExportModuleName(id: ComponentIdentifier, moduleVersion: ModuleVersionIdentifier?): String? =
+    when (id) {
+        is ProjectComponentIdentifier -> id.projectPath
+        is ModuleComponentIdentifier -> moduleVersion?.inheritedName
+        else -> null
+    }
 
 private fun Project.swiftExportedModules(
     exportConfiguration: LazyResolvedConfigurationWithArtifacts,
@@ -114,6 +178,46 @@ private fun Project.swiftExportedModules(
         }
         ?: emptySet(),
 )
+
+/**
+ * Reads the Swift Export metadata published by each resolved dependency, keyed by the owning component so it can be
+ * correlated with the klib artifacts collected from the same dependency graph.
+ *
+ * The receiver is expected to be resolved requesting the `swiftExportMetadata` variant, so [resolvedArtifacts] contains
+ * only the metadata JSONs. Dependencies without such a variant are simply absent (lenient artifact view). Artifacts that
+ * are missing on disk are silently skipped. Metadata carrying an unsupported [SwiftExportMetadata.schemaVersion] is
+ * skipped with a warning ([KotlinToolingDiagnostics.SwiftExportUnsupportedMetadataSchemaVersion]), as well as metadata that
+ * fails to decode - ([KotlinToolingDiagnostics.SwiftExportMalformedMetadata]).
+ */
+internal fun LazyResolvedConfigurationWithArtifacts.metadataByComponent(
+    reportDiagnostic: (ToolingDiagnostic) -> Unit,
+): Map<ComponentIdentifier, SwiftExportMetadata> {
+    return resolvedArtifacts.mapNotNull { artifact ->
+        if (!artifact.file.exists()) return@mapNotNull null
+        val metadata = try {
+            artifact.file.inputStream().use(::deserializeSwiftExportMetadata)
+        } catch (e: Exception) {
+            reportDiagnostic(
+                KotlinToolingDiagnostics.SwiftExportMalformedMetadata(
+                    artifact.id.componentIdentifier.displayName,
+                    e.message,
+                )
+            )
+            return@mapNotNull null
+        }
+        if (metadata.schemaVersion != SWIFT_EXPORT_METADATA_SCHEMA_VERSION) {
+            reportDiagnostic(
+                KotlinToolingDiagnostics.SwiftExportUnsupportedMetadataSchemaVersion(
+                    artifact.id.componentIdentifier.displayName,
+                    metadata.schemaVersion,
+                    SWIFT_EXPORT_METADATA_SCHEMA_VERSION,
+                )
+            )
+            return@mapNotNull null
+        }
+        artifact.id.componentIdentifier to metadata
+    }.toMap()
+}
 
 private fun LazyResolvedConfigurationWithArtifacts.filteredArtifacts(
     dependenciesSelector: LazyResolvedConfigurationWithArtifacts.() -> Iterable<ResolvedDependencyResult>
@@ -199,7 +303,7 @@ private fun Project.findAndCreateSwiftExportedModules(
         result.add(
             createFullyExportedSwiftExportedModule(
                 moduleName = artifact.defaultExportedModuleName().normalizedSwiftExportModuleName,
-                flattenPackage = null,
+                rootPackage = null,
                 artifact = artifact.artifact.file,
             )
         )
@@ -213,8 +317,8 @@ private fun Project.findAndCreateSwiftExportedModules(
         .forEach { artifact ->
             result.add(
                 createTransitiveSwiftExportedModule(
-                    artifact.moduleVersion.inheritedName.normalizedSwiftExportModuleName,
-                    artifact.artifact.file
+                    moduleName = artifact.moduleVersion.inheritedName.normalizedSwiftExportModuleName,
+                    artifact = artifact.artifact.file
                 )
             )
         }
@@ -224,9 +328,9 @@ private fun Project.findAndCreateSwiftExportedModules(
 
 private data class SwiftExportedModuleImp(
     override val moduleName: String,
-    override val flattenPackage: String?,
+    override val rootPackage: String?,
     override val artifact: File,
-    override val shouldBeFullyExported: Boolean,
+    override val exportMode: SwiftExportedModuleMode,
 ) : SwiftExportedModule
 
 private fun Project.normalizedAndValidatedModuleName(moduleName: String) =
