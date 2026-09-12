@@ -542,6 +542,7 @@ include(
 )
 
 include(
+    ":compiler:test-coverage",
     ":compiler:test-infrastructure",
     ":compiler:test-infrastructure:grouping-test-engine",
     ":compiler:test-infrastructure-utils",
@@ -699,8 +700,7 @@ include(":native:swift:swift-export-embeddable")
 include(
     ":js:typescript-export-model",
     ":js:typescript-printer",
-    ":js:typescript-export-standalone",
-    ":js:typescript-export-standalone-embeddable"
+    ":js:typescript-export-standalone"
 )
 
 include(

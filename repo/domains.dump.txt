@@ -126,7 +126,6 @@ Js:
  - js/js.translator/src
  - js/npm
  - js/typescript-export-standalone
- - js/typescript-export-standalone-embeddable
 
 Native:
  - compiler/ir/backend.native
@@ -280,6 +279,7 @@ Unknown:
  - compiler/CLAUDE.md
  - compiler/ir/ReadMe.md
  - compiler/ir/code-rules.md
+ - compiler/test-coverage
  - dependencies
  - docs
  - generators
