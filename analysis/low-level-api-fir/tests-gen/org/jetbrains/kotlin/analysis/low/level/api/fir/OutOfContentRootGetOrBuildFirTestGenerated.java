@@ -252,6 +252,12 @@ public class OutOfContentRootGetOrBuildFirTestGenerated extends AbstractOutOfCon
     }
 
     @Test
+    @TestMetadata("annotationOnExplicitBackingField.kt")
+    public void testAnnotationOnExplicitBackingField() {
+      run("annotationOnExplicitBackingField.kt");
+    }
+
+    @Test
     @TestMetadata("annotationOnReturnType.kt")
     public void testAnnotationOnReturnType() {
       run("annotationOnReturnType.kt");
@@ -1208,6 +1214,12 @@ public class OutOfContentRootGetOrBuildFirTestGenerated extends AbstractOutOfCon
     }
 
     @Test
+    @TestMetadata("explicitBackingField.kt")
+    public void testExplicitBackingField() {
+      run("explicitBackingField.kt");
+    }
+
+    @Test
     @TestMetadata("initializerConflict.kt")
     public void testInitializerConflict() {
       run("initializerConflict.kt");
@@ -1487,6 +1499,12 @@ public class OutOfContentRootGetOrBuildFirTestGenerated extends AbstractOutOfCon
     @TestMetadata("incExpression.kt")
     public void testIncExpression() {
       run("incExpression.kt");
+    }
+
+    @Test
+    @TestMetadata("insideExplicitBackingFieldInitializer.kt")
+    public void testInsideExplicitBackingFieldInitializer() {
+      run("insideExplicitBackingFieldInitializer.kt");
     }
 
     @Test
@@ -1863,6 +1881,12 @@ public class OutOfContentRootGetOrBuildFirTestGenerated extends AbstractOutOfCon
     }
 
     @Test
+    @TestMetadata("accessorInDestructuringDeclaration.kt")
+    public void testAccessorInDestructuringDeclaration() {
+      run("accessorInDestructuringDeclaration.kt");
+    }
+
+    @Test
     public void testAllFilesPresentInInvalidCode() {
       KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/low-level-api-fir/testData/getOrBuildFir/invalidCode"), Pattern.compile("^(.+)\\.(kt)$"), null, true);
     }
@@ -1943,6 +1967,12 @@ public class OutOfContentRootGetOrBuildFirTestGenerated extends AbstractOutOfCon
     @TestMetadata("expectAndActualInTheSameFile.kt")
     public void testExpectAndActualInTheSameFile() {
       run("expectAndActualInTheSameFile.kt");
+    }
+
+    @Test
+    @TestMetadata("explicitBackingFieldInDestructuringDeclaration.kt")
+    public void testExplicitBackingFieldInDestructuringDeclaration() {
+      run("explicitBackingFieldInDestructuringDeclaration.kt");
     }
 
     @Test
@@ -2173,6 +2203,12 @@ public class OutOfContentRootGetOrBuildFirTestGenerated extends AbstractOutOfCon
     @TestMetadata("definitelyNotNullType.kt")
     public void testDefinitelyNotNullType() {
       run("definitelyNotNullType.kt");
+    }
+
+    @Test
+    @TestMetadata("explicitBackingFieldType.kt")
+    public void testExplicitBackingFieldType() {
+      run("explicitBackingFieldType.kt");
     }
 
     @Test
