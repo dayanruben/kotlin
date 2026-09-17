@@ -3137,6 +3137,12 @@ private fun KaDiagnosticConverterBuilder.addConversions68() {
             token,
         )
     }
+    add(FirJsErrors.IMPLEMENTING_SUSPEND_FUNCTION_INTERFACE) { firDiagnostic ->
+        ImplementingSuspendFunctionInterfaceImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
     add(FirWebCommonErrors.CALL_TO_DEFINED_EXTERNALLY_FROM_NON_EXTERNAL_DECLARATION) { firDiagnostic ->
         CallToDefinedExternallyFromNonExternalDeclarationImpl(
             firDiagnostic as KtDiagnosticWithSource,
@@ -5040,6 +5046,14 @@ private fun KaDiagnosticConverterBuilder.addConversions109() {
     }
     add(FirErrors.EMPTY_CHARACTER_LITERAL) { firDiagnostic ->
         EmptyCharacterLiteralImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirErrors.LATEINIT_VAL_OVERRIDDEN_BY_VAL) { firDiagnostic ->
+        LateinitValOverriddenByValImpl(
+            firSymbolBuilder.callableBuilder.buildCallableSymbol(firDiagnostic.a),
+            firSymbolBuilder.callableBuilder.buildCallableSymbol(firDiagnostic.b),
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -6971,6 +6985,12 @@ private fun KaDiagnosticConverterBuilder.addConversions151() {
             token,
         )
     }
+    add(FirErrors.LATEINIT_INTRINSIC_CALL_ON_LATEINIT_VAL) { firDiagnostic ->
+        LateinitIntrinsicCallOnLateinitValImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
     add(FirErrors.LOCAL_EXTENSION_PROPERTY) { firDiagnostic ->
         LocalExtensionPropertyImpl(
             firDiagnostic as KtDiagnosticWithSource,
@@ -7747,6 +7767,13 @@ private fun KaDiagnosticConverterBuilder.addConversions170() {
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions171() {
+    add(FirErrors.MISSING_DEPENDENCY_CLASS_IN_PARAMETER_WITH_DEFAULT_VALUE) { firDiagnostic ->
+        MissingDependencyClassInParameterWithDefaultValueImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
     add(FirErrors.NULLABLE_SUPERTYPE_THROUGH_TYPEALIAS.errorFactory) { firDiagnostic ->
         NullableSupertypeThroughTypealiasErrorImpl(
             firDiagnostic as KtDiagnosticWithSource,

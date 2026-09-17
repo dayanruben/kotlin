@@ -472,6 +472,12 @@ internal class MissingDependencyClassInExpressionTypeImpl(
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.MissingDependencyClassInExpressionType
 
+internal class MissingDependencyClassInParameterWithDefaultValueImpl(
+    override val type: KaType,
+    firDiagnostic: KtDiagnosticWithSource,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.MissingDependencyClassInParameterWithDefaultValue
+
 internal class MissingDependencySuperclassImpl(
     override val missingTypeConstructorName: FqName,
     override val declarationTypeConstructorName: FqName,
@@ -3456,6 +3462,13 @@ internal class VarImplementedByInheritedValWarningImpl(
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtNamedDeclaration>(firDiagnostic, token), KaFirDiagnostic.VarImplementedByInheritedValWarning
 
+internal class LateinitValOverriddenByValImpl(
+    override val overridingDeclaration: KaCallableSymbol,
+    override val overriddenDeclaration: KaCallableSymbol,
+    firDiagnostic: KtDiagnosticWithSource,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtNamedDeclaration>(firDiagnostic, token), KaFirDiagnostic.LateinitValOverriddenByVal
+
 internal class NonFinalMemberInFinalClassImpl(
     firDiagnostic: KtDiagnosticWithSource,
     token: KaLifetimeToken,
@@ -4063,6 +4076,11 @@ internal class LateinitIntrinsicCallOnNonLateinitImpl(
     firDiagnostic: KtDiagnosticWithSource,
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.LateinitIntrinsicCallOnNonLateinit
+
+internal class LateinitIntrinsicCallOnLateinitValImpl(
+    firDiagnostic: KtDiagnosticWithSource,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KaFirDiagnostic.LateinitIntrinsicCallOnLateinitVal
 
 internal class LateinitIntrinsicCallInInlineFunctionImpl(
     firDiagnostic: KtDiagnosticWithSource,
@@ -6579,6 +6597,11 @@ internal class ImplementingFunctionInterfaceImpl(
     firDiagnostic: KtDiagnosticWithSource,
     token: KaLifetimeToken,
 ) : KaAbstractFirDiagnostic<KtClassOrObject>(firDiagnostic, token), KaFirDiagnostic.ImplementingFunctionInterface
+
+internal class ImplementingSuspendFunctionInterfaceImpl(
+    firDiagnostic: KtDiagnosticWithSource,
+    token: KaLifetimeToken,
+) : KaAbstractFirDiagnostic<KtClassOrObject>(firDiagnostic, token), KaFirDiagnostic.ImplementingSuspendFunctionInterface
 
 internal class OverridingExternalFunWithOptionalParamsImpl(
     firDiagnostic: KtDiagnosticWithSource,

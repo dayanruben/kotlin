@@ -38,7 +38,6 @@ kotlin {
                 "org.jetbrains.kotlin.gradle.ExternalKotlinTargetApi",
                 "org.jetbrains.kotlin.buildtools.api.ExperimentalBuildToolsApi",
                 "org.jetbrains.kotlin.gradle.ComposeKotlinGradlePluginApi",
-                "org.jetbrains.kotlin.gradle.export.ExperimentalExportDsl",
                 "org.jetbrains.kotlin.gradle.swiftexport.ExperimentalSwiftExportDsl",
                 "org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation",
                 "org.jetbrains.kotlin.gradle.ExperimentalJsTestDsl",
@@ -47,31 +46,6 @@ kotlin {
         )
     }
 }
-
-registerKotlinSourceForVersionRange(
-    GradlePluginVariant.GRADLE_MIN,
-    GradlePluginVariant.GRADLE_82,
-)
-
-registerKotlinSourceForVersionRange(
-    GradlePluginVariant.GRADLE_MIN,
-    GradlePluginVariant.GRADLE_86,
-)
-
-registerKotlinSourceForVersionRange(
-    GradlePluginVariant.GRADLE_MIN,
-    GradlePluginVariant.GRADLE_811,
-)
-
-registerKotlinSourceForVersionRange(
-    GradlePluginVariant.GRADLE_MIN,
-    GradlePluginVariant.GRADLE_96,
-)
-
-registerKotlinSourceForVersionRange(
-    GradlePluginVariant.GRADLE_86,
-    GradlePluginVariant.GRADLE_96,
-)
 
 binaryCompatibilityValidator {
     targets.configureEach {

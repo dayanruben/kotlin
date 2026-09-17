@@ -1,8 +1,6 @@
 import TestLifecycleTask.QualityGate
 import org.gradle.crypto.checksum.Checksum
 import org.gradle.plugins.ide.idea.model.IdeaModel
-import org.jetbrains.gradle.ext.ProjectSettings
-import org.jetbrains.gradle.ext.TaskTriggersConfig
 import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin
 import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootEnvSpec
 import org.jetbrains.kotlin.gradle.targets.wasm.yarn.WasmYarnPlugin
@@ -357,6 +355,10 @@ tasks {
 
     testLifecycleTask("wasmJsBoxTest", QualityGate.Master) {
         dependsOn(":wasm:wasm.tests:wasmJsBoxTest")
+    }
+
+    testLifecycleTask("wasmJsBoxWithJscOnWindows", QualityGate.Undefined) {
+        dependsOn(":wasm:wasm.tests:wasmJsBoxWithJscOnWindows")
     }
 
     testLifecycleTask("wasmJsSplittingTest", QualityGate.Master) {
@@ -836,22 +838,6 @@ configure<IdeaModel> {
                 "intellij",
             )
         )
-    }
-
-    project {
-        // Patched IntelliJ classes are consumed as fat-JAR artifacts of the ':dependencies:intellij-*' projects,
-        // so on a clean checkout the IDE cannot resolve IntelliJ PSI references until those JARs are built.
-        // Build them (together with sources for navigation) right after every Gradle import.
-        (this as ExtensionAware).configure<ProjectSettings> {
-            (this as ExtensionAware).configure<TaskTriggersConfig> {
-                afterSync(
-                    ":dependencies:intellij-java-psi-api:jar",
-                    ":dependencies:intellij-java-psi-api:sourcesJar",
-                    ":dependencies:intellij-core-implementation:jar",
-                    ":dependencies:intellij-core-implementation:sourcesJar",
-                )
-            }
-        }
     }
 }
 

@@ -577,6 +577,7 @@ enum class LanguageFeature(
     ConcurrentMapPurelyImplemented(sinceVersion = KOTLIN_2_6, enabledInProgressiveMode = true, "KTLC-416"),
     EnforceNamedArgumentsOnJavaAnnotationInAccessors(sinceVersion = KOTLIN_2_6, enabledInProgressiveMode = true, "KTLC-418"),
     JsIntegerDivisionCheck(sinceVersion = KOTLIN_2_6, enabledInProgressiveMode = true, issue = "KT-17719"),
+    ForbidUsingParameterWithDefaultValueTypesWithInaccessibleContent(KOTLIN_2_6, enabledInProgressiveMode = true, "KTLC-422"),
 
     // End of 2.* language features --------------------------------------------------
 
@@ -687,6 +688,7 @@ enum class LanguageFeature(
         }
     },
     JsExportingSuspendLambdas(sinceVersion = null, "KT-80188", enabledInLatestLVTests = false),
+    LateinitVals(sinceVersion = null, "KT-28413", forcesPreReleaseBinaries = true, enabledInLatestLVTests = false),
 
     InferThrowableTypeParameterToUpperBound(sinceVersion = null, issue = "KT-82961", enabledInLatestLVTests = true),
     EagerLambdaAnalysis(sinceVersion = null, issue = "KT-51107", enabledInLatestLVTests = true) {

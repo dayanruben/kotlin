@@ -675,7 +675,7 @@ fun getActualTargetList(container: FirAnnotationContainer, session: FirSession):
     val annotated =
         if (container is FirBackingField) {
             when {
-                !container.propertySymbol.hasBackingField -> container.propertyIfBackingField
+                !container.propertySymbol.hasAnnotatableBackingField -> container.propertyIfBackingField
                 container.propertySymbol.getContainingClassSymbol()?.classKind == ClassKind.ANNOTATION_CLASS -> {
                     @OptIn(AnnotationTargetListForDeprecation::class)
                     return TargetLists.T_MEMBER_PROPERTY_IN_ANNOTATION
@@ -713,15 +713,23 @@ fun getActualTargetList(container: FirAnnotationContainer, session: FirSession):
                     if (annotated.source?.kind == KtFakeSourceElementKind.PropertyFromParameter) {
                         TargetLists.T_VALUE_PARAMETER_WITH_VAL
                     } else {
-                        TargetLists.T_MEMBER_PROPERTY(annotated.hasBackingField, annotated.delegate != null, isCompanionMember = false)
+                        TargetLists.T_MEMBER_PROPERTY(
+                            backingField = annotated.hasAnnotatableBackingField,
+                            delegate = annotated.delegate != null,
+                            isCompanionMember = false,
+                        )
                     }
                 annotated.isCompanionBlockMember -> TargetLists.T_MEMBER_PROPERTY(
-                    backingField = annotated.hasBackingField,
+                    backingField = annotated.hasAnnotatableBackingField,
                     delegate = annotated.delegate != null,
-                    isCompanionMember = true
+                    isCompanionMember = true,
                 )
                 else ->
-                    TargetLists.T_TOP_LEVEL_PROPERTY(annotated.hasBackingField, annotated.delegate != null, isCompanionExtension = annotated.isCompanionExtension)
+                    TargetLists.T_TOP_LEVEL_PROPERTY(
+                        backingField = annotated.hasAnnotatableBackingField,
+                        delegate = annotated.delegate != null,
+                        isCompanionExtension = annotated.isCompanionExtension,
+                    )
             }
         }
         is FirValueParameter -> {
@@ -942,6 +950,10 @@ fun ConeKotlinType.forEachClassId(f: (ClassId) -> Unit) {
         is ConeDefinitelyNotNullType -> original.forEachClassId(f)
         is ConeCapturedType -> constructor.supertypes?.forEach { it.forEachClassId(f) }
         is ConeIntersectionType -> intersectedTypes.forEach { it.forEachClassId(f) }
+        is ConeUnionType -> {
+            primaryType.forEachClassId(f)
+            richErrorTypes.forEach { it.forEachClassId(f) }
+        }
         is ConeTypeParameterType -> lookupTag.symbol.resolvedBounds.forEach { it.coneType.forEachClassId(f) }
         is ConeClassLikeType -> fullyExpandedType().classId.let(f)
         is ConeStubTypeForTypeVariableInSubtyping,
