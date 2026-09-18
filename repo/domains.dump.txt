@@ -68,6 +68,7 @@ Frontend:
  - compiler/psi/parser
  - compiler/resolution
  - compiler/resolution.common
+ - compiler/resolution.common.js
  - compiler/resolution.common.jvm
  - compiler/serialization
  - compiler/serialization.common
@@ -112,8 +113,6 @@ Js:
  - js/js.config/src/org/jetbrains/kotlin/js/artifacts
  - js/js.config/src/org/jetbrains/kotlin/platform
  - js/js.config/src/org/jetbrains/kotlin/utils
- - js/js.frontend
- - js/js.frontend.common
  - js/js.parser
  - js/js.tests/ReadMe.md
  - js/js.tests/build.gradle.kts
@@ -312,6 +311,7 @@ Unknown:
  - libraries/tools/kotlin-compose-compiler
  - libraries/tools/kotlin-dataframe
  - libraries/tools/kotlin-dist-for-jps-meta
+ - libraries/tools/kotlin-documentation-model
  - libraries/tools/kotlin-lombok
  - libraries/tools/kotlin-noarg
  - libraries/tools/kotlin-osgi-bundle

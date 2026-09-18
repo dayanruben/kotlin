@@ -21,20 +21,20 @@ import org.jetbrains.kotlin.light.classes.symbol.annotations.hasDeprecatedAnnota
 import org.jetbrains.kotlin.light.classes.symbol.annotations.suppressWildcardMode
 import org.jetbrains.kotlin.light.classes.symbol.classes.SymbolLightClassBase
 import org.jetbrains.kotlin.light.classes.symbol.classes.SymbolLightClassForInterfaceDefaultImpls
-import org.jetbrains.kotlin.light.classes.symbol.compareSymbolPointers
-import org.jetbrains.kotlin.light.classes.symbol.isOriginEquivalentTo
-import org.jetbrains.kotlin.light.classes.symbol.isValid
 import org.jetbrains.kotlin.light.classes.symbol.parameters.SymbolLightParameterForDefaultImplsReceiver
 import org.jetbrains.kotlin.light.classes.symbol.parameters.SymbolLightParameterList
 import org.jetbrains.kotlin.light.classes.symbol.parameters.SymbolLightSuspendContinuationParameter
 import org.jetbrains.kotlin.light.classes.symbol.parameters.SymbolLightValueParameter
-import org.jetbrains.kotlin.light.classes.symbol.withSymbol
+import org.jetbrains.kotlin.light.classes.symbol.utils.compareSymbolPointers
+import org.jetbrains.kotlin.light.classes.symbol.utils.isOriginEquivalentTo
+import org.jetbrains.kotlin.light.classes.symbol.utils.isValid
+import org.jetbrains.kotlin.light.classes.symbol.utils.withSymbol
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtDeclaration
 import java.util.*
 
 internal abstract class SymbolLightMethod<FType : KaFunctionSymbol> private constructor(
-    protected val functionSymbolPointer: KaSymbolPointer<FType>,
+    override val symbolPointer: KaSymbolPointer<FType>,
     lightMemberOrigin: LightMemberOrigin?,
     containingClass: SymbolLightClassBase,
     methodIndex: Int,
@@ -42,7 +42,7 @@ internal abstract class SymbolLightMethod<FType : KaFunctionSymbol> private cons
     protected val functionDeclaration: KtCallableDeclaration?,
     override val kotlinOrigin: KtDeclaration?,
     generationMode: MethodGenerationMode,
-) : SymbolLightMethodBase(
+) : SymbolLightMethodBaseImpl<FType>(
     lightMemberOrigin = lightMemberOrigin,
     containingClass = containingClass,
     methodIndex = methodIndex,
@@ -56,7 +56,7 @@ internal abstract class SymbolLightMethod<FType : KaFunctionSymbol> private cons
         generationMode: MethodGenerationMode,
         valueParameterPickMask: BitSet? = null,
     ) : this(
-        functionSymbolPointer = kotlin.run {
+        symbolPointer = kotlin.run {
             @Suppress("UNCHECKED_CAST")
             functionSymbol.createPointer() as KaSymbolPointer<FType>
         },
@@ -70,7 +70,7 @@ internal abstract class SymbolLightMethod<FType : KaFunctionSymbol> private cons
     )
 
     protected inline fun <T> withFunctionSymbol(crossinline action: context(KaSession) (FType) -> T): T =
-        functionSymbolPointer.withSymbol(ktModule, action)
+        symbolPointer.withSymbol(useSiteModule, action)
 
     protected open fun createValueParameter(parameterSymbol: KaValueParameterSymbol, parameterIndex: Int): PsiParameter =
         SymbolLightValueParameter(parameterSymbol = parameterSymbol, containingMethod = this)
@@ -78,7 +78,7 @@ internal abstract class SymbolLightMethod<FType : KaFunctionSymbol> private cons
     private val _parametersList by lazyPub {
         SymbolLightParameterList(
             parent = this@SymbolLightMethod,
-            correspondingCallablePointer = functionSymbolPointer,
+            correspondingCallablePointer = symbolPointer,
         ) { builder ->
             if (this@SymbolLightMethod.containingClass is SymbolLightClassForInterfaceDefaultImpls) {
                 builder.addParameter(SymbolLightParameterForDefaultImplsReceiver(this@SymbolLightMethod))
@@ -96,7 +96,7 @@ internal abstract class SymbolLightMethod<FType : KaFunctionSymbol> private cons
                     builder.addParameter(
                         @Suppress("UNCHECKED_CAST")
                         SymbolLightSuspendContinuationParameter(
-                            functionSymbolPointer = functionSymbolPointer as KaSymbolPointer<KaNamedFunctionSymbol>,
+                            symbolPointer = symbolPointer as KaSymbolPointer<KaNamedFunctionSymbol>,
                             containingMethod = this@SymbolLightMethod,
                         )
                     )
@@ -128,7 +128,7 @@ internal abstract class SymbolLightMethod<FType : KaFunctionSymbol> private cons
         }
     }
 
-    override fun isValid(): Boolean = super.isValid() && functionDeclaration?.isValid ?: functionSymbolPointer.isValid(ktModule)
+    override fun isValid(): Boolean = super.isValid() && functionDeclaration?.isValid ?: symbolPointer.isValid(useSiteModule)
 
     override fun isEquivalentTo(another: PsiElement?): Boolean {
         return super.isEquivalentTo(another) || isOriginEquivalentTo(another)
@@ -140,7 +140,7 @@ internal abstract class SymbolLightMethod<FType : KaFunctionSymbol> private cons
             other::class != this::class ||
             (other as SymbolLightMethod<*>).methodIndex != methodIndex ||
             other.generationMode != generationMode ||
-            other.ktModule != ktModule ||
+            other.useSiteModule != useSiteModule ||
             other.valueParameterPickMask != valueParameterPickMask
         ) return false
 
@@ -149,7 +149,7 @@ internal abstract class SymbolLightMethod<FType : KaFunctionSymbol> private cons
         }
 
         return containingClass == other.containingClass &&
-                compareSymbolPointers(functionSymbolPointer, other.functionSymbolPointer)
+                compareSymbolPointers(symbolPointer, other.symbolPointer)
     }
 
     override fun hashCode(): Int = kotlinOrigin.hashCode()

@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.light.classes.symbol.methods
 
 import com.intellij.psi.*
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.asJava.builder.LightMemberOrigin
 import org.jetbrains.kotlin.asJava.classes.METHOD_INDEX_FOR_DEFAULT_CTOR
@@ -16,20 +17,20 @@ import org.jetbrains.kotlin.light.classes.symbol.annotations.EmptyAnnotationsBox
 import org.jetbrains.kotlin.light.classes.symbol.annotations.GranularAnnotationsBox
 import org.jetbrains.kotlin.light.classes.symbol.annotations.JvmExposeBoxedAdditionalAnnotationsProvider
 import org.jetbrains.kotlin.light.classes.symbol.annotations.SymbolAnnotationsProvider
-import org.jetbrains.kotlin.light.classes.symbol.cachedValue
 import org.jetbrains.kotlin.light.classes.symbol.classes.SymbolLightClassBase
 import org.jetbrains.kotlin.light.classes.symbol.modifierLists.InitializedModifiersBox
 import org.jetbrains.kotlin.light.classes.symbol.modifierLists.SymbolLightMemberModifierList
 import org.jetbrains.kotlin.light.classes.symbol.parameters.SymbolLightParameterList
+import org.jetbrains.kotlin.light.classes.symbol.utils.cachedValue
 
-internal class SymbolLightNoArgConstructor(
+internal abstract class SymbolLightNoArgConstructorBase<out SType : KaSymbol>(
     lightMemberOrigin: LightMemberOrigin?,
     containingClass: SymbolLightClassBase,
     private val visibility: String,
     methodIndex: Int,
     generationMode: MethodGenerationMode,
-    private val functionSymbolPointer: KaSymbolPointer<KaConstructorSymbol>? = null,
-) : SymbolLightMethodBase(
+    private val constructorSymbolPointer: KaSymbolPointer<KaConstructorSymbol>?,
+) : SymbolLightMethodBaseImpl<SType>(
     lightMemberOrigin = lightMemberOrigin,
     containingClass = containingClass,
     methodIndex = methodIndex,
@@ -61,13 +62,13 @@ internal class SymbolLightNoArgConstructor(
         SymbolLightMemberModifierList(
             containingDeclaration = this,
             modifiersBox = InitializedModifiersBox(visibility),
-            annotationsBox = if (functionSymbolPointer == null) {
+            annotationsBox = if (constructorSymbolPointer == null) {
                 EmptyAnnotationsBox
             } else {
                 GranularAnnotationsBox(
                     annotationsProvider = SymbolAnnotationsProvider(
-                        ktModule = ktModule,
-                        annotatedSymbolPointer = functionSymbolPointer,
+                        useSiteModule = useSiteModule,
+                        annotatedSymbolPointer = constructorSymbolPointer,
                     ),
                     annotationFilter = jvmExposeBoxedAwareAnnotationFilter,
                     additionalAnnotationsProvider = JvmExposeBoxedAdditionalAnnotationsProvider,
@@ -85,7 +86,7 @@ internal class SymbolLightNoArgConstructor(
     override fun getReturnType(): PsiType? = null
 
     override fun equals(other: Any?): Boolean =
-        this === other || other is SymbolLightNoArgConstructor &&
+        this === other || other is SymbolLightNoArgConstructorBase<*> &&
                 generationMode == other.generationMode &&
                 containingClass == other.containingClass
 
@@ -94,4 +95,38 @@ internal class SymbolLightNoArgConstructor(
     override fun isValid(): Boolean = super.isValid() && containingClass.isValid
 
     override fun isOverride(): Boolean = false
+}
+
+internal class SymbolLightNoArgConstructor(
+    lightMemberOrigin: LightMemberOrigin?,
+    containingClass: SymbolLightClassBase,
+    visibility: String,
+    methodIndex: Int,
+    generationMode: MethodGenerationMode,
+    override val symbolPointer: KaSymbolPointer<KaConstructorSymbol>,
+) : SymbolLightNoArgConstructorBase<KaConstructorSymbol>(
+    lightMemberOrigin,
+    containingClass,
+    visibility,
+    methodIndex,
+    generationMode,
+    constructorSymbolPointer = symbolPointer
+)
+
+internal class SymbolLightDefaultNoArgConstructor(
+    lightMemberOrigin: LightMemberOrigin?,
+    containingClass: SymbolLightClassBase,
+    visibility: String,
+    methodIndex: Int,
+    generationMode: MethodGenerationMode,
+) : SymbolLightNoArgConstructorBase<KaSymbol>(
+    lightMemberOrigin,
+    containingClass,
+    visibility,
+    methodIndex,
+    generationMode,
+    constructorSymbolPointer = null
+) {
+    override val symbolPointer: KaSymbolPointer<KaSymbol>
+        get() = containingClass.symbolPointer
 }

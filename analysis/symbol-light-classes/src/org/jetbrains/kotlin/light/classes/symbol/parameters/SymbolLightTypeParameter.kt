@@ -14,6 +14,7 @@ import com.intellij.psi.impl.PsiClassImplUtil
 import com.intellij.psi.impl.light.LightElement
 import com.intellij.psi.javadoc.PsiDocComment
 import com.intellij.psi.search.SearchScope
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
@@ -28,22 +29,25 @@ import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.asJava.elements.KtLightAbstractAnnotation
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.light.classes.symbol.*
+import org.jetbrains.kotlin.light.classes.symbol.KaSymbolJavaView
 import org.jetbrains.kotlin.light.classes.symbol.annotations.AnnotationsBox
 import org.jetbrains.kotlin.light.classes.symbol.annotations.GranularAnnotationsBox
 import org.jetbrains.kotlin.light.classes.symbol.annotations.SymbolAnnotationsProvider
+import org.jetbrains.kotlin.light.classes.symbol.utils.*
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtTypeParameter
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import javax.swing.Icon
 
+@OptIn(KaImplementationDetail::class)
 internal class SymbolLightTypeParameter private constructor(
     private val parent: SymbolLightTypeParameterList,
     private val index: Int,
-    private val typeParameterSymbolPointer: KaSymbolPointer<KaTypeParameterSymbol>,
+    override val symbolPointer: KaSymbolPointer<KaTypeParameterSymbol>,
     override val kotlinOrigin: KtTypeParameter?,
 ) : LightElement(parent.manager, KotlinLanguage.INSTANCE), PsiTypeParameter,
-    KtLightDeclaration<KtTypeParameter, PsiTypeParameter> {
+    KtLightDeclaration<KtTypeParameter, PsiTypeParameter>,
+    KaSymbolJavaView<KaTypeParameterSymbol> {
 
     constructor(
         parent: SymbolLightTypeParameterList,
@@ -52,14 +56,14 @@ internal class SymbolLightTypeParameter private constructor(
     ) : this(
         parent = parent,
         index = index,
-        typeParameterSymbolPointer = typeParameterSymbol.createPointer(),
+        symbolPointer = typeParameterSymbol.createPointer(),
         kotlinOrigin = typeParameterSymbol.sourcePsiSafe(),
     )
 
-    private val ktModule: KaModule get() = parent.ktModule
+    override val useSiteModule: KaModule get() = parent.useSiteModule
 
     private inline fun <T> withTypeParameterSymbol(crossinline action: context(KaSession) (KaTypeParameterSymbol) -> T): T =
-        typeParameterSymbolPointer.withSymbol(ktModule, action)
+        symbolPointer.withSymbol(useSiteModule, action)
 
     override val givenAnnotations: List<KtLightAbstractAnnotation> get() = invalidAccess()
 
@@ -68,7 +72,7 @@ internal class SymbolLightTypeParameter private constructor(
     internal fun copyTo(parent: SymbolLightTypeParameterList): SymbolLightTypeParameter = SymbolLightTypeParameter(
         parent,
         index,
-        typeParameterSymbolPointer,
+        symbolPointer,
         kotlinOrigin,
     )
 
@@ -175,7 +179,7 @@ internal class SymbolLightTypeParameter private constructor(
     override fun getIndex(): Int = index
 
     private val annotationsBox: AnnotationsBox = GranularAnnotationsBox(
-        annotationsProvider = SymbolAnnotationsProvider(ktModule, typeParameterSymbolPointer)
+        annotationsProvider = SymbolAnnotationsProvider(useSiteModule, symbolPointer)
     )
 
     override fun getAnnotations(): Array<PsiAnnotation> = annotationsBox.annotationsArray(this)
@@ -193,12 +197,12 @@ internal class SymbolLightTypeParameter private constructor(
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is SymbolLightTypeParameter || other.ktModule != ktModule || other.index != index) return false
+        if (other !is SymbolLightTypeParameter || other.useSiteModule != useSiteModule || other.index != index) return false
         if (kotlinOrigin != null || other.kotlinOrigin != null) {
             return other.kotlinOrigin == kotlinOrigin
         }
 
-        return compareSymbolPointers(typeParameterSymbolPointer, other.typeParameterSymbolPointer) &&
+        return compareSymbolPointers(symbolPointer, other.symbolPointer) &&
                 other.parent == parent
     }
 
@@ -215,5 +219,5 @@ internal class SymbolLightTypeParameter private constructor(
     override fun getTextOffset(): Int = kotlinOrigin?.startOffset ?: -1
     override fun getStartOffsetInParent(): Int = kotlinOrigin?.startOffsetInParent ?: -1
 
-    override fun isValid(): Boolean = super.isValid() && kotlinOrigin?.isValid ?: typeParameterSymbolPointer.isValid(ktModule)
+    override fun isValid(): Boolean = super.isValid() && kotlinOrigin?.isValid ?: symbolPointer.isValid(useSiteModule)
 }

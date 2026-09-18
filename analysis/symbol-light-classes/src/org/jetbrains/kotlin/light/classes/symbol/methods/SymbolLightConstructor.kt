@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
-import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.symbols.sourcePsiSafe
 import org.jetbrains.kotlin.asJava.builder.LightMemberOriginForDeclaration
 import org.jetbrains.kotlin.asJava.classes.METHOD_INDEX_BASE
@@ -21,12 +20,12 @@ import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.lexer.KtTokens.INNER_KEYWORD
 import org.jetbrains.kotlin.lexer.KtTokens.SEALED_KEYWORD
 import org.jetbrains.kotlin.light.classes.symbol.annotations.*
-import org.jetbrains.kotlin.light.classes.symbol.cachedValue
 import org.jetbrains.kotlin.light.classes.symbol.classes.*
 import org.jetbrains.kotlin.light.classes.symbol.modifierLists.GranularModifiersBox
 import org.jetbrains.kotlin.light.classes.symbol.modifierLists.SymbolLightMemberModifierList
 import org.jetbrains.kotlin.light.classes.symbol.modifierLists.with
-import org.jetbrains.kotlin.light.classes.symbol.toPsiVisibilityForMember
+import org.jetbrains.kotlin.light.classes.symbol.utils.cachedValue
+import org.jetbrains.kotlin.light.classes.symbol.utils.toPsiVisibilityForMember
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmDeclarationOriginKind
 import java.util.*
@@ -71,8 +70,8 @@ internal class SymbolLightConstructor private constructor(
             ),
             annotationsBox = GranularAnnotationsBox(
                 annotationsProvider = SymbolAnnotationsProvider(
-                    ktModule = ktModule,
-                    annotatedSymbolPointer = functionSymbolPointer,
+                    useSiteModule = useSiteModule,
+                    annotatedSymbolPointer = symbolPointer,
                 ),
                 annotationFilter = jvmExposeBoxedAwareAnnotationFilter,
                 additionalAnnotationsProvider = JvmExposeBoxedAdditionalAnnotationsProvider,
@@ -218,45 +217,37 @@ internal class SymbolLightConstructor private constructor(
                 else -> PsiModifier.PUBLIC
             }
 
-            return noArgConstructor(
-                visibility,
-                classOrObject,
-                METHOD_INDEX_FOR_DEFAULT_CTOR,
+            return SymbolLightDefaultNoArgConstructor(
+                lightMemberOrigin = classOrObject?.let {
+                    LightMemberOriginForDeclaration(
+                        originalElement = it,
+                        originKind = JvmDeclarationOriginKind.OTHER,
+                    )
+                },
+                containingClass = this,
+                visibility = visibility,
+                methodIndex = METHOD_INDEX_FOR_DEFAULT_CTOR,
                 generationMode = MethodGenerationMode.Regular(),
-                functionSymbolPointer = null,
             )
         }
 
         private fun SymbolLightClassBase.noArgConstructor(
             primaryConstructor: KaConstructorSymbol,
             generationMode: MethodGenerationMode,
-        ): KtLightMethod = noArgConstructor(
-            visibility = primaryConstructor.visibility.asJavaVisibilityModifier(),
-            declaration = primaryConstructor.sourcePsiSafe(),
-            methodIndex = METHOD_INDEX_FOR_NO_ARG_OVERLOAD_CTOR,
-            generationMode = generationMode,
-            functionSymbolPointer = primaryConstructor.createPointer(),
-        )
-
-        private fun SymbolLightClassBase.noArgConstructor(
-            visibility: String,
-            declaration: KtDeclaration?,
-            methodIndex: Int,
-            generationMode: MethodGenerationMode,
-            functionSymbolPointer: KaSymbolPointer<KaConstructorSymbol>?,
-        ): KtLightMethod = SymbolLightNoArgConstructor(
-            lightMemberOrigin = declaration?.let {
-                LightMemberOriginForDeclaration(
-                    originalElement = it,
-                    originKind = JvmDeclarationOriginKind.OTHER,
-                )
-            },
-            containingClass = this,
-            visibility = visibility,
-            methodIndex = methodIndex,
-            generationMode = generationMode,
-            functionSymbolPointer = functionSymbolPointer,
-        )
+        ): KtLightMethod =
+            SymbolLightNoArgConstructor(
+                lightMemberOrigin = primaryConstructor.sourcePsiSafe<KtDeclaration>()?.let {
+                    LightMemberOriginForDeclaration(
+                        originalElement = it,
+                        originKind = JvmDeclarationOriginKind.OTHER,
+                    )
+                },
+                containingClass = this,
+                visibility = primaryConstructor.visibility.asJavaVisibilityModifier(),
+                methodIndex = METHOD_INDEX_FOR_NO_ARG_OVERLOAD_CTOR,
+                generationMode = generationMode,
+                symbolPointer = primaryConstructor.createPointer(),
+            )
     }
 }
 

@@ -164,6 +164,7 @@ include(
     ":compiler:arguments",
     ":compiler:container",
     ":compiler:resolution.common",
+    ":compiler:resolution.common.js",
     ":compiler:resolution.common.jvm",
     ":compiler:resolution",
     ":compiler:serialization.common",
@@ -222,8 +223,6 @@ include(
     ":js:js.sourcemap",
     ":js:js.parser",
     ":js:js.config",
-    ":js:js.frontend.common",
-    ":js:js.frontend",
     ":js:js.translator",
     ":js:js.tests",
     ":js:js.tests:klib-compatibility",
@@ -753,6 +752,7 @@ include(
     ":tools:binary-compatibility-validator",
     ":tools:jdk-api-validator",
     ":tools:kotlin-stdlib-gen",
+    ":tools:kotlin-documentation-model:analyzer",
 
     ":kotlin-test",
     ":kotlin-test:kotlin-test-js-it",
@@ -781,6 +781,8 @@ project(":tools").projectDir = File("$rootDir/libraries/tools")
 project(":tools:binary-compatibility-validator").projectDir = File("$rootDir/libraries/tools/binary-compatibility-validator")
 project(":tools:jdk-api-validator").projectDir = File("$rootDir/libraries/tools/jdk-api-validator")
 project(":tools:kotlin-stdlib-gen").projectDir = File("$rootDir/libraries/tools/kotlin-stdlib-gen")
+project(":tools:kotlin-documentation-model").projectDir = File("$rootDir/libraries/tools/kotlin-documentation-model")
+project(":tools:kotlin-documentation-model:analyzer").projectDir = File("$rootDir/libraries/tools/kotlin-documentation-model/analyzer")
 project(":tools:ide-plugin-dependencies-validator").projectDir = File("$rootDir/libraries/tools/ide-plugin-dependencies-validator")
 
 project(":kotlin-test").projectDir = File("$rootDir/libraries/kotlin.test")

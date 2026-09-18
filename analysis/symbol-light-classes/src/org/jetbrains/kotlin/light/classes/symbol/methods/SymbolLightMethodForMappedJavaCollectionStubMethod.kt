@@ -11,17 +11,19 @@ import com.intellij.psi.impl.light.LightIdentifier
 import com.intellij.psi.impl.light.LightParameter
 import com.intellij.psi.impl.light.LightParameterListBuilder
 import com.intellij.psi.javadoc.PsiDocComment
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.asJava.classes.METHOD_INDEX_BASE
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.light.classes.symbol.annotations.EmptyAnnotationsProvider
 import org.jetbrains.kotlin.light.classes.symbol.annotations.GranularAnnotationsBox
 import org.jetbrains.kotlin.light.classes.symbol.annotations.MethodAdditionalAnnotationsProvider
-import org.jetbrains.kotlin.light.classes.symbol.cachedValue
 import org.jetbrains.kotlin.light.classes.symbol.classes.SymbolLightClassForClassOrObject
 import org.jetbrains.kotlin.light.classes.symbol.classes.isTypeParameter
 import org.jetbrains.kotlin.light.classes.symbol.modifierLists.GranularModifiersBox
 import org.jetbrains.kotlin.light.classes.symbol.modifierLists.SymbolLightMemberModifierList
 import org.jetbrains.kotlin.light.classes.symbol.modifierLists.with
+import org.jetbrains.kotlin.light.classes.symbol.utils.cachedValue
 import javax.swing.Icon
 
 internal data class MethodSignature(val parameterTypes: List<PsiType>, val returnType: PsiType)
@@ -53,19 +55,21 @@ internal class SymbolLightMethodForMappedJavaCollectionStubMethod(
     private val hasImplementation: Boolean,
     private val substituteObjectWith: PsiType?,
     private val providedSignature: MethodSignature?,
-) : SymbolLightMethodBase(
+) : SymbolLightMethodBaseImpl<KaNamedClassSymbol>(
     lightMemberOrigin = null,
     containingClass = containingClass,
     methodIndex = METHOD_INDEX_BASE,
     generationMode = MethodGenerationMode.Regular(),
-),
-    SyntheticElement {
+), SyntheticElement {
 
     init {
         if (!hasImplementation && isFinal) {
             error("Can't be final without an implementation")
         }
     }
+
+    override val symbolPointer: KaSymbolPointer<KaNamedClassSymbol>
+        get() = (containingClass as SymbolLightClassForClassOrObject).symbolPointer
 
     override fun getPresentation(): ItemPresentation? = javaMethod.presentation
     override fun getNavigationElement(): PsiElement = javaMethod.navigationElement

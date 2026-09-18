@@ -191,8 +191,6 @@ class ConeResolutionAtomWithPostponedChild(
 }
 
 sealed class ConePostponedResolvedAtom : ConeResolutionAtom(), PostponedResolvedAtomMarker {
-    abstract override val inputTypes: Collection<ConeKotlinType>
-    abstract override val outputType: ConeKotlinType?
     override var analyzed: Boolean = false
     abstract override val expectedType: ConeKotlinType?
 
@@ -219,7 +217,11 @@ sealed class ConePostponedResolvedAtom : ConeResolutionAtom(), PostponedResolved
 // A lambda or a callable reference.
 // We separate this kind of atom because for them, we might fix earlier type variables contained inside the parameter
 // type of the relevant function expected type.
-sealed class ConeFunctionTypeRelatedPostponedResolvedAtom : ConePostponedResolvedAtom()
+sealed class ConeFunctionLikeAtom : ConePostponedResolvedAtom(), FunctionLikeAtomMarker {
+    abstract override val inputTypes: Collection<ConeKotlinType>
+    abstract override val outputType: ConeKotlinType?
+}
+
 sealed interface ConeLambdaAtom
 
 class ConeResolvedLambdaAtom(
@@ -236,7 +238,7 @@ class ConeResolvedLambdaAtom(
     // NB: It's not null right now only for lambdas inside the calls
     // TODO: Handle somehow that kind of lack of information once KT-67961 is fixed
     val sourceForFunctionExpression: KtSourceElement?,
-) : ConeFunctionTypeRelatedPostponedResolvedAtom(), ConeLambdaAtom {
+) : ConeFunctionLikeAtom(), ConeLambdaAtom {
     val anonymousFunction: FirAnonymousFunction = expression.anonymousFunction
 
     var typeVariableForLambdaReturnType: ConeTypeVariableForLambdaReturnType? = typeVariableForLambdaReturnType
@@ -277,7 +279,7 @@ sealed class ConePostponedAtomWithRevisableExpectedType(
      * when creating the atom, hence no need to store this field.
      */
     val anonymousFunctionIfReturnExpression: FirAnonymousFunction?
-) : ConeFunctionTypeRelatedPostponedResolvedAtom(), PostponedAtomWithRevisableExpectedTypeAndRegisteredTypeVariables {
+) : ConeFunctionLikeAtom(), PostponedAtomWithRevisableExpectedTypeAndRegisteredTypeVariables {
     final override val registeredTypeVariables: List<TypeVariableMarker>
         field = mutableListOf<TypeVariableMarker>()
 
@@ -410,11 +412,7 @@ class ConeSimpleNameForContextSensitiveResolution(
     override val expectedType: ConeKotlinType,
     override val containingCallCandidate: Candidate,
     val fallbackSubAtom: ConeResolutionAtom,
-) : ConePostponedResolvedAtom() {
-    override val inputTypes: Collection<ConeKotlinType> = listOf(expectedType)
-    override val outputType: ConeKotlinType?
-        get() = null
-}
+) : ConePostponedResolvedAtom()
 
 class ConeContextSensitiveAlternativeForQualifierAtom @FirIdeOnly constructor(
     val originalExpression: FirQualifierWithContextSensitiveAlternative,
@@ -422,10 +420,6 @@ class ConeContextSensitiveAlternativeForQualifierAtom @FirIdeOnly constructor(
     override val expectedType: ConeKotlinType,
     override val containingCallCandidate: Candidate,
 ) : ConePostponedResolvedAtom() {
-    override val inputTypes: Collection<ConeKotlinType> = listOf(expectedType)
-    override val outputType: ConeKotlinType?
-        get() = null
-
     override val expression: FirExpression
         get() = originalExpression as FirExpression
 
@@ -442,9 +436,6 @@ class ConeCollectionLiteralAtom(
     override val expectedType: ConeKotlinType?,
     override val containingCallCandidate: Candidate,
 ) : ConePostponedResolvedAtom(), CollectionLiteralAtomMarker {
-    override val inputTypes: Collection<ConeKotlinType> = listOfNotNull(expectedType)
-    override val outputType: ConeKotlinType?
-        get() = null
 
     var subAtom: ConeAtomWithCandidate? = null
         set(value) {

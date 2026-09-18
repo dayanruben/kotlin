@@ -13,23 +13,21 @@ import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.light.classes.symbol.annotations.AbstractClassAdditionalAnnotationsProvider
 import org.jetbrains.kotlin.light.classes.symbol.annotations.GranularAnnotationsBox
 import org.jetbrains.kotlin.light.classes.symbol.annotations.SymbolAnnotationsProvider
-import org.jetbrains.kotlin.light.classes.symbol.cachedValue
 import org.jetbrains.kotlin.light.classes.symbol.fields.SymbolLightField
 import org.jetbrains.kotlin.light.classes.symbol.modifierLists.GranularModifiersBox
 import org.jetbrains.kotlin.light.classes.symbol.modifierLists.SymbolLightClassModifierList
 import org.jetbrains.kotlin.light.classes.symbol.modifierLists.with
+import org.jetbrains.kotlin.light.classes.symbol.utils.cachedValue
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 
 internal abstract class SymbolLightClassForInterfaceOrAnnotationClass : SymbolLightClassForNamedClassLike {
     constructor(
-        ktModule: KaModule,
+        useSiteModule: KaModule,
         classSymbol: KaNamedClassSymbol,
-        manager: PsiManager,
     ) : super(
-        ktModule = ktModule,
+        useSiteModule = useSiteModule,
         classSymbol = classSymbol,
-        manager = manager,
     ) {
         val classKind = classSymbol.classKind
         require(classKind == KaClassKind.INTERFACE || classKind == KaClassKind.ANNOTATION_CLASS)
@@ -37,12 +35,11 @@ internal abstract class SymbolLightClassForInterfaceOrAnnotationClass : SymbolLi
 
     constructor(
         classOrObject: KtClassOrObject,
-        ktModule: KaModule,
+        useSiteModule: KaModule,
     ) : this(
         classOrObjectDeclaration = classOrObject,
-        classSymbolPointer = classOrObject.createSymbolPointer(ktModule),
-        ktModule = ktModule,
-        manager = classOrObject.manager,
+        classSymbolPointer = classOrObject.createSymbolPointer(useSiteModule),
+        useSiteModule = useSiteModule,
     ) {
         require(classOrObject is KtClass && (classOrObject.isInterface() || classOrObject.isAnnotation()))
     }
@@ -50,13 +47,11 @@ internal abstract class SymbolLightClassForInterfaceOrAnnotationClass : SymbolLi
     protected constructor(
         classOrObjectDeclaration: KtClassOrObject?,
         classSymbolPointer: KaSymbolPointer<KaNamedClassSymbol>,
-        ktModule: KaModule,
-        manager: PsiManager,
+        useSiteModule: KaModule,
     ) : super(
         classOrObjectDeclaration = classOrObjectDeclaration,
         classSymbolPointer = classSymbolPointer,
-        ktModule = ktModule,
-        manager = manager,
+        useSiteModule = useSiteModule,
     )
 
     protected open fun computeModifierList(): PsiModifierList? = SymbolLightClassModifierList(
@@ -66,7 +61,7 @@ internal abstract class SymbolLightClassForInterfaceOrAnnotationClass : SymbolLi
             computer = ::computeModifiers
         ),
         annotationsBox = GranularAnnotationsBox(
-            annotationsProvider = SymbolAnnotationsProvider(ktModule, classSymbolPointer),
+            annotationsProvider = SymbolAnnotationsProvider(useSiteModule, symbolPointer),
             additionalAnnotationsProvider = AbstractClassAdditionalAnnotationsProvider,
         ),
     )

@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analysis.api.scopes.combinedDeclaredMemberScope
+import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
 import org.jetbrains.kotlin.analysis.api.scopes.delegatedMemberScope
 import org.jetbrains.kotlin.analysis.api.scopes.staticDeclaredMemberScope
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -27,7 +28,6 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.light.classes.symbol.annotations.ExcludeAnnotationFilter
 import org.jetbrains.kotlin.light.classes.symbol.annotations.GranularAnnotationsBox
 import org.jetbrains.kotlin.light.classes.symbol.annotations.SymbolAnnotationsProvider
-import org.jetbrains.kotlin.light.classes.symbol.cachedValue
 import org.jetbrains.kotlin.light.classes.symbol.fields.SymbolLightField
 import org.jetbrains.kotlin.light.classes.symbol.fields.SymbolLightFieldForEnumEntry
 import org.jetbrains.kotlin.light.classes.symbol.fields.SymbolLightFieldForObject
@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.light.classes.symbol.methods.SymbolLightSimpleMethod
 import org.jetbrains.kotlin.light.classes.symbol.modifierLists.GranularModifiersBox
 import org.jetbrains.kotlin.light.classes.symbol.modifierLists.SymbolLightClassModifierList
 import org.jetbrains.kotlin.light.classes.symbol.records.SymbolLightRecordHeader
+import org.jetbrains.kotlin.light.classes.symbol.utils.cachedValue
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.JvmStandardClassIds
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -55,13 +56,11 @@ internal class SymbolLightClassForClassOrObject : SymbolLightClassForNamedClassL
     val isKotlinValueClass: Boolean
 
     constructor(
-        ktModule: KaModule,
+        useSiteModule: KaModule,
         classSymbol: KaNamedClassSymbol,
-        manager: PsiManager,
     ) : super(
-        ktModule = ktModule,
+        useSiteModule = useSiteModule,
         classSymbol = classSymbol,
-        manager = manager,
     ) {
         require(classSymbol.classKind != KaClassKind.INTERFACE && classSymbol.classKind != KaClassKind.ANNOTATION_CLASS)
         isKotlinValueClass = classSymbol.isInline
@@ -69,12 +68,11 @@ internal class SymbolLightClassForClassOrObject : SymbolLightClassForNamedClassL
 
     constructor(
         classOrObject: KtClassOrObject,
-        ktModule: KaModule,
+        useSiteModule: KaModule,
     ) : this(
         classOrObjectDeclaration = classOrObject,
-        classSymbolPointer = classOrObject.createSymbolPointer(ktModule),
-        ktModule = ktModule,
-        manager = classOrObject.manager,
+        classSymbolPointer = classOrObject.createSymbolPointer(useSiteModule),
+        useSiteModule = useSiteModule,
         isKotlinValueClass = classOrObject.hasModifier(KtTokens.VALUE_KEYWORD) || classOrObject.hasModifier(KtTokens.INLINE_KEYWORD),
     ) {
         require(classOrObject !is KtClass || !classOrObject.isInterface() && !classOrObject.isAnnotation())
@@ -83,14 +81,12 @@ internal class SymbolLightClassForClassOrObject : SymbolLightClassForNamedClassL
     private constructor(
         classOrObjectDeclaration: KtClassOrObject?,
         classSymbolPointer: KaSymbolPointer<KaNamedClassSymbol>,
-        ktModule: KaModule,
-        manager: PsiManager,
+        useSiteModule: KaModule,
         isKotlinValueClass: Boolean,
     ) : super(
         classOrObjectDeclaration = classOrObjectDeclaration,
         classSymbolPointer = classSymbolPointer,
-        ktModule = ktModule,
-        manager = manager,
+        useSiteModule = useSiteModule,
     ) {
         this.isKotlinValueClass = isKotlinValueClass
     }
@@ -100,7 +96,7 @@ internal class SymbolLightClassForClassOrObject : SymbolLightClassForNamedClassL
             containingDeclaration = this,
             modifiersBox = GranularModifiersBox(computer = ::computeModifiers),
             annotationsBox = GranularAnnotationsBox(
-                annotationsProvider = SymbolAnnotationsProvider(ktModule, classSymbolPointer),
+                annotationsProvider = SymbolAnnotationsProvider(useSiteModule, symbolPointer),
                 annotationFilter = ExcludeAnnotationFilter.JvmExposeBoxed,
             ),
         )
@@ -179,7 +175,7 @@ internal class SymbolLightClassForClassOrObject : SymbolLightClassForNamedClassL
     }
 
     private fun isEnumEntriesDisabled(): Boolean {
-        return (ktModule as? KaSourceModule)
+        return (useSiteModule as? KaSourceModule)
             ?.languageVersionSettings
             ?.supportsFeature(LanguageFeature.EnumEntries) != true
     }
@@ -343,6 +339,7 @@ internal class SymbolLightClassForClassOrObject : SymbolLightClassForNamedClassL
                 SymbolLightFieldForEnumEntry(
                     enumEntry = enumEntry,
                     enumEntryName = name,
+                    symbolPointer = enumEntry.symbol.createPointer(),
                     containingClass = this@SymbolLightClassForClassOrObject,
                 )
             }
@@ -359,9 +356,15 @@ internal class SymbolLightClassForClassOrObject : SymbolLightClassForNamedClassL
     override fun getRecordHeader(): PsiRecordHeader? = cachedValue {
         if (!isRecord) return@cachedValue null
 
+        val constructorPsi = (classOrObjectDeclaration as? KtClass)?.primaryConstructor
+        val constructorSymbolPointer = withClassSymbol { classSymbol ->
+            classSymbol.declaredMemberScope.constructors.singleOrNull { it.isPrimary }?.createPointer()
+        } ?: return@cachedValue null
         SymbolLightRecordHeader(
-            kotlinOrigin = (classOrObjectDeclaration as? KtClass)?.primaryConstructor,
+            kotlinOrigin = constructorPsi,
+            symbolPointer = constructorSymbolPointer,
             containingClass = this@SymbolLightClassForClassOrObject,
+            useSiteModule = useSiteModule
         )
     }
 
@@ -370,9 +373,8 @@ internal class SymbolLightClassForClassOrObject : SymbolLightClassForNamedClassL
 
     override fun copy(): SymbolLightClassForClassOrObject = SymbolLightClassForClassOrObject(
         classOrObjectDeclaration = classOrObjectDeclaration,
-        classSymbolPointer = classSymbolPointer,
-        ktModule = ktModule,
-        manager = manager,
+        classSymbolPointer = symbolPointer,
+        useSiteModule = useSiteModule,
         isKotlinValueClass = isKotlinValueClass,
     )
 }
