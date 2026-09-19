@@ -15,6 +15,7 @@ dependencies {
     implementation(project(":compiler:psi:psi-impl"))
     implementation(project(":compiler:psi:psi-frontend-utils"))
     implementation(project(":compiler:psi:parser"))
+    implementation(project(":compiler:multiplatform-parsing"))
 
     compileOnly(intellijCore())
     compileOnly(libs.guava)
@@ -30,8 +31,6 @@ dependencies {
     testFixturesApi(testFixtures(project(":compiler:fir:raw-fir:raw-fir.common")))
 
     testCompileOnly(kotlinTest("junit"))
-
-    testFixturesCompileOnly(intellijCore())
 }
 
 sourceSets {

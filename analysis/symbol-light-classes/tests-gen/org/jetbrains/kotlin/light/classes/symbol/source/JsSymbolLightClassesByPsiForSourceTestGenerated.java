@@ -113,15 +113,21 @@ public class JsSymbolLightClassesByPsiForSourceTestGenerated extends AbstractJsS
   }
 
   @Test
-  @TestMetadata("defaultMethodInKotlinWithSettingAll.kt")
-  public void testDefaultMethodInKotlinWithSettingAll() {
-    run("defaultMethodInKotlinWithSettingAll.kt");
+  @TestMetadata("defaultMethodInKotlinWithSettingDisable.kt")
+  public void testDefaultMethodInKotlinWithSettingDisable() {
+    run("defaultMethodInKotlinWithSettingDisable.kt");
   }
 
   @Test
-  @TestMetadata("defaultMethodInKotlinWithSettingAllCompatibility.kt")
-  public void testDefaultMethodInKotlinWithSettingAllCompatibility() {
-    run("defaultMethodInKotlinWithSettingAllCompatibility.kt");
+  @TestMetadata("defaultMethodInKotlinWithSettingEnable.kt")
+  public void testDefaultMethodInKotlinWithSettingEnable() {
+    run("defaultMethodInKotlinWithSettingEnable.kt");
+  }
+
+  @Test
+  @TestMetadata("defaultMethodInKotlinWithSettingNoCompatibility.kt")
+  public void testDefaultMethodInKotlinWithSettingNoCompatibility() {
+    run("defaultMethodInKotlinWithSettingNoCompatibility.kt");
   }
 
   @Test
@@ -284,6 +290,12 @@ public class JsSymbolLightClassesByPsiForSourceTestGenerated extends AbstractJsS
   @TestMetadata("jvmRecord.kt")
   public void testJvmRecord() {
     run("jvmRecord.kt");
+  }
+
+  @Test
+  @TestMetadata("jvmStaticInInterfaceCompanion.kt")
+  public void testJvmStaticInInterfaceCompanion() {
+    run("jvmStaticInInterfaceCompanion.kt");
   }
 
   @Test

@@ -9,16 +9,14 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReferenceList
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.scopes.combinedDeclaredMemberScope
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.light.classes.symbol.utils.cachedValue
-import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 
-internal open class SymbolLightClassForInterface : SymbolLightClassForInterfaceOrAnnotationClass {
+internal class SymbolLightClassForInterface : SymbolLightClassForInterfaceOrAnnotationClass {
     constructor(
         useSiteModule: KaModule,
         classSymbol: KaNamedClassSymbol,
@@ -29,11 +27,7 @@ internal open class SymbolLightClassForInterface : SymbolLightClassForInterfaceO
         require(classSymbol.classKind == KaClassKind.INTERFACE)
     }
 
-    constructor(classOrObject: KtClassOrObject, ktModule: KaModule) : super(classOrObject, ktModule) {
-        require(classOrObject is KtClass && classOrObject.isInterface())
-    }
-
-    protected constructor(
+    private constructor(
         classOrObjectDeclaration: KtClassOrObject?,
         classSymbolPointer: KaSymbolPointer<KaNamedClassSymbol>,
         useSiteModule: KaModule,
@@ -47,7 +41,7 @@ internal open class SymbolLightClassForInterface : SymbolLightClassForInterfaceO
         withClassSymbol { classSymbol ->
             val result = mutableListOf<PsiMethod>()
 
-            val visibleDeclarations = classSymbol.combinedDeclaredMemberScope.callables.filter { acceptCallableSymbol(it) }
+            val visibleDeclarations = classSymbol.combinedDeclaredMemberScope.callables
 
             createMethods(this@SymbolLightClassForInterface, visibleDeclarations, result)
             addMethodsFromCompanionIfNeeded(result, classSymbol)
@@ -55,8 +49,6 @@ internal open class SymbolLightClassForInterface : SymbolLightClassForInterfaceO
             result
         }
     }
-
-    protected open fun acceptCallableSymbol(symbol: KaCallableSymbol): Boolean = true
 
     override fun copy(): SymbolLightClassForInterface =
         SymbolLightClassForInterface(classOrObjectDeclaration, symbolPointer, useSiteModule)

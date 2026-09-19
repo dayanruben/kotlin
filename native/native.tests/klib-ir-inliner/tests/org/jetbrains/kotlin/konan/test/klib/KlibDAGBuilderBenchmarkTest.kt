@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.konan.test.klib
 
+import org.jetbrains.kotlin.backend.konan.library.KlibDAG
 import org.jetbrains.kotlin.backend.konan.library.KlibDAGBuilder
 import org.jetbrains.kotlin.konan.library.KlibNativeDistributionLibraryProvider
 import org.jetbrains.kotlin.konan.test.blackbox.AbstractNativeSimpleTest
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.library.loader.reportLoadingProblemsIfAny
 import org.jetbrains.kotlin.library.uniqueName
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -35,16 +37,24 @@ import kotlin.time.measureTime
 @Execution(ExecutionMode.SAME_THREAD)
 class KlibDAGBuilderBenchmarkTest : AbstractNativeSimpleTest() {
 
+    private lateinit var testInfo: TestInfo
+
+    @BeforeEach
+    fun setUp(testInfo: TestInfo) {
+        this.testInfo = testInfo
+    }
+
     /**
      * Benchmarking results (Apple M2 Max):
      * - roots: []
      * - target: macos_arm64
      * - number of libraries: 177 (stdlib + platform libs)
+     * - resulting DAG size: 1
      * - average duration is < 1ms
      * - median duration is < 1ms
      */
     @Test
-    fun `stdlib and platform libraries only (no roots)`(testInfo: TestInfo) {
+    fun `stdlib and platform libraries only (no roots)`() {
         benchmark(
             testName = testInfo.testMethod.get().name,
             extraLibraryPaths = emptySet(),
@@ -58,11 +68,12 @@ class KlibDAGBuilderBenchmarkTest : AbstractNativeSimpleTest() {
      * - roots: [stdlib, Foundation]
      * - target: macos_arm64
      * - number of libraries: 177 (stdlib + platform libs)
-     * - average duration is 718 ms
-     * - median duration is 712 ms
+     * - resulting DAG size: 10
+     * - average duration is 677 ms
+     * - median duration is 679 ms
      */
     @Test
-    fun `stdlib and platform libraries only (roots = stdlib + Foundation)`(testInfo: TestInfo) {
+    fun `stdlib and platform libraries only (roots = stdlib + Foundation)`() {
         benchmark(
             testName = testInfo.testMethod.get().name,
             extraLibraryPaths = emptySet(),
@@ -73,14 +84,36 @@ class KlibDAGBuilderBenchmarkTest : AbstractNativeSimpleTest() {
 
     /**
      * Benchmarking results (Apple M2 Max):
-     * - roots: 20 user libs
+     * - roots: 20 regular user libs
      * - target: macos_arm64
      * - number of libraries: 197 (stdlib + platform libs + 20 user libs)
-     * - average duration is 200 ms
-     * - median duration is 200 ms
+     * - resulting DAG size: 21
+     * - average duration is 46 ms
+     * - median duration is 46 ms
      */
     @Test
-    fun `stdlib and platform libraries with 20 user libraries`(testInfo: TestInfo) {
+    fun `stdlib and platform libraries (roots = 20 + 0 user libs)`() {
+        val userLibraryPaths = generateUserLibraries(regularLibsNumber = 20, cInteropLibsNumber = 0)
+
+        benchmark(
+            testName = testInfo.testMethod.get().name,
+            extraLibraryPaths = userLibraryPaths,
+            isRoot = { it.canonicalPath.pathString in userLibraryPaths },
+            expectedRootsNumber = 20,
+        )
+    }
+
+    /**
+     * Benchmarking results (Apple M2 Max):
+     * - roots: 15 regular + 5 C-interop user libs
+     * - target: macos_arm64
+     * - number of libraries: 197 (stdlib + platform libs + 20 user libs)
+     * - resulting DAG size: 21
+     * - average duration is 179 ms
+     * - median duration is 177 ms
+     */
+    @Test
+    fun `stdlib and platform libraries (roots = 15 + 5 user libs)`() {
         val userLibraryPaths = generateUserLibraries(regularLibsNumber = 15, cInteropLibsNumber = 5)
 
         benchmark(
@@ -93,14 +126,78 @@ class KlibDAGBuilderBenchmarkTest : AbstractNativeSimpleTest() {
 
     /**
      * Benchmarking results (Apple M2 Max):
-     * - roots: 100 user libs
+     * - roots: 10 regular + 10 C-interop user libs
      * - target: macos_arm64
-     * - number of libraries: 277 (stdlib + platform libs + 100 user libs)
-     * - average duration is 3.34 s
-     * - median duration is 3.34 s
+     * - number of libraries: 197 (stdlib + platform libs + 20 user libs)
+     * - resulting DAG size: 21
+     * - average duration is 514 ms
+     * - median duration is 514 ms
      */
     @Test
-    fun `stdlib and platform libraries with 100 user libraries`(testInfo: TestInfo) {
+    fun `stdlib and platform libraries (roots = 10 + 10 user libs)`() {
+        val userLibraryPaths = generateUserLibraries(regularLibsNumber = 10, cInteropLibsNumber = 10)
+
+        benchmark(
+            testName = testInfo.testMethod.get().name,
+            extraLibraryPaths = userLibraryPaths,
+            isRoot = { it.canonicalPath.pathString in userLibraryPaths },
+            expectedRootsNumber = 20,
+        )
+    }
+
+    /**
+     * Benchmarking results (Apple M2 Max):
+     * - roots: 100 regular user libs
+     * - target: macos_arm64
+     * - number of libraries: 277 (stdlib + platform libs + 100 user libs)
+     * - resulting DAG size: 101
+     * - average duration is 235 ms
+     * - median duration is 234 ms
+     */
+    @Test
+    fun `stdlib and platform libraries (roots = 100 + 0 user libs)`() {
+        val userLibraryPaths = generateUserLibraries(regularLibsNumber = 100, cInteropLibsNumber = 0)
+
+        benchmark(
+            testName = testInfo.testMethod.get().name,
+            extraLibraryPaths = userLibraryPaths,
+            isRoot = { it.canonicalPath.pathString in userLibraryPaths },
+            expectedRootsNumber = 100,
+        )
+    }
+
+    /**
+     * Benchmarking results (Apple M2 Max):
+     * - roots: 75 regular and 25 C-interop user libs
+     * - target: macos_arm64
+     * - number of libraries: 277 (stdlib + platform libs + 100 user libs)
+     * - resulting DAG size: 101
+     * - average duration is 3.06 s
+     * - median duration is 3.05 s
+     */
+    @Test
+    fun `stdlib and platform libraries (roots = 75 + 25 user libs)`() {
+        val userLibraryPaths = generateUserLibraries(regularLibsNumber = 75, cInteropLibsNumber = 25)
+
+        benchmark(
+            testName = testInfo.testMethod.get().name,
+            extraLibraryPaths = userLibraryPaths,
+            isRoot = { it.canonicalPath.pathString in userLibraryPaths },
+            expectedRootsNumber = 100,
+        )
+    }
+
+    /**
+     * Benchmarking results (Apple M2 Max):
+     * - roots: 50 regular and 50 C-interop user libs
+     * - target: macos_arm64
+     * - number of libraries: 277 (stdlib + platform libs + 100 user libs)
+     * - resulting DAG size: 101
+     * - average duration is 2.99 s
+     * - median duration is 2.98 s
+     */
+    @Test
+    fun `stdlib and platform libraries (roots = 50 + 50 user libs)`() {
         val userLibraryPaths = generateUserLibraries(regularLibsNumber = 75, cInteropLibsNumber = 25)
 
         benchmark(
@@ -112,8 +209,7 @@ class KlibDAGBuilderBenchmarkTest : AbstractNativeSimpleTest() {
     }
 
     private fun generateUserLibraries(regularLibsNumber: Int, cInteropLibsNumber: Int): Set<String> {
-        require(regularLibsNumber > 0)
-        require(cInteropLibsNumber > 0)
+        require(regularLibsNumber + cInteropLibsNumber > 0)
 
         val generatedLibraries = hashSetOf<String>()
 
@@ -206,15 +302,19 @@ class KlibDAGBuilderBenchmarkTest : AbstractNativeSimpleTest() {
         // Sanity check.
         assertEquals(expectedRootsNumber, roots.size)
 
+        var latestDag: KlibDAG? = null
+
         // Run the benchmark.
         runBenchWithWarmup(
             name = "$testName ($target, ${allLibraries.size} libraries)",
             warmupRounds = 10,
             benchmarkRounds = 5,
             pre = System::gc,
-            post = {},
+            post = {
+                println("The computed DAG size is: ${latestDag!!.librariesReverseTopoSorted.size}")
+            },
         ) {
-            KlibDAGBuilder(allLibraries) { it in roots }.build()
+            latestDag = KlibDAGBuilder(allLibraries) { it in roots }.build()
         }
     }
 
