@@ -17,16 +17,17 @@ import org.jetbrains.kotlin.fir.expressions.builder.FirBlockBuilder
 import org.jetbrains.kotlin.kmp.lexer.KtTokens
 import org.jetbrains.kotlin.kmp.parser.KtNodeTypes
 import org.jetbrains.kotlin.kmp.utils.SyntaxElementTypesWithIds
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.types.ConstantValueKind
 
 abstract class AbstractTreeRawFirBuilder<Node : Any, Type : Any>(
     baseSession: FirSession,
     context: Context<Node>,
 ) : AbstractRawFirBuilder<Node, Type>(baseSession, context) {
-    override fun Node.getReferencedNameAsName(): Name {
-        return asText.nameAsSafeName()
+    protected fun Node.getAsStringWithoutBacktick(): String {
+        return this.asText.replace("`", "")
     }
+
+    abstract fun Node.getParent(): Node?
 
     private fun Node.getModifierList(): Node? = getChildNodeByTokenId(KtNodeTypes.MODIFIER_LIST_ID)
 
@@ -69,14 +70,13 @@ abstract class AbstractTreeRawFirBuilder<Node : Any, Type : Any>(
     /**
      * See [UNWRAPPABLE_TOKEN_TYPES][org.jetbrains.kotlin.psi.psiUtil.UNWRAPPABLE_TOKEN_TYPES]
      */
-    override fun Node?.unwrap(): Node? {
+    override fun Node.unwrap(): Node? {
         // NOTE: By removing surrounding parentheses and labels, FirLabels will NOT be created for those labels.
         // This should be fine since the label is meaningless and unusable for a ++/-- argument or assignment LHS.
-        var unwrapped = this
+        var unwrapped: Node? = this
         while (true) {
             val tokenId = unwrapped?.toTokenId()
             unwrapped = when (tokenId) {
-                null -> return unwrapped
                 KtNodeTypes.PARENTHESIZED_ID -> unwrapped.getExpressionInParentheses()
                 KtNodeTypes.LABELED_EXPRESSION_ID -> unwrapped.getLabeledExpression()
                 KtNodeTypes.ANNOTATED_EXPRESSION_ID -> unwrapped.getAnnotatedExpression()
@@ -88,9 +88,10 @@ abstract class AbstractTreeRawFirBuilder<Node : Any, Type : Any>(
     abstract fun KtSourceElement.toNode(): Node
 
     abstract fun Node.getChildren(): List<Node>
+    abstract fun Node.getChildrenAsArray(): Array<out Node?>
 
     inline fun Node.forEachChildren(f: (Node) -> Unit) {
-        val kidsArray = this.getChildrenAsArray()
+        val kidsArray = getChildrenAsArray()
         for (kid in kidsArray) {
             if (kid == null) break
             if (ignoredTokensId.contains(kid.toTokenId())) continue
@@ -99,7 +100,7 @@ abstract class AbstractTreeRawFirBuilder<Node : Any, Type : Any>(
     }
 
     inline fun <T> Node.forEachChildrenReturnList(f: (Node, MutableList<T>) -> Unit): MutableList<T> {
-        val kidsArray = this.getChildrenAsArray()
+        val kidsArray = getChildrenAsArray()
 
         val container = mutableListOf<T>()
         for (kid in kidsArray) {
@@ -170,8 +171,8 @@ abstract class AbstractTreeRawFirBuilder<Node : Any, Type : Any>(
         }
     }
 
-    override val Node?.arrayExpression: Node?
-        get() = this?.getFirstChildExpression()
+    override val Node.arrayExpression: Node?
+        get() = getFirstChildExpression()
 
     fun Node.getChildNodeByTokenId(tokenId: Int): Node? {
         return getChildrenAsArray().firstOrNull { it?.toTokenId() == tokenId }

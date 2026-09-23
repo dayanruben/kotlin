@@ -154,6 +154,8 @@ where advanced options include:
                              A list of IR checkers to disable, specified by a simple name of the checker class. A name of an annotation can also be used to match all tagged checkers.
                              Only has effect if '-Xverify-ir' is not 'none'.
   -Xdisable-phases           Disable backend phases.
+  -Xdo-not-normalize-nan-values-in-const-context
+                             Disables `NormalizeNaNValuesInConstContext` language feature.`
   -Xdont-sort-source-files   Disable automatic sorting of source files.
   -Xdont-warn-on-error-suppression
                              Don't report warnings when errors are suppressed. This only affects K2.
@@ -230,8 +232,6 @@ where advanced options include:
   -Xprofile-phases           Profile backend phases.
   -Xrender-internal-diagnostic-names
                              Render the internal names of warnings and errors.
-  -Xrepl                     Run Kotlin REPL.
-                             The option is deprecated since Kotlin 2.2.0. It will be removed in one of the future releases. REPL is deprecated.
   -Xreport-all-warnings      Report all warnings even if errors are found.
   -Xreport-output-files      Report the source-to-output file mapping.
   -Xreport-perf              Report detailed performance statistics.

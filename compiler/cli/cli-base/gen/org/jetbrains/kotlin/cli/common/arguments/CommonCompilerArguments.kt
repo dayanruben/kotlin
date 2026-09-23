@@ -398,6 +398,17 @@ Only has effect if '-Xverify-ir' is not 'none'.""",
         }
 
     @Argument(
+        value = "-Xdo-not-normalize-nan-values-in-const-context",
+        description = "Disables `NormalizeNaNValuesInConstContext` language feature.`",
+    )
+    @Disables(LanguageFeature.NormalizeNaNValuesInConstContext)
+    var doNotNormalizeNanValuesInConstContext: Boolean = false
+        set(value) {
+            checkFrozen()
+            field = value
+        }
+
+    @Argument(
         value = "-Xdont-sort-source-files",
         description = "Disable automatic sorting of source files.",
     )
@@ -882,18 +893,6 @@ with bodies.""",
         description = "Render the internal names of warnings and errors.",
     )
     var renderInternalDiagnosticNames: Boolean = false
-        set(value) {
-            checkFrozen()
-            field = value
-        }
-
-    @all:Deprecated("REPL is deprecated.")
-    @Argument(
-        value = "-Xrepl",
-        description = "Run Kotlin REPL.",
-        deprecatedVersion = "2.2.0",
-    )
-    var repl: Boolean = false
         set(value) {
             checkFrozen()
             field = value

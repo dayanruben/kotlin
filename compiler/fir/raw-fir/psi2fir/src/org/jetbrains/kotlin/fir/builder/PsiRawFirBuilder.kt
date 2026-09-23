@@ -175,10 +175,10 @@ open class PsiRawFirBuilder(
     /**
      * See [UNWRAPPABLE_TOKEN_TYPES][org.jetbrains.kotlin.psi.psiUtil.UNWRAPPABLE_TOKEN_TYPES]
      */
-    override fun PsiElement?.unwrap(): PsiElement? {
+    override fun PsiElement.unwrap(): PsiElement? {
         // NOTE: By removing surrounding parentheses and labels, FirLabels will NOT be created for those labels.
         // This should be fine since the label is meaningless and unusable for a ++/-- argument or assignment LHS.
-        var unwrapped = this
+        var unwrapped: PsiElement? = this
         while (true) {
             unwrapped = when (unwrapped?.elementType) {
                 PARENTHESIZED -> unwrapped.getExpressionInParentheses()
@@ -194,14 +194,6 @@ open class PsiRawFirBuilder(
 
     private fun PsiElement.getChildNodeByType(type: IElementType): PsiElement? {
         return children.firstOrNull { it.node.elementType == type }
-    }
-
-    override fun PsiElement?.getChildrenAsArray(): Array<out PsiElement?> {
-        error("Should not be called")
-    }
-
-    override fun PsiElement.getReferencedNameAsName(): Name {
-        return (this as KtSimpleNameExpression).getReferencedNameAsName()
     }
 
     override fun PsiElement.getLabelName(): String? {
@@ -224,16 +216,16 @@ open class PsiRawFirBuilder(
         return (this as KtLabeledExpression).baseExpression
     }
 
-    override val PsiElement?.receiverExpression: PsiElement?
+    override val PsiElement.receiverExpression: PsiElement?
         get() = (this as? KtQualifiedExpression)?.receiverExpression
 
-    override val PsiElement?.selectorExpression: PsiElement?
+    override val PsiElement.selectorExpression: PsiElement?
         get() = (this as? KtQualifiedExpression)?.selectorExpression
 
-    override val PsiElement?.arrayExpression: PsiElement?
+    override val PsiElement.arrayExpression: PsiElement?
         get() = (this as? KtArrayAccessExpression)?.arrayExpression
 
-    override val PsiElement?.indexExpressions: List<PsiElement>?
+    override val PsiElement.indexExpressions: List<PsiElement>?
         get() = (this as? KtArrayAccessExpression)?.indexExpressions
 
     override val PsiElement.isVararg: Boolean
