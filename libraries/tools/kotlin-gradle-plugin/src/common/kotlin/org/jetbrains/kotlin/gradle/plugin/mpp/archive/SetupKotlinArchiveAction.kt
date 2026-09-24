@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.gradle.dsl.metadataTarget
 import org.jetbrains.kotlin.gradle.dsl.multiplatformExtensionOrNull
 import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.plugin.KotlinPluginLifecycle.Stage
+import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.Companion.kotlinPropertiesProvider
 import org.jetbrains.kotlin.gradle.plugin.mpp.internal
 import org.jetbrains.kotlin.gradle.plugin.mpp.resolvableMetadataConfiguration
 import org.jetbrains.kotlin.gradle.plugin.sources.internal
@@ -38,6 +39,7 @@ internal val SetupKotlinArchiveAction = KotlinProjectSetupCoroutine {
     val assembleTask = karAssembleTask
     assembleTask.configure { task ->
         task.outputDirectory.set(layout.buildDirectory.dir(KarLayout.ASSEMBLE_DIRECTORY))
+        task.incompleteArchiveAllowed.set(project.kotlinPropertiesProvider.allowIncompleteKotlinArchivePublication)
         task.onlyIf { kotlinPublicationFormatProvider.get() == KotlinPublicationFormat.KOTLIN_ARCHIVE }
     }
     for (target in extension.awaitTargets()) {
@@ -109,7 +111,7 @@ private fun KotlinTarget.requestKarPlatformArtifactsForCompilation() {
  * This code tries to handle the case, where you have both "library-platform" in old publication format
  * and "library" in kar format in your configuration. In that case we need to remove older variant.
  *
- * [defaultKotlinUsageContextMaybeReplacedWithKar] sets both current module and platform module
+ * [defaultKotlinUsageContextWithArtifactsMaybeReplacedByTask] sets both current module and platform module
  * capabilities on Kotlin Archive platform variant, which creates capabilities conflict, resolved by this rule.
  *
  * Unfortunately, as old one didn't have any special capabilities we can't distinguish detect it from unrelated conflict.

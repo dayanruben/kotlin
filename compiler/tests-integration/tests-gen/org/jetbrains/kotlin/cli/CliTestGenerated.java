@@ -619,15 +619,33 @@ public class CliTestGenerated extends AbstractCliTest {
     }
 
     @Test
+    @TestMetadata("checkerLv24.args")
+    public void testCheckerLv24() {
+      run("checkerLv24.args");
+    }
+
+    @Test
     @TestMetadata("contracts.args")
     public void testContracts() {
       run("contracts.args");
     }
 
     @Test
+    @TestMetadata("default.args")
+    public void testDefault() {
+      run("default.args");
+    }
+
+    @Test
     @TestMetadata("full.args")
     public void testFull() {
       run("full.args");
+    }
+
+    @Test
+    @TestMetadata("lv24.args")
+    public void testLv24() {
+      run("lv24.args");
     }
   }
 
@@ -2145,9 +2163,9 @@ public class CliTestGenerated extends AbstractCliTest {
     }
 
     @Test
-    @TestMetadata("valhallaSupportIllegalConfiguration.args")
-    public void testValhallaSupportIllegalConfiguration() {
-      run("valhallaSupportIllegalConfiguration.args");
+    @TestMetadata("valhallaValueClassesIllegalConfiguration.args")
+    public void testValhallaValueClassesIllegalConfiguration() {
+      run("valhallaValueClassesIllegalConfiguration.args");
     }
 
     @Test

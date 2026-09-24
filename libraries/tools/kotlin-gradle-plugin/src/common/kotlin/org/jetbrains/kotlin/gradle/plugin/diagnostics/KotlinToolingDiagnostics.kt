@@ -9,6 +9,7 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.component.ComponentIdentifier
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.buildtools.api.abi.KlibTargetType
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.KotlinSourceSetConvention.isAccessedByKotlinSourceSetConventionAt
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.jetbrains.kotlin.gradle.internal.KOTLIN_BUILD_TOOLS_API_IMPL
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.Companion.KOTLIN_SUPPRESS_GRADLE_PLUGIN_WARNINGS_PROPERTY
+import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.PropertyNames.KOTLIN_ALLOW_INCOMPLETE_KOTLIN_ARCHIVE_PUBLICATION
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.PropertyNames.KOTLIN_INTERNAL_ALLOW_MULTIPLATFORM_PUBLICATIONS_ON_UNSUPPORTED_HOST
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.PropertyNames.KOTLIN_MPP_APPLY_DEFAULT_HIERARCHY_TEMPLATE
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.PropertyNames.KOTLIN_NATIVE_ENABLE_KLIBS_CROSSCOMPILATION
@@ -29,10 +31,12 @@ import org.jetbrains.kotlin.gradle.plugin.diagnostics.KotlinToolingDiagnosticsSe
 import org.jetbrains.kotlin.gradle.plugin.diagnostics.checkers.UnresolvedKmpDependency.ResolvedVariant
 import org.jetbrains.kotlin.gradle.plugin.diagnostics.checkers.UnresolvedKmpDependency.UnresolvedComponent
 import org.jetbrains.kotlin.gradle.plugin.mpp.uklibs.Uklib
+import org.jetbrains.kotlin.gradle.dsl.KotlinBrowserBundler
 import org.jetbrains.kotlin.gradle.targets.jvm.JAVA_TEST_FIXTURES_PLUGIN_ID
 import org.jetbrains.kotlin.gradle.targets.wasm.WasmCompilationMode
 import org.jetbrains.kotlin.gradle.utils.appendLine
 import org.jetbrains.kotlin.gradle.utils.prettyName
+import org.jetbrains.kotlin.gradle.targets.web.nodejs.toolchain.NodeJsVersion
 import org.jetbrains.kotlin.konan.target.Family
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
@@ -476,6 +480,30 @@ internal object KotlinToolingDiagnostics {
                 .solution("Upgrade Kotlin or downgrade the associated dependency")
                 .documentationLink(URI("https://kotl.in/kar"))
         }
+    }
+
+    internal object IncompleteKotlinArchivePublication : ToolingDiagnosticFactory(FATAL, DiagnosticGroup.Kgp.Misconfiguration) {
+        operator fun invoke(missingTargetNames: Collection<String>, hostName: String) =
+            build {
+                val targetsList = missingTargetNames.sorted().joinToString(separator = "\n* ", prefix = "* ")
+
+                title("Kotlin Archive publication is incomplete")
+                    .description(
+                        """
+                        |The Kotlin Archive keeps several targets in one artifact, so it must be built on a host that supports all of them.
+                        |These targets are not publishable on the current host platform ($hostName), but configured to be stored in Kotlin Archive:
+                        |$targetsList
+                        """.trimMargin()
+                    )
+                    .solutions {
+                        listOf(
+                            "Run the publish task on a host platform that supports all targets of the project.",
+                            "If you need it for testing purposes, and plan to publish only to local repositories, add " +
+                                    "'$KOTLIN_ALLOW_INCOMPLETE_KOTLIN_ARCHIVE_PUBLICATION=true' to your local Gradle properties.",
+                        )
+                    }
+                    .documentationLink(URI("https://kotl.in/kar"))
+            }
     }
 
     object NewNativeVersionDiagnostic : ToolingDiagnosticFactory(WARNING, DiagnosticGroup.Kgp.Misconfiguration) {
@@ -2549,6 +2577,31 @@ internal object KotlinToolingDiagnostics {
         }
     }
 
+    @OptIn(ExperimentalWasmDsl::class)
+    internal object BrowserBundlerAlreadyDefined : ToolingDiagnosticFactory(
+        predefinedSeverity = ERROR,
+        predefinedGroup = DiagnosticGroup.Kgp.Misconfiguration,
+    ) {
+        operator fun invoke(
+            targetName: String,
+            definedBundler: KotlinBrowserBundler,
+            requestedBundler: KotlinBrowserBundler,
+        ) = build {
+            title { "Browser bundler is already defined in the '$targetName' target" }
+                .description {
+                    """
+                    The '$definedBundler' bundler is already defined for the browser execution environment of the '$targetName' target,
+                    so it can't be changed to '$requestedBundler'.
+                    The bundler is chosen when the 'browser { }' block is configured for the first time and can't be changed afterwards,
+                    because the corresponding bundler tasks are already registered.
+                    """.trimIndent()
+                }
+                .solution {
+                    "Please declare the same bundler in all 'browser(${requestedBundler.name}) { }' blocks of the '$targetName' target"
+                }
+        }
+    }
+
     internal object SwiftPMLinkagePackageNotIntegratedInXcodeProject : ToolingDiagnosticFactory(
         FATAL,
         DiagnosticGroup.Kgp.Misconfiguration,
@@ -2604,7 +2657,44 @@ internal object KotlinToolingDiagnostics {
         }
     }
 
-    internal object SharedNpmProjectInvalidPackageJson : ToolingDiagnosticFactory(
+    internal object PreInstalledNodeJsVersionMismatch : ToolingDiagnosticFactory(
+        predefinedSeverity = WARNING,
+        predefinedGroup = DiagnosticGroup.Kgp.Misconfiguration,
+    ) {
+        operator fun invoke(
+            installedVersion: NodeJsVersion,
+            requestedVersion: NodeJsVersion,
+            command: String = "node",
+        ) = build {
+            title("Pre-installed Node.js version mismatch")
+                .description {
+                    "Node.js $installedVersion found by '$command' does not match the requested " +
+                            "version $requestedVersion. The requested version cannot be provisioned, because " +
+                            "the Node.js toolchain is configured to use a pre-installed Node.js."
+                }
+                .solution {
+                    "Please update the pre-installed Node.js or configure the Kotlin Gradle Plugin to download Node.js by setting kotlin.js.node.toolchain=DOWNLOAD."
+                }
+        }
+    }
+
+    internal object NodeJsVersionIsNotSupported : ToolingDiagnosticFactory(
+        predefinedSeverity = WARNING,
+        predefinedGroup = DiagnosticGroup.Kgp.Misconfiguration,
+    ) {
+        operator fun invoke(version: NodeJsVersion, minimalSupportedMajorVersion: Int) = build {
+            title("Node.js $version is not supported")
+                .description {
+                    "Node.js $version is not supported by the Kotlin Gradle Plugin. " +
+                            "The minimal supported version is $minimalSupportedMajorVersion."
+                }
+                .solution {
+                    "Please use Node.js $minimalSupportedMajorVersion or a newer version."
+                }
+        }
+    }
+
+internal object SharedNpmProjectInvalidPackageJson : ToolingDiagnosticFactory(
         WARNING,
         DiagnosticGroup.Kgp.Misconfiguration,
     ) {

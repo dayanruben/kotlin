@@ -124,8 +124,7 @@ where advanced options include:
   -Xuse-old-class-files-reading Use the old implementation for reading class files. This may slow down the compilation and cause problems with Groovy interop.
                              This can be used in the event of problems with the new implementation.
   -Xuse-type-table           Use a type table in metadata serialization.
-  -Xvalhalla-support={none|primitives|primitivesAndFullValueClasses|allValues}
-                             Select which declarations are compiled to behave as experimental Project Valhalla value classes. Use 'none' for a JDK that is not Valhalla-compatible (the default); any other mode requires a Valhalla-compatible JDK.
+  -Xvalhalla-value-classes   Compile value classes to behave as experimental Project Valhalla value classes. Requires a Valhalla-compatible JDK, JVM target 27 or later and the '-Xjvm-enable-preview' flag.
   -Xvalidate-bytecode        Validate generated JVM bytecode before and after optimizations.
   -Xwhen-expressions={indy|inline}
                              Select the code generation scheme for type-checking 'when' expressions:
@@ -265,8 +264,8 @@ where advanced options include:
   -Xreport-all-warnings      Report all warnings even if errors are found.
   -Xreport-output-files      Report the source-to-output file mapping.
   -Xreport-perf              Report detailed performance statistics.
-  -Xreturn-value-checker={check|full|disable}
-                             Set improved unused return value checker mode. Use 'check' to run checker only and use 'full' to also enable automatic annotation insertion.
+  -Xreturn-value-checker={check|full|disable|default}
+                             Set improved unused return value checker mode. Use 'check' to run checker only and use 'full' to also enable automatic annotation insertion. 'default' mode is based on the current language version: Since Kotlin 2.5, checker is enabled by default.
   -Xseparate-kmp-compilation Enables the separated compilation scheme, in which common source sets are analyzed against their own dependencies
   -Xskip-metadata-version-check Allow loading classes with bad metadata versions and pre-release classes.
   -Xskip-prerelease-check    Allow loading pre-release classes.
