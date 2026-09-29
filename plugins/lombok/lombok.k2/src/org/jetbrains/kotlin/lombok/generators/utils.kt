@@ -10,12 +10,15 @@ import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.containingClassForStaticMemberAttr
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
+import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.declarations.FirTypeParameter
 import org.jetbrains.kotlin.fir.declarations.impl.FirResolvedDeclarationStatusImpl
+import org.jetbrains.kotlin.fir.declarations.processAllDeclaredCallables
 import org.jetbrains.kotlin.fir.declarations.utils.isAnnotationClass
 import org.jetbrains.kotlin.fir.declarations.utils.isExtension
 import org.jetbrains.kotlin.fir.declarations.utils.isInner
@@ -28,18 +31,24 @@ import org.jetbrains.kotlin.fir.java.declarations.buildJavaValueParameter
 import org.jetbrains.kotlin.fir.plugin.createMemberFunction
 import org.jetbrains.kotlin.fir.resolve.defaultType
 import org.jetbrains.kotlin.fir.resolve.getSuperClassSymbolOrAny
+import org.jetbrains.kotlin.fir.resolve.typeParameterSymbol
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
+import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirValueParameterSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.hasContextParameters
 import org.jetbrains.kotlin.fir.toEffectiveVisibility
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.jvm.FirJavaTypeRef
+import org.jetbrains.kotlin.load.java.structure.JavaClass
+import org.jetbrains.kotlin.load.java.structure.JavaClassifierType
 import org.jetbrains.kotlin.load.java.structure.JavaPrimitiveType
 import org.jetbrains.kotlin.lombok.AccessorNames
+import org.jetbrains.kotlin.lombok.LombokNames
 import org.jetbrains.kotlin.lombok.config.CallSuperMode
 import org.jetbrains.kotlin.lombok.config.ConeLombokAnnotations
 import org.jetbrains.kotlin.name.CallableId
@@ -256,6 +265,86 @@ val FirClassSymbol<*>.isPlainClass: Boolean
  */
 val FirCallableSymbol<*>.hasReceiverOrContextParameters: Boolean
     get() = isExtension || hasContextParameters
+
+/**
+ * Whether [this] has the JVM signature of the `canEqual` that `@EqualsAndHashCode` generates,
+ * `canEqual(Ljava/lang/Object;)Z`. Overloads with another parameter type, an extension receiver or context
+ * parameters merely share the name.
+ */
+val FirNamedFunctionSymbol.hasCanEqualJvmSignature: Boolean
+    get() = name == LombokNames.CAN_EQUAL &&
+            !hasReceiverOrContextParameters &&
+            valueParameterSymbols.singleOrNull()?.erasesToJavaObject == true
+
+/**
+ * The `canEqual` a generated one would override or clash with: the closest one with [hasCanEqualJvmSignature]
+ * declared by a superclass of [this]. Private ones are skipped, as they are not inherited.
+ *
+ * Members are requested only up to TYPES: this runs within the STATUS phase of [this], and a phase can only request a
+ * lazy resolve into a strictly earlier one. Matching parameter types needs nothing later.
+ */
+@OptIn(SymbolInternals::class)
+fun FirClassSymbol<*>.findSuperclassCanEqual(session: FirSession): FirNamedFunctionSymbol? {
+    var superClassSymbol = getSuperClassSymbolOrAny(session)
+    while (superClassSymbol != null && superClassSymbol.classId != StandardClassIds.Any) {
+        var canEqual: FirNamedFunctionSymbol? = null
+        superClassSymbol.processAllDeclaredCallables(session, memberRequiredPhase = FirResolvePhase.TYPES) {
+            if (canEqual == null && it is FirNamedFunctionSymbol && it.hasCanEqualJvmSignature &&
+                it.fir.status.visibility != Visibilities.Private
+            ) {
+                canEqual = it
+            }
+        }
+        canEqual?.let { return it }
+        superClassSymbol = superClassSymbol.getSuperClassSymbolOrAny(session)
+    }
+    return null
+}
+
+/**
+ * Whether [this] parameter's type is `Any?`, or `java.lang.Object` for a Java declaration: the exact parameter type
+ * of the `equals` and `canEqual` that `@EqualsAndHashCode` generates, so the only one they can override.
+ *
+ * A Java parameter's type is still a [FirJavaTypeRef] when the declaring class is a supertype only "peeked into" -
+ * signature enhancement has not run for it - so `resolvedReturnTypeRef` would throw and the type has to be matched
+ * structurally instead.
+ */
+val FirValueParameterSymbol.isAnyOrJavaObjectType: Boolean
+    get() = matchesJavaObjectType { it.upperBoundIfFlexible().isNullableAny }
+
+/**
+ * Whether [this] parameter's type erases to `java.lang.Object`: besides [isAnyOrJavaObjectType], also `Any` or a
+ * type parameter bounded by nothing else. A member taking one has the same JVM signature as one taking `Any?`.
+ */
+val FirValueParameterSymbol.erasesToJavaObject: Boolean
+    get() = matchesJavaObjectType { it.erasesToJavaObject }
+
+@OptIn(SymbolInternals::class)
+private inline fun FirValueParameterSymbol.matchesJavaObjectType(matchesResolvedType: (ConeKotlinType) -> Boolean): Boolean =
+    when (val typeRef = fir.returnTypeRef) {
+        is FirResolvedTypeRef -> matchesResolvedType(typeRef.coneType)
+        is FirJavaTypeRef -> ((typeRef.type as? JavaClassifierType)?.classifier as? JavaClass)?.fqName ==
+                LombokNames.JAVA_OBJECT_ID.asSingleFqName()
+        else -> false
+    }
+
+/**
+ * Whether [this] erases to `java.lang.Object`. A type parameter erases to its first bound; requiring all of them to
+ * erase to `Object` is simpler and only under-matches a multi-bounded one.
+ *
+ * The bounds are read as they are rather than via `resolvedBounds`: this runs from `getCallableNamesForClass`,
+ * which is too early to request a lazy resolve. A bound that is not resolved yet does not match.
+ */
+@OptIn(SymbolInternals::class)
+private val ConeKotlinType.erasesToJavaObject: Boolean
+    get() {
+        val type = lowerBoundIfFlexible()
+        return if (type is ConeTypeParameterType) {
+            type.lookupTag.typeParameterSymbol.fir.bounds.all { it is FirResolvedTypeRef && it.coneType.erasesToJavaObject }
+        } else {
+            type.isAnyOrNullableAny
+        }
+    }
 
 /**
  * Whether `@ToString` and `@EqualsAndHashCode` leave [this] property out of what they generate unless it is
