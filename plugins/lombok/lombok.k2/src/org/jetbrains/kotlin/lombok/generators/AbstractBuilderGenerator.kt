@@ -89,8 +89,11 @@ sealed class BuilderDeclarationType {
          *
          * fir2ir records this very symbol on the declaration it produces, so the two sides are tied together
          * by identity rather than by declaration names or source offsets.
+         *
+         * [useGuavaForSingular] is `lombok.singular.useGuava`: whether `build()` produces a Guava immutable
+         * collection for a `@Singular` field, whatever collection type the field is declared with.
          */
-        class Build(val entitySymbol: FirBasedSymbol<*>) : Function()
+        class Build(val entitySymbol: FirBasedSymbol<*>, val useGuavaForSingular: Boolean) : Function()
         object Builder : Function()
         object ToBuilder : Function()
     }
@@ -574,6 +577,7 @@ abstract class AbstractBuilderGenerator<T : AbstractBuilder>(session: FirSession
                                 }
                             }
                         ).apply {
+                            remapTypeParameterBounds(typeParameters, builderTypeParameters, session)
                             if (isStaticBuilderFunction) {
                                 replaceAnnotations(listOf(symbol.buildJvmStaticAnnotationCallOrError(session)))
                             }
@@ -798,21 +802,31 @@ abstract class AbstractBuilderGenerator<T : AbstractBuilder>(session: FirSession
         Table,
     }
 
-    /** Returns a type of mutable collection a `@Singular` builder field is backed by, for Kotlin-origin builders. */
+    /**
+     * Returns a type of mutable collection a `@Singular` builder field is backed by, for Kotlin-origin builders.
+     *
+     * A sorted `java.util` collection is backed by a `TreeSet`/`TreeMap`, as in Lombok, so that `build()` can hand
+     * out a sorted result.
+     */
     private fun ConeKotlinType.toBackingMutableCollectionType(): ConeKotlinType {
         val mutableCollectionClassId =
             when (classId) {
                 StandardClassIds.List, StandardClassIds.MutableList,
                 StandardClassIds.Collection, StandardClassIds.MutableCollection,
                 StandardClassIds.Iterable, StandardClassIds.MutableIterable,
+                LombokNames.JAVA_LIST_ID, LombokNames.JAVA_COLLECTION_ID, LombokNames.JAVA_ITERABLE_ID,
                 LombokNames.IMMUTABLE_LIST_ID, LombokNames.IMMUTABLE_COLLECTION_ID,
                     -> StandardClassIds.MutableList
                 StandardClassIds.Set, StandardClassIds.MutableSet,
+                LombokNames.JAVA_SET_ID,
                 LombokNames.IMMUTABLE_SET_ID, LombokNames.IMMUTABLE_SORTED_SET_ID,
                     -> StandardClassIds.MutableSet
+                LombokNames.JAVA_SORTED_SET_ID, LombokNames.JAVA_NAVIGABLE_SET_ID -> LombokNames.JAVA_TREE_SET_ID
                 StandardClassIds.Map, StandardClassIds.MutableMap,
+                LombokNames.JAVA_MAP_ID,
                 LombokNames.IMMUTABLE_MAP_ID, LombokNames.IMMUTABLE_BI_MAP_ID, LombokNames.IMMUTABLE_SORTED_MAP_ID,
                     -> StandardClassIds.MutableMap
+                LombokNames.JAVA_SORTED_MAP_ID, LombokNames.JAVA_NAVIGABLE_MAP_ID -> LombokNames.JAVA_TREE_MAP_ID
                 LombokNames.IMMUTABLE_TABLE_ID -> TABLE_ID
                 else -> null
             }
@@ -855,8 +869,10 @@ abstract class AbstractBuilderGenerator<T : AbstractBuilder>(session: FirSession
                     ConeLombokValueParameter(nameInSingularForm, parameterTypeRef)
                 )
 
-                collectionType = when (typeId) {
-                    in LombokNames.SUPPORTED_GUAVA_COLLECTION_IDS -> SingularAddAllParameterType.Iterable
+                collectionType = when {
+                    typeId in LombokNames.SUPPORTED_GUAVA_COLLECTION_IDS -> SingularAddAllParameterType.Iterable
+                    // Lombok's Guava singularizer (when lombok.singular.useGuava=true) also takes an `Iterable`
+                    session.lombokService.config.singularUseGuava -> SingularAddAllParameterType.Iterable
                     else -> SingularAddAllParameterType.Collection
                 }
                 typeArgumentRefs = listOf(parameterTypeRef)
@@ -1125,7 +1141,7 @@ abstract class AbstractBuilderGenerator<T : AbstractBuilder>(session: FirSession
      * }
      * ```
      *
-     * We have to initialize the new type parameters for static `builder` (T -> T2) to make Java resolve robust:
+     * We have to initialize the new type parameters for static `builder` (T -> T2) to make Java/Kotlin resolve robust:
      *
      * ```java
      * public static <T2> CBuilder<T2> builder() {
@@ -1153,7 +1169,7 @@ abstract class AbstractBuilderGenerator<T : AbstractBuilder>(session: FirSession
      *
      * The function also handles type parameters on explicitly declared declarations.
      *
-     * @return a map used for remapping type parameters on a Java stack
+     * @return a map used for remapping type parameters on a Java stack/substitutors
      */
     @OptIn(SymbolInternals::class)
     private fun FirDeclaration.extractTypeParametersMapping(
@@ -1174,6 +1190,11 @@ abstract class AbstractBuilderGenerator<T : AbstractBuilder>(session: FirSession
                     symbol = FirTypeParameterSymbol()
                     containingDeclarationSymbol = newContainingDeclarationSymbol
                 }
+            }
+
+            // An existing declaration's type parameters keep the bounds the user wrote: only fresh copies are remapped.
+            if (!existingDeclaration) {
+                remapTypeParameterBounds(values, keys, session)
             }
         }
     }
