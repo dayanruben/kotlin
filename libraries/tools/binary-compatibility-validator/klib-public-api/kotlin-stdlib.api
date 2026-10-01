@@ -1834,7 +1834,6 @@ final class kotlin.ranges/UIntRange : kotlin.ranges/ClosedRange<kotlin/UInt>, ko
 
     final fun contains(kotlin/UInt): kotlin/Boolean // kotlin.ranges/UIntRange.contains|contains(kotlin.UInt){}[0]
     final fun equals(kotlin/Any?): kotlin/Boolean // kotlin.ranges/UIntRange.equals|equals(kotlin.Any?){}[0]
-    final fun hashCode(): kotlin/Int // kotlin.ranges/UIntRange.hashCode|hashCode(){}[0]
     final fun isEmpty(): kotlin/Boolean // kotlin.ranges/UIntRange.isEmpty|isEmpty(){}[0]
     final fun toString(): kotlin/String // kotlin.ranges/UIntRange.toString|toString(){}[0]
 
@@ -1856,7 +1855,6 @@ final class kotlin.ranges/ULongRange : kotlin.ranges/ClosedRange<kotlin/ULong>, 
 
     final fun contains(kotlin/ULong): kotlin/Boolean // kotlin.ranges/ULongRange.contains|contains(kotlin.ULong){}[0]
     final fun equals(kotlin/Any?): kotlin/Boolean // kotlin.ranges/ULongRange.equals|equals(kotlin.Any?){}[0]
-    final fun hashCode(): kotlin/Int // kotlin.ranges/ULongRange.hashCode|hashCode(){}[0]
     final fun isEmpty(): kotlin/Boolean // kotlin.ranges/ULongRange.isEmpty|isEmpty(){}[0]
     final fun toString(): kotlin/String // kotlin.ranges/ULongRange.toString|toString(){}[0]
 

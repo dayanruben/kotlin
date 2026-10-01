@@ -1,5 +1,11 @@
 // RUN_PIPELINE_TILL: FRONTEND
 // FIR_DUMP
+// ALLOW_KOTLIN_PACKAGE
+// FILE: RichError.kt
+package kotlin
+
+abstract class RichError
+// FILE: test.kt
 <!WRONG_MODIFIER_TARGET!>error<!> class Foo
 <!WRONG_MODIFIER_TARGET!>error<!> class Bar
 
@@ -18,6 +24,7 @@ fun foo(
     l: <!OTHER_ERROR!>String | Foo?<!>,
     m: <!OTHER_ERROR!>String | Int<!>,
     n: <!OTHER_ERROR!>String | <!OTHER_ERROR!>(Foo | Int)<!><!>,
+    o: String | RichError,
 ){
 }
 

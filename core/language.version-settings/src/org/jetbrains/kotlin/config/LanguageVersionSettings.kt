@@ -571,6 +571,7 @@ enum class LanguageFeature(
     // 2.6
 
     ReportReificationProblemsInDnnAndFlexible(sinceVersion = KOTLIN_2_6, enabledInProgressiveMode = true, "KTLC-399"),
+    ForbidSamConstructorCallsWithMissingDependencySupertype(sinceVersion = KOTLIN_2_6, enabledInProgressiveMode = true, "KT-81075"),
     ExplicitContextArguments(sinceVersion = KOTLIN_2_6, issue = "KT-81684"),
     ForbidJavaClassPropertyReferences(sinceVersion = KOTLIN_2_6, enabledInProgressiveMode = true, "KTLC-375"),
     ForbidNonTopLevelEagerInitialization(sinceVersion = KOTLIN_2_6, enabledInProgressiveMode = true, "KT-89476"),
@@ -579,6 +580,7 @@ enum class LanguageFeature(
     ForbidUselessTypeArgumentsIn26(sinceVersion = KOTLIN_2_6, enabledInProgressiveMode = true, "KTLC-390"),
     EnforceMissingNamedArgumentsOnJavaAnnotation(sinceVersion = KOTLIN_2_6, enabledInProgressiveMode = true, "KTLC-418"),
     JsIntegerDivisionCheck(sinceVersion = KOTLIN_2_6, enabledInProgressiveMode = true, issue = "KT-17719"),
+    ProhibitVarInJsModuleFile(sinceVersion = KOTLIN_2_6, enabledInProgressiveMode = true, issue = "KT-88343"),
 
     // End of 2.* language features --------------------------------------------------
 

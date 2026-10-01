@@ -3980,6 +3980,7 @@ public abstract class kotlin/jvm/internal/CallableReference : java/io/Serializab
 	public fun getBoundContextArguments ()[Ljava/lang/Object;
 	public fun getBoundReceiver ()Ljava/lang/Object;
 	public fun getCompanionExtensionClass ()Lkotlin/reflect/KClass;
+	public fun getContainer ()Lkotlin/reflect/KDeclarationContainer;
 	public fun getName ()Ljava/lang/String;
 	public fun getOwner ()Lkotlin/reflect/KDeclarationContainer;
 	public fun getParameters ()Ljava/util/List;
@@ -5185,7 +5186,6 @@ public final class kotlin/ranges/UIntRange : kotlin/ranges/UIntProgression, kotl
 	public fun getEndInclusive-pVg5ArA ()I
 	public synthetic fun getStart ()Ljava/lang/Comparable;
 	public fun getStart-pVg5ArA ()I
-	public fun hashCode ()I
 	public fun isEmpty ()Z
 	public fun toString ()Ljava/lang/String;
 }
@@ -5222,7 +5222,6 @@ public final class kotlin/ranges/ULongRange : kotlin/ranges/ULongProgression, ko
 	public fun getEndInclusive-s-VKNKU ()J
 	public synthetic fun getStart ()Ljava/lang/Comparable;
 	public fun getStart-s-VKNKU ()J
-	public fun hashCode ()I
 	public fun isEmpty ()Z
 	public fun toString ()Ljava/lang/String;
 }
@@ -5289,6 +5288,7 @@ public abstract interface class kotlin/reflect/KCallable : kotlin/reflect/KAnnot
 	public abstract fun call ([Ljava/lang/Object;)Ljava/lang/Object;
 	public abstract fun callBy (Ljava/util/Map;)Ljava/lang/Object;
 	public abstract fun getCompanionExtensionClass ()Lkotlin/reflect/KClass;
+	public abstract fun getContainer ()Lkotlin/reflect/KDeclarationContainer;
 	public abstract fun getName ()Ljava/lang/String;
 	public abstract fun getParameters ()Ljava/util/List;
 	public abstract fun getReturnType ()Lkotlin/reflect/KType;

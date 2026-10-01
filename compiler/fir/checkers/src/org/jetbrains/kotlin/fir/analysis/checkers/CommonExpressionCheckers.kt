@@ -29,7 +29,6 @@ object CommonExpressionCheckers : ExpressionCheckers() {
         FirAnnotatedBinaryExpressionChecker,
         FirExpressionWithErrorTypeChecker,
         FirInlineBodyResolvableExpressionChecker,
-        ArrayEqualityCanBeReplacedWithContentEquals,
     )
 
     override val throwExpressionCheckers: Set<FirThrowExpressionChecker> = setOf(
@@ -185,6 +184,7 @@ object CommonExpressionCheckers : ExpressionCheckers() {
     override val equalityOperatorCallCheckers: Set<FirEqualityOperatorCallChecker> = setOf(
         FirEqualityCompatibilityChecker,
         FirContextSensitiveResolutionAmbiguityCheckerForEqualities,
+        ArrayEqualityCanBeReplacedWithContentEquals,
     )
 
     override val collectionLiteralCheckers: Set<FirCollectionLiteralChecker> = @OptIn(ArrayLiteralResolution::class) setOf(
@@ -212,5 +212,9 @@ object CommonExpressionCheckers : ExpressionCheckers() {
 
     override val thisReceiverExpressionCheckers: Set<FirThisReceiverExpressionChecker> = setOf(
         FirInlineExposedLessVisibleThisReceiverChecker
+    )
+
+    override val functionTypeConversionExpressionCheckers: Set<FirFunctionTypeConversionExpressionChecker> = setOf(
+        FirMissingDependencySupertypeInSamConversionChecker,
     )
 }
