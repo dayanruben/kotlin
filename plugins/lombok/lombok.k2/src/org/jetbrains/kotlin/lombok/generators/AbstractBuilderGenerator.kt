@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.lombok.generators
 import org.jetbrains.kotlin.KtFakeSourceElementKind
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
+import org.jetbrains.kotlin.descriptors.java.JavaVisibilities
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.analysis.checkers.getAllowedAnnotationTargets
 import org.jetbrains.kotlin.fir.analysis.checkers.typeParameterSymbols
@@ -28,7 +29,7 @@ import org.jetbrains.kotlin.fir.extensions.UnsafePluginApi
 import org.jetbrains.kotlin.fir.java.JavaScopeProvider
 import org.jetbrains.kotlin.fir.java.MutableJavaTypeParameterStack
 import org.jetbrains.kotlin.fir.java.declarations.*
-import org.jetbrains.kotlin.fir.plugin.createDefaultPrivateConstructor
+import org.jetbrains.kotlin.fir.plugin.createDefaultConstructor
 import org.jetbrains.kotlin.fir.plugin.createMemberFunction
 import org.jetbrains.kotlin.fir.plugin.createMemberProperty
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
@@ -209,7 +210,13 @@ abstract class AbstractBuilderGenerator<T : AbstractBuilder>(session: FirSession
 
     override fun generateConstructors(context: MemberGenerationContext): List<FirConstructorSymbol> {
         val key = context.owner.generatedBuilderClassKey ?: return emptyList()
-        return listOf(createDefaultPrivateConstructor(context.owner, key).symbol)
+        val constructor = createDefaultConstructor(
+            context.owner,
+            key,
+            visibility = if (context.owner.hasJavaOrigin) JavaVisibilities.PackageVisibility else Visibilities.Internal,
+            generateDelegatedNoArgConstructorCall = !context.owner.hasJavaOrigin
+        )
+        return listOf(constructor.symbol)
     }
 
     /**
@@ -220,8 +227,14 @@ abstract class AbstractBuilderGenerator<T : AbstractBuilder>(session: FirSession
      * [LombokCompanionObjectGenerator]'s, constructor included.
      */
     private val FirClassSymbol<*>.generatedBuilderClassKey: BuilderGeneratorKey?
-        get() = ((origin as? FirDeclarationOrigin.Plugin)?.key as? BuilderGeneratorKey)
-            ?.takeIf { it.type is BuilderDeclarationType.Class.Builder }
+        get() {
+            val key = when (val origin = origin) {
+                is FirDeclarationOrigin.Plugin -> origin.key
+                is FirDeclarationOrigin.Java.Plugin -> origin.key
+                else -> null
+            }
+            return (key as? BuilderGeneratorKey)?.takeIf { it.type is BuilderDeclarationType.Class.Builder }
+        }
 
     /**
      * Whether [owner] needs a generated companion object to host its `builder()` factories. Only a static builder
@@ -300,13 +313,7 @@ abstract class AbstractBuilderGenerator<T : AbstractBuilder>(session: FirSession
         val builderName = builderSymbol.classId.shortClassName.asString()
         val builderFir = builderSymbol.fir as? FirRegularClass
         val entityClass = containingClassSymbol.fir as FirRegularClass
-
-        val nestedClassifierScope =
-            containingClassSymbol.fir.scopeProvider.getNestedClassifierScope(containingClassSymbol.fir, session, ScopeSession())
-        var builderSymbolAlreadyExists = false // TODO: distinguish explicit/generated builders via origin, it's blocked by KT-79778
-        nestedClassifierScope?.processClassifiersByName(builderSymbol.name) {
-            builderSymbolAlreadyExists = true
-        }
+        val isExplicitBuilder = builderSymbol.generatedBuilderClassKey == null
 
         for ((builder, declaration) in builderWithDeclarations) {
             val containingClassBuilderName = builder.getBuilderClassShortName(declaration)
@@ -317,7 +324,7 @@ abstract class AbstractBuilderGenerator<T : AbstractBuilder>(session: FirSession
                 declaration.extractTypeParametersMapping(newContainingDeclarationSymbol = builderSymbol, existingDeclaration = true)
             val substitutor = substitutorByMap(typeParametersMapping.entries.associate { it.key.symbol to it.value.toConeType() }, session)
 
-            if (builderSymbolAlreadyExists && builderFir is FirJavaClass) {
+            if (isExplicitBuilder && builderFir is FirJavaClass) {
                 // For already existing explicit builders, initialize and populate type parameters to link generated functions with them.
                 // Unfortunately, we can't do it on the nested classes generation step because scope is being traversed recursively (that would lead to StackOverflow)
                 // For Lombok-generated builders, createEmptyBuilderClass already sets up the correct mapping
@@ -482,7 +489,8 @@ abstract class AbstractBuilderGenerator<T : AbstractBuilder>(session: FirSession
             if (entityFir is FirJavaClass) {
                 val nestedClassifierScope = entityFir.scopeProvider.getNestedClassifierScope(entityFir, session, ScopeSession())
                 nestedClassifierScope?.processClassifiersByName(builderClassName) {
-                    if (existingBuilder == null && it is FirClassSymbol<*>) {
+                    // The scope also contains the builder generated by this extension, which is not an existing one
+                    if (existingBuilder == null && it is FirClassSymbol<*> && it.generatedBuilderClassKey == null) {
                         existingBuilder = it
                     }
                 }
@@ -1020,6 +1028,7 @@ abstract class AbstractBuilderGenerator<T : AbstractBuilder>(session: FirSession
             FirJavaClassBuilder().apply {
                 containingClassSymbol = containingClass
                 isFromSource = true
+                key = BuilderGeneratorKey(BuilderDeclarationType.Class.Builder)
 
                 // Remap Java type parameters from the containing declaration to the newly created type parameters to make the Java resolve work.
                 // Don't care about outer type parameters because builder classes are always static (nested).
