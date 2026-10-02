@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.diagnostics.impl.DiagnosticsCollectorImpl
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.declarations.DirectDeclarationsAccess
 import org.jetbrains.kotlin.fir.declarations.FirFile
+import org.jetbrains.kotlin.fir.declarations.FirReplSnippet
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.declarations.FirScript
 import org.jetbrains.kotlin.fir.diagnostics.ConeDiagnostic
@@ -88,8 +89,10 @@ internal fun collectAndResolveScriptAnnotationsViaFir(
     ProgressIndicatorAndCompilationCanceledStatus.checkCanceled()
     val firFile = script.convertToFir(sessionForAnnotationResolution, diagnosticsCollector)
     firFile.declarations.forEach {
-        if (it is FirScript) {
-            it.scriptCompilationConfiguration = compilationConfiguration
+        when (it) {
+            is FirScript -> it.scriptCompilationConfiguration = compilationConfiguration
+            is FirReplSnippet -> it.scriptCompilationConfiguration = compilationConfiguration
+            else -> {}
         }
     }
     if (diagnosticsCollector.hasErrors) {
@@ -323,6 +326,19 @@ private fun FirLiteralExpression.toRuntimeValue(): Any? {
         else -> value
     }
 }
+
+/**
+ * [refineAllForK2] with the annotations collected by [collectAndResolveScriptAnnotationsViaFir].
+ */
+internal fun ScriptCompilationConfiguration.refineAllViaFir(
+    script: SourceCode,
+    hostConfiguration: ScriptingHostConfiguration,
+    getSessionForAnnotationResolution: (SourceCode, ScriptCompilationConfiguration) -> FirSession,
+    convertToFir: SourceCode.(FirSession, BaseDiagnosticsCollector) -> FirFile,
+): ResultWithDiagnostics<ScriptCompilationConfiguration> =
+    refineAllForK2(script, hostConfiguration) { source, configuration ->
+        collectAndResolveScriptAnnotationsViaFir(source, configuration, hostConfiguration, getSessionForAnnotationResolution, convertToFir)
+    }
 
 // TODO: implement. Probably need to change SourceCode.Position to accept offsets and then remap them later on reporting
 private fun FirElement.getLocation(): SourceCode.Location? = null
