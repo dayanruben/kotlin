@@ -503,6 +503,24 @@ public class FirOutOfContentRootLazyDeclarationResolveTestGenerated extends Abst
   }
 
   @Test
+  @TestMetadata("lambdaInsideAnnotationArgument.kt")
+  public void testLambdaInsideAnnotationArgument() {
+    run("lambdaInsideAnnotationArgument.kt");
+  }
+
+  @Test
+  @TestMetadata("lambdaInsideForeignTypeAnnotation.kt")
+  public void testLambdaInsideForeignTypeAnnotation() {
+    run("lambdaInsideForeignTypeAnnotation.kt");
+  }
+
+  @Test
+  @TestMetadata("lambdaInsideLocalForeignTypeAnnotation.kt")
+  public void testLambdaInsideLocalForeignTypeAnnotation() {
+    run("lambdaInsideLocalForeignTypeAnnotation.kt");
+  }
+
+  @Test
   @TestMetadata("lazyProperty.kt")
   public void testLazyProperty() {
     run("lazyProperty.kt");
@@ -560,6 +578,18 @@ public class FirOutOfContentRootLazyDeclarationResolveTestGenerated extends Abst
   @TestMetadata("localParameterInsideSuperEntryCall.kt")
   public void testLocalParameterInsideSuperEntryCall() {
     run("localParameterInsideSuperEntryCall.kt");
+  }
+
+  @Test
+  @TestMetadata("namedFunctionInsideClassAnnotation.kt")
+  public void testNamedFunctionInsideClassAnnotation() {
+    run("namedFunctionInsideClassAnnotation.kt");
+  }
+
+  @Test
+  @TestMetadata("namedFunctionInsideFileAnnotation.kt")
+  public void testNamedFunctionInsideFileAnnotation() {
+    run("namedFunctionInsideFileAnnotation.kt");
   }
 
   @Test

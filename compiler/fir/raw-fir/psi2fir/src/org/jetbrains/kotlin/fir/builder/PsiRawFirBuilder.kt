@@ -527,10 +527,7 @@ open class PsiRawFirBuilder(
                         ownerClassBuilder.ownerRegularOrAnonymousObjectSymbol
                     )
                 }
-                is KtDestructuringDeclaration -> {
-                    val initializer = toInitializerExpression()
-                    buildErrorNonLocalDestructuringDeclaration(toFirSourceElement(), initializer, baseModuleData)
-                }
+                is KtDestructuringDeclaration -> buildErrorNonLocalDestructuringDeclaration(this)
                 is KtClassInitializer -> {
                     buildAnonymousInitializer(this, ownerClassBuilder.ownerRegularOrAnonymousObjectSymbol)
                         .apply {
@@ -1215,7 +1212,8 @@ open class PsiRawFirBuilder(
                 }
                 is KtClass if classKind == ClassKind.ANNOTATION_CLASS -> {
                     container.superTypeRefs += implicitAnnotationType
-                    delegatedSuperTypeRef = implicitAnyType
+                    // A written super call is kept for red code to be resolved as written
+                    delegatedSuperTypeRef = delegatedSuperTypeRef ?: implicitAnyType
                 }
             }
 
@@ -1428,10 +1426,7 @@ open class PsiRawFirBuilder(
                     for (declaration in file.declarations) {
                         declarations += when (declaration) {
                             is KtScript -> convertScriptOrSnippets(declaration, psiSourceFile, this@buildFile)
-                            is KtDestructuringDeclaration -> {
-                                val initializer = declaration.toInitializerExpression()
-                                buildErrorNonLocalDestructuringDeclaration(declaration.toFirSourceElement(), initializer, baseModuleData)
-                            }
+                            is KtDestructuringDeclaration -> buildErrorNonLocalDestructuringDeclaration(declaration)
                             else -> declaration.convert()
                         }
                     }
@@ -1455,6 +1450,15 @@ open class PsiRawFirBuilder(
             }
 
             return packageName
+        }
+
+        protected fun buildErrorNonLocalDestructuringDeclaration(destructuringDeclaration: KtDestructuringDeclaration): FirErrorProperty {
+            val initializer = destructuringDeclaration.toInitializerExpression()
+            return this@PsiRawFirBuilder.buildErrorNonLocalDestructuringDeclaration(
+                destructuringDeclaration.toFirSourceElement(),
+                initializer,
+                baseModuleData,
+            ) { destructuringDeclaration.extractAnnotationsTo(it) }
         }
 
         protected fun buildScriptDestructuringDeclaration(destructuringDeclaration: KtDestructuringDeclaration): FirVariable {
@@ -2043,46 +2047,53 @@ open class PsiRawFirBuilder(
         override fun visitObjectLiteralExpression(expression: KtObjectLiteralExpression, data: FirElement?): FirElement {
             return this@PsiRawFirBuilder.context.withChildClassName(SpecialNames.ANONYMOUS, forceLocalContext = true, isExpect = false) {
                 var delegatedFieldsMap: Map<Int, FirFieldSymbol>?
-                buildAnonymousObjectExpression {
-                    source = expression.toFirSourceElement()
-                    val companionBlockCollector = CompanionBlockCollector()
-                    anonymousObject = buildAnonymousObject {
-                        val objectDeclaration = expression.objectDeclaration
-                        source = objectDeclaration.toFirSourceElement()
-                        moduleData = baseModuleData
-                        origin = FirDeclarationOrigin.Source
-                        classKind = ClassKind.CLASS
-                        scopeProvider = baseScopeProvider
-                        symbol = FirAnonymousObjectSymbol(context.packageFqName)
-                        status = FirDeclarationStatusImpl(Visibilities.Local, Modality.FINAL)
-                        context.appendOuterTypeParameters(ignoreLastLevel = false, typeParameters)
-                        val delegatedSelfType = objectDeclaration.toDelegatedSelfType(this)
-                        registerSelfType(delegatedSelfType)
-                        objectDeclaration.extractAnnotationsTo(this)
-                        val [delegatedSuperType, extractedDelegatedFieldsMap] = objectDeclaration.extractSuperTypeListEntriesTo(
-                            this,
-                            delegatedSelfType,
-                            null,
-                            ClassKind.CLASS,
-                            containerTypeParameters = emptyList(),
-                            containingClassIsExpectClass = false
-                        )
-                        delegatedFieldsMap = extractedDelegatedFieldsMap
+                val objectDeclaration = expression.objectDeclaration
+                val objectSource = objectDeclaration.toFirSourceElement()
+                val anonymousObjectSymbol = FirAnonymousObjectSymbol(context.packageFqName)
+                // Type parameters are prohibited for objects, but they are kept for the FIR checker and the Analysis API
+                val firTypeParameters = objectDeclaration.convertTypeParameters(anonymousObjectSymbol)
+                context.withCapturedTypeParameters(status = true, objectSource, firTypeParameters) {
+                    buildAnonymousObjectExpression {
+                        source = expression.toFirSourceElement()
+                        val companionBlockCollector = CompanionBlockCollector()
+                        anonymousObject = buildAnonymousObject {
+                            source = objectSource
+                            moduleData = baseModuleData
+                            origin = FirDeclarationOrigin.Source
+                            classKind = ClassKind.CLASS
+                            scopeProvider = baseScopeProvider
+                            symbol = anonymousObjectSymbol
+                            status = FirDeclarationStatusImpl(Visibilities.Local, Modality.FINAL)
+                            typeParameters += firTypeParameters
+                            context.appendOuterTypeParameters(ignoreLastLevel = true, typeParameters)
+                            val delegatedSelfType = objectDeclaration.toDelegatedSelfType(this)
+                            registerSelfType(delegatedSelfType)
+                            objectDeclaration.extractAnnotationsTo(this)
+                            val [delegatedSuperType, extractedDelegatedFieldsMap] = objectDeclaration.extractSuperTypeListEntriesTo(
+                                this,
+                                delegatedSelfType,
+                                null,
+                                ClassKind.CLASS,
+                                containerTypeParameters = typeParameters,
+                                containingClassIsExpectClass = false
+                            )
+                            delegatedFieldsMap = extractedDelegatedFieldsMap
 
-                        addDeclarations(
-                            classBody = objectDeclaration.body,
-                            delegatedSuperType,
-                            delegatedSelfType,
-                            owner = objectDeclaration,
-                            companionBlockCollector,
-                        )
+                            addDeclarations(
+                                classBody = objectDeclaration.body,
+                                delegatedSuperType,
+                                delegatedSelfType,
+                                owner = objectDeclaration,
+                                companionBlockCollector,
+                            )
 
-                        for (danglingModifier in objectDeclaration.body?.danglingModifierLists ?: emptyList()) {
-                            declarations += buildErrorNonLocalDeclarationForDanglingModifierList(danglingModifier)
+                            for (danglingModifier in objectDeclaration.body?.danglingModifierLists ?: emptyList()) {
+                                declarations += buildErrorNonLocalDeclarationForDanglingModifierList(danglingModifier)
+                            }
+                        }.apply {
+                            this.delegateFieldsMap = delegatedFieldsMap
+                            companionBlockCollector.toCompanionBlockInfoOrNull()?.let { companionBlocks = it }
                         }
-                    }.apply {
-                        this.delegateFieldsMap = delegatedFieldsMap
-                        companionBlockCollector.toCompanionBlockInfoOrNull()?.let { companionBlocks = it }
                     }
                 }
             }

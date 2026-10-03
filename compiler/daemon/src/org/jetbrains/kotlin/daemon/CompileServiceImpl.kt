@@ -40,8 +40,6 @@ import org.jetbrains.kotlin.daemon.report.DaemonMessageReporter
 import org.jetbrains.kotlin.daemon.report.getBuildReporter
 import org.jetbrains.kotlin.incremental.*
 import org.jetbrains.kotlin.incremental.components.*
-import org.jetbrains.kotlin.incremental.js.IncrementalDataProvider
-import org.jetbrains.kotlin.incremental.js.IncrementalResultsConsumer
 import org.jetbrains.kotlin.incremental.multiproject.EmptyModulesApiHistory
 import org.jetbrains.kotlin.incremental.multiproject.ModulesApiHistoryJs
 import org.jetbrains.kotlin.incremental.parsing.classesFqNames
@@ -901,6 +899,9 @@ class CompileServiceImpl(
             })
     }
 
+    override fun isSessionActive(sessionId: Int): CompileService.CallResult<Boolean> = ifAlive(minAliveness = Aliveness.LastSession) {
+        CompileService.CallResult.Good(state.sessions[sessionId] != null)
+    }
 
     override fun releaseCompileSession(sessionId: Int) = ifAlive(minAliveness = Aliveness.LastSession) {
         state.sessions.remove(sessionId)

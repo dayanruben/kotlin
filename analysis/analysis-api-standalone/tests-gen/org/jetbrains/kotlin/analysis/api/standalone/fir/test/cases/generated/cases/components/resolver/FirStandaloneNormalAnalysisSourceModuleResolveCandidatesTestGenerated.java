@@ -2376,6 +2376,12 @@ public class FirStandaloneNormalAnalysisSourceModuleResolveCandidatesTestGenerat
     }
 
     @Test
+    @TestMetadata("sequenceOperator.kt")
+    public void testSequenceOperator() {
+      run("sequenceOperator.kt");
+    }
+
+    @Test
     @TestMetadata("set.kt")
     public void testSet() {
       run("set.kt");
@@ -6960,6 +6966,36 @@ public class FirStandaloneNormalAnalysisSourceModuleResolveCandidatesTestGenerat
     }
 
     @Test
+    @TestMetadata("annotationArgumentOnNonLocalDestructuringDeclaration.kt")
+    public void testAnnotationArgumentOnNonLocalDestructuringDeclaration() {
+      run("annotationArgumentOnNonLocalDestructuringDeclaration.kt");
+    }
+
+    @Test
+    @TestMetadata("annotationArgumentOnNonLocalDestructuringEntry.kt")
+    public void testAnnotationArgumentOnNonLocalDestructuringEntry() {
+      run("annotationArgumentOnNonLocalDestructuringEntry.kt");
+    }
+
+    @Test
+    @TestMetadata("annotationClassSuperTypeCall.kt")
+    public void testAnnotationClassSuperTypeCall() {
+      run("annotationClassSuperTypeCall.kt");
+    }
+
+    @Test
+    @TestMetadata("annotationClassSuperTypeCallAny.kt")
+    public void testAnnotationClassSuperTypeCallAny() {
+      run("annotationClassSuperTypeCallAny.kt");
+    }
+
+    @Test
+    @TestMetadata("annotationClassSuperTypeCallCallee.kt")
+    public void testAnnotationClassSuperTypeCallCallee() {
+      run("annotationClassSuperTypeCallCallee.kt");
+    }
+
+    @Test
     @TestMetadata("annotationOnExpression_asT.kt")
     public void testAnnotationOnExpression_asT() {
       run("annotationOnExpression_asT.kt");
@@ -6972,9 +7008,33 @@ public class FirStandaloneNormalAnalysisSourceModuleResolveCandidatesTestGenerat
     }
 
     @Test
+    @TestMetadata("annotationOnNonLocalDestructuringDeclaration.kt")
+    public void testAnnotationOnNonLocalDestructuringDeclaration() {
+      run("annotationOnNonLocalDestructuringDeclaration.kt");
+    }
+
+    @Test
+    @TestMetadata("annotationOnNonLocalDestructuringEntry.kt")
+    public void testAnnotationOnNonLocalDestructuringEntry() {
+      run("annotationOnNonLocalDestructuringEntry.kt");
+    }
+
+    @Test
     @TestMetadata("annotationOnReceiver.kt")
     public void testAnnotationOnReceiver() {
       run("annotationOnReceiver.kt");
+    }
+
+    @Test
+    @TestMetadata("annotationOnTopLevelDestructuringDeclaration.kt")
+    public void testAnnotationOnTopLevelDestructuringDeclaration() {
+      run("annotationOnTopLevelDestructuringDeclaration.kt");
+    }
+
+    @Test
+    @TestMetadata("annotationOnTopLevelDestructuringEntry.kt")
+    public void testAnnotationOnTopLevelDestructuringEntry() {
+      run("annotationOnTopLevelDestructuringEntry.kt");
     }
 
     @Test
@@ -7587,6 +7647,12 @@ public class FirStandaloneNormalAnalysisSourceModuleResolveCandidatesTestGenerat
     @TestMetadata("typeParameterAsValue.kt")
     public void testTypeParameterAsValue() {
       run("typeParameterAsValue.kt");
+    }
+
+    @Test
+    @TestMetadata("typeParameterOfAnonymousObject.kt")
+    public void testTypeParameterOfAnonymousObject() {
+      run("typeParameterOfAnonymousObject.kt");
     }
 
     @Test

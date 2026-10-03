@@ -630,6 +630,7 @@ tasks {
         dependsOn(":compiler:build-tools:kotlin-build-tools-api:check")
         dependsOn(":compiler:build-tools:kotlin-build-tools-api-tests:check")
         dependsOn(":compiler:build-tools:kotlin-build-tools-api-forward-tests:check")
+        dependsOn(":compiler:build-tools:kotlin-build-tools-impl:check")
     }
 
     testLifecycleTask("buildToolsApiKotlinVersionCheck", QualityGate.None) {
@@ -707,7 +708,11 @@ tasks {
         dependsOn(":kotlin-native:prepare:kotlin-native-compiler-embeddable:publish")
     }
 
-    fun registerSpecialPublishingTasks(nameSuffix: String, artifactProjectList: List<String>, latch: Project.(() -> Unit) -> Unit) {
+    fun registerSpecialPublishingTasks(
+        nameSuffix: String,
+        artifactProjectList: List<String>,
+        latch: Project.(() -> Unit) -> Unit = { block -> block() }
+    ) {
         register("publish$nameSuffix") {
             latch {
                 dependsOn(artifactProjectList.map { "$it:publish" })
@@ -727,11 +732,7 @@ tasks {
         latch = Project::idePluginPublishingLatch
     )
 
-    registerSpecialPublishingTasks(
-        nameSuffix = "AnalysisApiArtifacts",
-        artifactProjectList = CompilerModules.analysisApiArtifacts,
-        latch = Project::analysisApiPublishingLatch
-    )
+    registerSpecialPublishingTasks(nameSuffix = "AnalysisApiArtifacts", artifactProjectList = CompilerModules.analysisApiArtifacts)
 
     register<Exec>("mvnInstall") {
         group = "publishing"
