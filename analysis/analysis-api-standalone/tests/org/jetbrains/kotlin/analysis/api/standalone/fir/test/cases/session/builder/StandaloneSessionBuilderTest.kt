@@ -6,9 +6,9 @@
 
 package org.jetbrains.kotlin.analysis.api.standalone.fir.test.cases.session.builder
 
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiPrimitiveType
 import com.intellij.psi.PsiTypes
 import com.intellij.psi.impl.source.PsiClassReferenceType
@@ -17,22 +17,19 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaNonPublicApi
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
-import org.jetbrains.kotlin.analysis.api.impl.base.util.LibraryUtils
 import org.jetbrains.kotlin.analysis.api.javaInterop.asPsiClass
 import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalSourceOutOfBlockModificationEvent
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.standalone.StandaloneAnalysisAPISession
-import org.jetbrains.kotlin.analysis.api.standalone.StandaloneWorkaroundApi
 import org.jetbrains.kotlin.analysis.api.standalone.base.projectStructure.StandaloneProjectFactory
 import org.jetbrains.kotlin.analysis.api.standalone.buildStandaloneAnalysisAPISession
 import org.jetbrains.kotlin.analysis.api.standalone.fir.test.AbstractStandaloneTest
-import org.jetbrains.kotlin.analysis.api.standalone.projectStructure.StandaloneLibraryScopeConstructionMode
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
@@ -64,8 +61,8 @@ import kotlin.test.assertEquals
 
 @OptIn(KaExperimentalApi::class)
 class StandaloneSessionBuilderTest : AbstractStandaloneTest() {
-    override val suiteName: String
-        get() = "sessionBuilder"
+    override val suiteName: Path
+        get() = Paths.get("sessionBuilder")
 
     @Test
     fun testJdkSessionBuilder() {
@@ -434,115 +431,6 @@ class StandaloneSessionBuilderTest : AbstractStandaloneTest() {
     }
 
     @Test
-    fun testLibraryModuleScopeUsesParentTraversalByDefault() {
-        val compiledJar = compileToJar(testDataPath("otherModuleUsage").resolve("dependent"))
-
-        lateinit var libraryModule: KaLibraryModule
-
-        val session = buildStandaloneAnalysisAPISession(disposable) {
-            buildKtModuleProvider {
-                platform = JvmPlatforms.defaultJvmPlatform
-                libraryModule = addModule(
-                    buildKtLibraryModule {
-                        addBinaryRoot(compiledJar)
-                        platform = JvmPlatforms.defaultJvmPlatform
-                        libraryName = "dependency"
-                    }
-                )
-            }
-        }
-
-        val jarRoot = getJarRootVirtualFile(compiledJar, session)
-        val fileInJar = findFirstFileInJar(jarRoot)
-
-        assertLibraryScopeKindAndContainment(libraryModule, "Parent-traversal library search scope", jarRoot, fileInJar)
-    }
-
-    @Test
-    @OptIn(StandaloneWorkaroundApi::class)
-    fun testLibraryModuleScopeRespectsProviderDefaultAndModuleOverride() {
-        val compiledJar = compileToJar(testDataPath("otherModuleUsage").resolve("dependent"))
-
-        lateinit var inheritedModule: KaLibraryModule
-        lateinit var parentTraversalModule: KaLibraryModule
-        lateinit var trieModule: KaLibraryModule
-        lateinit var enumerationModule: KaLibraryModule
-
-        val session = buildStandaloneAnalysisAPISession(disposable) {
-            buildKtModuleProvider {
-                platform = JvmPlatforms.defaultJvmPlatform
-
-                // A provider-wide default that differs from the global default ([StandaloneLibraryScopeConstructionMode.ParentTraversal]).
-                libraryScopeConstructionMode = StandaloneLibraryScopeConstructionMode.Trie
-
-                // Inherits the provider-wide default.
-                inheritedModule = addModule(
-                    buildKtLibraryModule {
-                        addBinaryRoot(compiledJar)
-                        platform = JvmPlatforms.defaultJvmPlatform
-                        libraryName = "inherited"
-                    }
-                )
-
-                // The following modules each override the provider-wide default with a specific mode.
-                parentTraversalModule = addModule(
-                    buildKtLibraryModule {
-                        addBinaryRoot(compiledJar)
-                        libraryScopeConstructionMode = StandaloneLibraryScopeConstructionMode.ParentTraversal
-                        platform = JvmPlatforms.defaultJvmPlatform
-                        libraryName = "parentTraversalOverride"
-                    }
-                )
-                trieModule = addModule(
-                    buildKtLibraryModule {
-                        addBinaryRoot(compiledJar)
-                        libraryScopeConstructionMode = StandaloneLibraryScopeConstructionMode.Trie
-                        platform = JvmPlatforms.defaultJvmPlatform
-                        libraryName = "trieOverride"
-                    }
-                )
-                enumerationModule = addModule(
-                    buildKtLibraryModule {
-                        addBinaryRoot(compiledJar)
-                        libraryScopeConstructionMode = StandaloneLibraryScopeConstructionMode.Enumeration
-                        platform = JvmPlatforms.defaultJvmPlatform
-                        libraryName = "enumerationOverride"
-                    }
-                )
-            }
-        }
-
-        val jarRoot = getJarRootVirtualFile(compiledJar, session)
-        val fileInJar = findFirstFileInJar(jarRoot)
-
-        assertLibraryScopeKindAndContainment(inheritedModule, "Trie-based library search scope", jarRoot, fileInJar)
-        assertLibraryScopeKindAndContainment(parentTraversalModule, "Parent-traversal library search scope", jarRoot, fileInJar)
-        assertLibraryScopeKindAndContainment(trieModule, "Trie-based library search scope", jarRoot, fileInJar)
-        assertLibraryScopeKindAndContainment(enumerationModule, "Enumeration-based library search scope", jarRoot, fileInJar)
-    }
-
-    private fun getJarRootVirtualFile(jar: Path, session: StandaloneAnalysisAPISession): VirtualFile =
-        StandaloneProjectFactory.getVirtualFilesForLibraryRoots(listOf(jar), session.coreApplicationEnvironment).single()
-
-    private fun findFirstFileInJar(jarRoot: VirtualFile): VirtualFile =
-        LibraryUtils.getAllVirtualFilesFromRoot(jarRoot, includeRoot = false).first()
-
-    private fun assertLibraryScopeKindAndContainment(
-        module: KaLibraryModule,
-        expectedDescriptionPrefix: String,
-        jarRoot: VirtualFile,
-        fileInJar: VirtualFile,
-    ) {
-        val scope = module.baseContentScope
-        Assertions.assertTrue(
-            scope.toString().startsWith(expectedDescriptionPrefix),
-            "Expected a library scope matching \"$expectedDescriptionPrefix\", but got: $scope",
-        )
-        Assertions.assertTrue(scope.contains(jarRoot), "The scope should contain the JAR root: $jarRoot")
-        Assertions.assertTrue(scope.contains(fileInJar), "The scope should contain a file from the JAR: $fileInJar")
-    }
-
-    @Test
     fun testCodeFragment() {
         val root = "codeFragment"
 
@@ -619,6 +507,53 @@ class StandaloneSessionBuilderTest : AbstractStandaloneTest() {
             val callExpression = dummyFile.findDescendantOfType<KtCallExpression>()!!
             val call = callExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: error("Call inside a dummy file is unresolved")
             assert(call.symbol is KaNamedFunctionSymbol)
+        }
+    }
+
+    /**
+     * [org.jetbrains.kotlin.analysis.project.structure.impl.KotlinStandaloneProjectStructureProvider.getModule] creates a fresh
+     * [KaNotUnderContentRootModule] on each call for a file outside all registered content roots. These instances must be equal, otherwise
+     * [org.jetbrains.kotlin.analysis.low.level.api.fir.state.LLSimpleResolutionStrategyProvider] returns the wrong resolution strategy.
+     */
+    @Test
+    fun testFileNotUnderContentRoot() {
+        val root = "notUnderContentRoot"
+
+        val session = buildStandaloneAnalysisAPISession(disposable) {
+            buildKtModuleProvider {
+                platform = JvmPlatforms.defaultJvmPlatform
+                addModule(
+                    buildKtSourceModule {
+                        addSourceRoot(testDataPath(root).resolve("src"))
+                        platform = JvmPlatforms.defaultJvmPlatform
+                        moduleName = "main"
+                    }
+                )
+            }
+        }
+
+        val project = session.project
+        val outsidePath = testDataPath(root).resolve("outside").resolve("outside.kt").toAbsolutePath()
+        val outsideVirtualFile = session.coreApplicationEnvironment.localFileSystem.findFileByPath(outsidePath.toString())
+            ?: error("Cannot find a virtual file for $outsidePath")
+        val outsideFile = PsiManager.getInstance(project).findFile(outsideVirtualFile) as KtFile
+
+        val module1 = KotlinProjectStructureProvider.getModule(project, outsideFile, useSiteModule = null)
+        val module2 = KotlinProjectStructureProvider.getModule(project, outsideFile, useSiteModule = null)
+        requireIsInstance<KaNotUnderContentRootModule>(module1)
+        requireIsInstance<KaNotUnderContentRootModule>(module2)
+        assertEquals(module1, module2)
+        assertEquals(module1.hashCode(), module2.hashCode())
+
+        analyze(outsideFile) {
+            val function = outsideFile.findDescendantOfType<KtNamedFunction> { it.name == "outsideFunction" }!!
+            val functionSymbol = function.symbol
+            Assertions.assertEquals(KaSymbolOrigin.SOURCE, functionSymbol.origin)
+
+            val callExpression = outsideFile.findDescendantOfType<KtCallExpression>()!!
+            val call = callExpression.resolveToCall()?.successfulFunctionCallOrNull()
+                ?: error("Call inside a file outside content roots is unresolved")
+            Assertions.assertEquals(functionSymbol, call.symbol)
         }
     }
 

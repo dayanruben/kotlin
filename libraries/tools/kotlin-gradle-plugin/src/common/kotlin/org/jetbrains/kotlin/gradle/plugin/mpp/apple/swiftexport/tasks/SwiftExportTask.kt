@@ -245,9 +245,8 @@ internal abstract class SwiftExportTask @Inject constructor(
 
         swiftExportQueue.submit(SwiftExportAction::class.java) { workParameters ->
             workParameters.bridgeModuleName.set(parameters.bridgeModuleName)
-            workParameters.outputPath.set(parameters.outputPath)
+            workParameters.outputDirectory.set(parameters.outputDirectory)
             workParameters.stableDeclarationsOrder.set(parameters.stableDeclarationsOrder)
-            workParameters.swiftModulesFile.set(parameters.swiftModulesFile)
             workParameters.swiftModules.set(swiftModules)
             workParameters.swiftExportSettings.set(parameters.swiftExportSettings)
             workParameters.konanDistribution.set(kotlinNativeProvider.flatMap { it.bundleDirectory }.map { Distribution(it) })
@@ -279,7 +278,7 @@ internal abstract class SwiftExportTask @Inject constructor(
 
     private fun cleanup() {
         fileSystem.delete {
-            it.delete(parameters.outputPath)
+            it.delete(parameters.outputDirectory)
         }
     }
 

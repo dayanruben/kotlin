@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2026 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -1796,10 +1796,9 @@ internal object KotlinToolingDiagnostics {
             "$pluginString Gradle plugin is not compatible with 'org.jetbrains.kotlin.multiplatform' plugin."
     }
 
-    internal object KMPWithJavaDiagnostic : ToolingDiagnosticFactory(predefinedSeverity = WARNING, DiagnosticGroup.Kgp.Deprecation) {
+    internal object KMPWithJavaDiagnostic : ToolingDiagnosticFactory(predefinedSeverity = ERROR, DiagnosticGroup.Kgp.Deprecation) {
         operator fun invoke(): ToolingDiagnostic {
-            val severity = if (GradleVersion.current() >= GradleVersion.version("9.0")) ERROR else WARNING
-            return build(severity = severity) {
+            return build {
                 title("'org.jetbrains.kotlin.multiplatform' plugin 'withJava()' configuration deprecation.")
                     .description {
                         "Kotlin multiplatform plugin always configures Java sources compilation and 'withJava()' configuration is deprecated."
@@ -2421,18 +2420,6 @@ internal object KotlinToolingDiagnostics {
         }
     }
 
-    internal object DeprecatedKotlinJsPlugin : ToolingDiagnosticFactory(
-        FATAL,
-        DiagnosticGroup.Kgp.Deprecation,
-    ) {
-        operator fun invoke(trace: Throwable? = null) = build(throwable = trace) {
-            title { "'kotlin-js' Gradle plugin is deprecated" }
-                .description { "'kotlin-js' Gradle plugin is deprecated and will be removed in the future" }
-                .solution { "Please use 'kotlin(\"multiplatform\")' plugin with a 'js()' target instead" }
-                .documentationLink(URI("https://kotl.in/t6m3vu"))
-        }
-    }
-
     internal object XCFrameworkWithSwiftPMDependencies : ToolingDiagnosticFactory(
         WARNING,
         DiagnosticGroup.Kgp.Experimental,
@@ -2702,6 +2689,25 @@ internal object SharedNpmProjectInvalidPackageJson : ToolingDiagnosticFactory(
             title { "Skipping '$file': not a valid package.json" }
                 .description { "The file could not be parsed or has no 'name', so it is left out of the shared npm project." }
                 .solution { "Check the projects declared on the 'kotlinNpmSharedDependencies' / 'kotlinWasmNpmSharedDependencies' configurations." }
+        }
+    }
+
+    internal object RichTypeScriptDeclarationsUnsupportedBuildToolsApiVersion : ToolingDiagnosticFactory(
+        ERROR,
+        DiagnosticGroup.Kgp.Misconfiguration,
+    ) {
+        operator fun invoke(buildToolsApiVersion: String, minimalSupportedVersion: String) = build {
+            title { "Rich TypeScript declarations generation is not supported by the Kotlin Build Tools API $buildToolsApiVersion" }
+                .description {
+                    "The Kotlin Build Tools API version $buildToolsApiVersion configured for the project " +
+                            "supports only the legacy TypeScript declarations generation. " +
+                            "The rich TypeScript declarations generation requires Kotlin Build Tools API $minimalSupportedVersion or higher."
+                }
+                .solution {
+                    "Either opt in to the legacy TypeScript declarations generation by setting " +
+                            "'${PropertiesProvider.PropertyNames.KOTLIN_JS_GENERATE_RICH_TYPESCRIPT_DECLARATIONS}=false' in your gradle.properties, " +
+                            "or bump the Kotlin Build Tools API version to $minimalSupportedVersion or higher."
+                }
         }
     }
 }

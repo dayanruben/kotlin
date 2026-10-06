@@ -40,6 +40,7 @@ import kotlin.script.templates.standard.SimpleScriptTemplate
 import kotlin.test.*
 
 @ResourceLock(Resources.SYSTEM_OUT)
+@Suppress("DEPRECATION") // SimpleScriptTemplate: checks the mapping of the legacy standard templates
 class ScriptingHostTest {
 
     @Test
@@ -544,7 +545,7 @@ class ScriptingHostTest {
             }
             assertTrue(comp0 is ResultWithDiagnostics.Failure)
             val errors = comp0.reports.filter { it.severity == ScriptDiagnostic.Severity.ERROR }
-            assertTrue( errors.any { it.message.contains( "Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type ") })
+            assertTrue( errors.any { it.message.contains( "Unsafe call on receiver of nullable type") })
 
             // runtime
             fun evalWith(evalConfig: ScriptEvaluationConfiguration) =
@@ -914,6 +915,7 @@ private fun evalScriptWithResult(
 ): ResultValue =
     evalScriptWithConfiguration(script, host, compilation, evaluation).throwOnFailure().valueOrNull()!!.returnValue
 
+@Suppress("DEPRECATION") // SimpleScriptTemplate
 internal fun evalScriptWithConfiguration(
     script: String,
     host: BasicScriptingHost = makeScriptingHost(),

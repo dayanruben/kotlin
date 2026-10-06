@@ -121,7 +121,7 @@ class SwiftExportIT : KGPBaseTest() {
                 ":embedSwiftExportForXcode",
                 environmentVariables = swiftExportEmbedAndSignEnvVariables(testBuildDir)
             ) {
-                assertTasksExecuted(":iosArm64DebugSwiftExport")
+                assertTasksExecuted(":iosArm64SwiftExport")
                 assertTasksExecuted(":iosArm64MainKlibrary")
                 assertTasksExecuted(":compileKotlinIosArm64")
                 assertTasksExecuted(":compileSwiftExportMainKotlinIosArm64")
@@ -136,7 +136,7 @@ class SwiftExportIT : KGPBaseTest() {
                 assertDirectoryInProjectExists("build/SPMBuild/iosArm64/Debug")
                 assertDirectoryInProjectExists("build/SPMDerivedData")
                 assertDirectoryInProjectExists("build/SPMPackage/iosArm64/Debug")
-                assertDirectoryInProjectExists("build/SwiftExport/iosArm64/Debug")
+                assertDirectoryInProjectExists("build/SwiftExport/iosArm64")
 
                 val buildProductsDir = this@project.gradleRunner.environment?.get("BUILT_PRODUCTS_DIR")?.let { File(it) }
                 assertNotNull(buildProductsDir)
@@ -157,6 +157,20 @@ class SwiftExportIT : KGPBaseTest() {
                 assertFileExists(libShared.toPath())
 
                 assertHasDiagnostic(KotlinToolingDiagnostics.ExperimentalFeatureWarning, "Swift Export")
+            }
+
+            // The run is per target, so a Release build reuses it and only links and packages again.
+            build(
+                ":embedSwiftExportForXcode",
+                environmentVariables = swiftExportEmbedAndSignEnvVariables(testBuildDir, customVariables = mapOf("CONFIGURATION" to "Release"))
+            ) {
+                assertTasksUpToDate(":iosArm64SwiftExport", ":compileSwiftExportMainKotlinIosArm64")
+                assertTasksExecuted(
+                    ":linkSwiftExportBinaryReleaseStaticIosArm64",
+                    ":iosArm64ReleaseGenerateSPMPackage",
+                    ":iosArm64ReleaseBuildSPMPackage",
+                    ":copyReleaseSPMIntermediates",
+                )
             }
         }
     }
@@ -195,6 +209,13 @@ class SwiftExportIT : KGPBaseTest() {
                 environmentVariables = swiftExportEmbedAndSignEnvVariables(testBuildDir)
             ) {
                 assertTasksExecuted(":copyDebugSPMIntermediates")
+            }
+
+            build(
+                ":embedSwiftExportForXcode",
+                environmentVariables = swiftExportEmbedAndSignEnvVariables(testBuildDir)
+            ) {
+                assertTasksUpToDate(":copyDebugSPMIntermediates")
             }
 
             source.appendText(
@@ -241,6 +262,59 @@ class SwiftExportIT : KGPBaseTest() {
                         pathComponents = listOf("barbarbar()")
                     )
                 )
+            )
+        }
+    }
+
+    @DisplayName("KT-89354: what xcodebuild writes into its products directory keeps the Swift Export pipeline up-to-date")
+    @GradleTest
+    fun testXcodebuildKeepsSwiftExportUpToDate(
+        gradleVersion: GradleVersion,
+    ) {
+        project("emptyxcode", gradleVersion) {
+            plugins {
+                kotlin("multiplatform")
+            }
+            settingsBuildScriptInjection {
+                settings.rootProject.name = "shared"
+            }
+            buildScriptInjection {
+                project.applyMultiplatform {
+                    iosSimulatorArm64()
+                    sourceSets.commonMain.get().compileStubSourceWithSourceSetName()
+                }
+            }
+
+            val xcodeproj = projectPath.resolve("iosApp/iosApp.xcodeproj")
+            val pbxproj = xcodeproj.resolve("project.pbxproj")
+            pbxproj.writeText(pbxproj.readText().replace(":embedAndSignAppleFrameworkForXcode", ":embedSwiftExportForXcode"))
+
+            val derivedDataPath = projectPath.resolve("iosApp/iosApp.derivedData")
+            fun xcodebuild() = buildXcodeProject(
+                xcodeproj = xcodeproj,
+                buildSettingOverrides = mapOf("ARCHS" to "arm64"),
+                derivedDataPath = derivedDataPath,
+            ).gradleTaskOutcomes()
+
+            val swiftExportPipeline = listOf(
+                ":iosSimulatorArm64SwiftExport",
+                ":compileSwiftExportMainKotlinIosSimulatorArm64",
+                ":linkSwiftExportBinaryDebugStaticIosSimulatorArm64",
+                ":iosSimulatorArm64DebugGenerateSPMPackage",
+                ":iosSimulatorArm64DebugBuildSPMPackage",
+                ":mergeIosSimulatorDebugSwiftExportLibraries",
+                ":copyDebugSPMIntermediates",
+            )
+
+            val firstRun = xcodebuild()
+            assertTrue(swiftExportPipeline.all { it in firstRun }, "The Swift Export pipeline didn't run: $firstRun")
+            assertEquals(swiftExportPipeline.associateWith { null }, swiftExportPipeline.associateWith { firstRun[it] })
+
+            // The first build also linked the app into the products directory that Gradle copies into
+            val secondRun = xcodebuild()
+            assertEquals(
+                swiftExportPipeline.associateWith { "UP-TO-DATE" },
+                swiftExportPipeline.associateWith { secondRun[it] },
             )
         }
     }
@@ -324,15 +398,15 @@ class SwiftExportIT : KGPBaseTest() {
                 }
             }
             build(
-                ":iosArm64DebugSwiftExport",
+                ":iosArm64SwiftExport",
                 environmentVariables = swiftExportEmbedAndSignEnvVariables(testBuildDir)
             ) {
-                assertTasksExecuted(":iosArm64DebugSwiftExport")
-                assertDirectoryInProjectExists("build/SwiftExport/iosArm64/Debug")
+                assertTasksExecuted(":iosArm64SwiftExport")
+                assertDirectoryInProjectExists("build/SwiftExport/iosArm64")
             }
 
             val swiftFile = projectPath
-                .resolve("build/SwiftExport/iosArm64/Debug/files/Shared/Shared.swift")
+                .resolve("build/SwiftExport/iosArm64/files/Shared/Shared.swift")
                 .readText()
 
             assert(swiftFile.contains("iosBar()")) { "Swift file doesn't contain iosBar() from iosMain source set" }
@@ -543,15 +617,15 @@ class SwiftExportIT : KGPBaseTest() {
                 assertTasksExecuted(":dep-two:compileKotlinIosArm64")
                 assertTasksExecuted(":compileKotlinIosArm64")
 
-                val sharedPath = projectPath.resolve("build/SwiftExport/iosArm64/Debug/files/Shared")
-                val depOnePath = projectPath.resolve("build/SwiftExport/iosArm64/Debug/files/SharedDepOne")
-                val depTwoPath = projectPath.resolve("build/SwiftExport/iosArm64/Debug/files/SharedDepTwo")
+                val sharedPath = projectPath.resolve("build/SwiftExport/iosArm64/files/Shared")
+                val depOnePath = projectPath.resolve("build/SwiftExport/iosArm64/files/SharedDepOne")
+                val depTwoPath = projectPath.resolve("build/SwiftExport/iosArm64/files/SharedDepTwo")
 
                 assertDirectoryExists(sharedPath)
                 assertDirectoryExists(depOnePath)
                 assertDirectoryDoesNotExist(depTwoPath)
 
-                val modulesFile = projectPath.resolve("build/SwiftExport/iosArm64/Debug/modules/Shared.json")
+                val modulesFile = projectPath.resolve("build/SwiftExport/iosArm64/modules.json")
                 assertFileExists(modulesFile)
 
                 val modules = parseJsonToMap(modulesFile).getNestedList("modules")
@@ -735,7 +809,7 @@ class SwiftExportIT : KGPBaseTest() {
                 environmentVariables = swiftExportEmbedAndSignEnvVariables(testBuildDir)
             ) {
                 val librarySwiftPath = projectPath
-                    .resolve("build/SwiftExport/iosArm64/Debug/files/FooMultiplatformLibrary/FooMultiplatformLibrary.swift")
+                    .resolve("build/SwiftExport/iosArm64/files/FooMultiplatformLibrary/FooMultiplatformLibrary.swift")
                 assertFileExists(librarySwiftPath)
                 assertContains(
                     librarySwiftPath.readText(),

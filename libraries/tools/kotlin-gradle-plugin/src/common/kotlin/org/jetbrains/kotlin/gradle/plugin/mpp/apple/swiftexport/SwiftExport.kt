@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.internal.SwiftEx
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.internal.normalizedSwiftExportModuleName
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.tasks.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftimport.whenSwiftPMImportAvailable
+import org.jetbrains.kotlin.gradle.plugin.mpp.disambiguateName
 import org.jetbrains.kotlin.gradle.plugin.mpp.export.internal.SwiftExportConfigurationCompat
 import org.jetbrains.kotlin.gradle.plugin.mpp.export.internal.SwiftExportDeclaredModuleOptions
 import org.jetbrains.kotlin.gradle.plugin.mpp.export.internal.SwiftExportDependencySelector
@@ -70,10 +71,8 @@ internal fun Project.registerSwiftExportTask(
     )
 
     val swiftExportTask = registerSwiftExportRun(
-        taskNamePrefix = taskNamePrefix,
         taskGroup = taskGroup,
         target = target,
-        configuration = buildConfiguration,
         swiftApiModuleName = swiftApiModuleName,
         exportConfiguration = swiftExportConfiguration.exportConfiguration.get(),
         apiConfiguration = swiftExportConfiguration.apiConfiguration.orNull,
@@ -155,7 +154,7 @@ internal fun Project.registerSwiftExportTask(
         }
         copyTask.configure { task ->
             task.filterInterfacesToOwnModules.set(true)
-            task.swiftModulesFile.set(swiftExportTask.map { it.parameters.swiftModulesFile.get() })
+            task.swiftModulesFile.set(swiftExportTask.flatMap { it.parameters.swiftModulesFile })
         }
     }
 
@@ -163,10 +162,8 @@ internal fun Project.registerSwiftExportTask(
 }
 
 private fun Project.registerSwiftExportRun(
-    taskNamePrefix: String,
     taskGroup: String,
     target: KotlinNativeTarget,
-    configuration: String,
     swiftApiModuleName: Provider<String>,
     exportConfiguration: Configuration,
     apiConfiguration: Configuration?,
@@ -177,17 +174,14 @@ private fun Project.registerSwiftExportRun(
     dependencyOptionsOverrides: Provider<Map<SwiftExportDependencySelector, SwiftExportDeclaredModuleOptions>>,
     customSetting: Provider<Map<String, String>>,
 ): TaskProvider<SwiftExportTask> {
-    val swiftExportTaskName = lowerCamelCaseName(
-        taskNamePrefix,
-        "swiftExport"
-    )
+    // The run doesn't depend on the build type: the klib it translates is the same for Debug and Release.
+    // So there's one run per target, like the Kotlin compile tasks.
+    val swiftExportTaskName = target.disambiguateName("swiftExport")
 
-    val outputs = layout.buildDirectory.dir("SwiftExport/${target.name}/$configuration")
-    val files = outputs.map { it.dir("files") }
-    val serializedModules = outputs.map { it.dir("modules").file("${swiftApiModuleName.get()}.json") }
+    val outputDirectory = layout.buildDirectory.dir("SwiftExport/${target.name}")
 
     return locateOrRegisterTask<SwiftExportTask>(swiftExportTaskName) { task ->
-        task.description = "Run $taskNamePrefix Swift Export process"
+        task.description = "Run ${target.name} Swift Export process"
         task.group = taskGroup
 
         // Input
@@ -234,8 +228,7 @@ private fun Project.registerSwiftExportRun(
         )
 
         // Output
-        task.parameters.outputPath.set(files)
-        task.parameters.swiftModulesFile.set(serializedModules)
+        task.parameters.outputDirectory.set(outputDirectory)
     }
 }
 
@@ -251,9 +244,7 @@ private fun registerSwiftExportCompilationAndGetBinary(
         invokeWhenCreated = { swiftExportCompilation ->
             swiftExportCompilation.associateWith(mainCompilation)
 
-            swiftExportCompilation.defaultSourceSet.kotlin.srcDir(swiftExportTask.map {
-                it.parameters.outputPath.getFile().parentFile
-            })
+            swiftExportCompilation.defaultSourceSet.kotlin.srcDir(swiftExportTask.flatMap { it.parameters.outputDirectory })
 
             swiftExportCompilation.compileTaskProvider.configure {
                 it.compilerOptions.optIn.add("kotlin.experimental.ExperimentalNativeApi")
@@ -302,7 +293,7 @@ private fun Project.registerPackageGeneration(
             file(Distribution(konanDistribution.root.absolutePath).kotlinRuntimeForSwiftHome)
         )
 
-        task.swiftModulesFile.set(swiftExportTask.map { it.parameters.swiftModulesFile.get() })
+        task.swiftModulesFile.set(swiftExportTask.flatMap { it.parameters.swiftModulesFile })
         task.swiftLibraryName.set(swiftApiLibraryName)
         task.swiftApiModuleName.set(swiftApiModuleName)
 
