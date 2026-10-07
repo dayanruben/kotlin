@@ -401,25 +401,6 @@ external public actual fun round(x: Double): Double
 external public actual fun abs(x: Double): Double
 
 /**
- * Returns the sign of the given value [x]:
- *   - `-1.0` if the value is negative,
- *   - zero if the value is zero,
- *   - `1.0` if the value is positive
- *
- * Special case:
- *   - `sign(NaN)` is `NaN`
- *
- * @sample samples.math.MathSamples.Doubles.signFun
- */
-@SinceKotlin("1.2")
-public actual fun sign(x: Double): Double = when {
-    x.isNaN() -> Double.NaN
-    x > 0 -> 1.0
-    x < 0 -> -1.0
-    else -> x
-}
-
-/**
  * Returns the smaller of two values.
  *
  * If either value is `NaN`, then the result is `NaN`.
@@ -523,21 +504,6 @@ public actual val Double.absoluteValue: Double
     get() = abs(this)
 
 /**
- * Returns the sign of this value:
- *   - `-1.0` if the value is negative,
- *   - zero if the value is zero,
- *   - `1.0` if the value is positive
- *
- * Special case:
- *   - `NaN.sign` is `NaN`
- *
- * @sample samples.math.MathSamples.Doubles.sign
- */
-@SinceKotlin("1.2")
-public actual val Double.sign: Double
-    get() = sign(this)
-
-/**
  * Returns this value with the sign bit same as of the [sign] value.
  *
  * If [sign] is `NaN` the sign of the result is undefined.
@@ -557,41 +523,11 @@ external public actual fun Double.withSign(sign: Double): Double
 public actual fun Double.withSign(sign: Int): Double = withSign(sign.toDouble())
 
 /**
- * Returns the ulp (unit in the last place) of this value.
- *
- * An ulp is a positive distance between this value and the next nearest [Double] value larger in magnitude.
- *
- * Special cases:
- *   - `NaN.ulp` is `NaN`
- *   - `x.ulp` is `+Inf` when `x` is `+Inf` or `-Inf`
- *   - `x.ulp` is `2^971` when `x` is `Double.MAX_VALUE` or `-Double.MAX_VALUE`
- *   - `0.0.ulp` is `Double.MIN_VALUE`
- *
- * @sample samples.math.MathSamples.Doubles.ulp
- * @sample samples.math.MathSamples.Doubles.discreteValues
- */
-@SinceKotlin("1.2")
-public actual val Double.ulp: Double
-    get() {
-        val magnitude = abs(this)
-        val bits = magnitude.toRawBits()
-        // 1. Check the exponent: drop 52 fraction bits and check if what's left is 0x7ffL (the sign bit isn't set, all eight exponent bits
-        // are), if yes, it's either NaN or +Inf.
-        return if (bits shr 52 != 0x7ffL) {
-            // 2.1. If magnitude is Double.MAX_VALUE, return 2^971, otherwise the difference between magnitude.nextUp() & magnitude.
-            if (bits == 0x7fef_ffff_ffff_ffffL) Double.fromBits(0x7ca0_0000_0000_0000L) else Double.fromBits(bits + 1) - magnitude
-        } else {
-            // 2.2. If this is NaN, return as-is (abs won't change it), if this is +Inf or -Inf, return +Inf.
-            magnitude
-        }
-    }
-
-/**
  * Returns the [Double] value nearest to this value in a direction of positive infinity.
  *
  * Special cases:
- *   - `NaN.nextUp() is `NaN`
- *   - `Double.POSITIVE_INFINITY.nextUp() is `+Infinity`
+ *   - `NaN.nextUp()` is `NaN`
+ *   - `Double.POSITIVE_INFINITY.nextUp()` is `+Infinity`
  *   - `0.0.nextUp()` is `Double.MIN_VALUE`
  *
  * @see nextTowards
@@ -608,8 +544,8 @@ external public actual fun Double.nextUp(): Double
  * Returns the [Double] value nearest to this value in a direction of negative infinity.
  *
  * Special cases:
- *   - `NaN.nextDown() is `NaN`
- *   - `Double.NEGATIVE_INFINITY.nextDown() is `-Infinity`
+ *   - `NaN.nextDown()` is `NaN`
+ *   - `Double.NEGATIVE_INFINITY.nextDown()` is `-Infinity`
  *   - `0.0.nextDown()` is `-Double.MIN_VALUE`
  *
  * @see nextUp
@@ -644,44 +580,6 @@ external public actual fun Double.nextTowards(to: Double): Double
  */
 @GCUnsafeCall("Kotlin_math_Double_signBit")
 external private fun Double.signBit(): Boolean
-
-/**
- * Rounds this [Double] value to the nearest integer and converts the result to [Int].
- * Ties are rounded towards positive infinity.
- *
- * Special cases:
- *   - `x.roundToInt() == Int.MAX_VALUE` when `x > Int.MAX_VALUE`
- *   - `x.roundToInt() == Int.MIN_VALUE` when `x < Int.MIN_VALUE`
- *
- * @throws IllegalArgumentException when this value is `NaN`
- * @sample samples.math.MathSamples.Doubles.roundToInt
- */
-@SinceKotlin("1.2")
-public actual fun Double.roundToInt(): Int = when {
-    isNaN() -> throw IllegalArgumentException("Cannot round NaN value.")
-    this > Int.MAX_VALUE -> Int.MAX_VALUE
-    this < Int.MIN_VALUE -> Int.MIN_VALUE
-    else -> floor(this + 0.5).toInt()
-}
-
-/**
- * Rounds this [Double] value to the nearest integer and converts the result to [Long].
- * Ties are rounded towards positive infinity.
- *
- * Special cases:
- *   - `x.roundToLong() == Long.MAX_VALUE` when `x > Long.MAX_VALUE`
- *   - `x.roundToLong() == Long.MIN_VALUE` when `x < Long.MIN_VALUE`
- *
- * @throws IllegalArgumentException when this value is `NaN`
- * @sample samples.math.MathSamples.Doubles.roundToLong
- */
-@SinceKotlin("1.2")
-public actual fun Double.roundToLong(): Long = when {
-    isNaN() -> throw IllegalArgumentException("Cannot round NaN value.")
-    this > Long.MAX_VALUE -> Long.MAX_VALUE
-    this < Long.MIN_VALUE -> Long.MIN_VALUE
-    else -> floor(this + 0.5).toLong()
-}
 
 // endregion
 
@@ -1080,25 +978,6 @@ external public actual fun round(x: Float): Float
 external public actual fun abs(x: Float): Float
 
 /**
- * Returns the sign of the given value [x]:
- *   - `-1.0` if the value is negative,
- *   - zero if the value is zero,
- *   - `1.0` if the value is positive
- *
- * Special case:
- *   - `sign(NaN)` is `NaN`
- *
- * @sample samples.math.MathSamples.Floats.signFun
- */
-@SinceKotlin("1.2")
-public actual fun sign(x: Float): Float = when {
-    x.isNaN() -> Float.NaN
-    x > 0 -> 1.0f
-    x < 0 -> -1.0f
-    else -> x
-}
-
-/**
  * Returns the smaller of two values.
  *
  * If either value is `NaN`, then the result is `NaN`.
@@ -1203,21 +1082,6 @@ public actual val Float.absoluteValue: Float
     get() = abs(this)
 
 /**
- * Returns the sign of this value:
- *   - `-1.0` if the value is negative,
- *   - zero if the value is zero,
- *   - `1.0` if the value is positive
- *
- * Special case:
- *   - `NaN.sign` is `NaN`
- *
- * @sample samples.math.MathSamples.Floats.sign
- */
-@SinceKotlin("1.2")
-public actual val Float.sign: Float
-    get() = sign(this)
-
-/**
  * Returns this value with the sign bit same as of the [sign] value.
  *
  * If [sign] is `NaN` the sign of the result is undefined.
@@ -1273,8 +1137,8 @@ public val Float.ulp: Float
  * Returns the [Float] value nearest to this value in a direction of positive infinity.
  *
  * Special cases:
- *   - `NaN.nextUp() is `NaN`
- *   - `Float.POSITIVE_INFINITY.nextUp() is `+Infinity`
+ *   - `NaN.nextUp()` is `NaN`
+ *   - `Float.POSITIVE_INFINITY.nextUp()` is `+Infinity`
  *   - `0.0f.nextUp()` is `Float.MIN_VALUE`
  *
  * @see nextTowards
@@ -1291,8 +1155,8 @@ external public fun Float.nextUp(): Float
  * Returns the [Float] value nearest to this value in a direction of negative infinity.
  *
  * Special cases:
- *   - `NaN.nextDown() is `NaN`
- *   - `Float.NEGATIVE_INFINITY.nextDown() is `-Infinity`
+ *   - `NaN.nextDown()` is `NaN`
+ *   - `Float.NEGATIVE_INFINITY.nextDown()` is `-Infinity`
  *   - `0.0.nextDown()` is `-Float.MIN_VALUE`
  *
  * @see nextUp
@@ -1328,44 +1192,6 @@ external public fun Float.nextTowards(to: Float): Float
 @GCUnsafeCall("Kotlin_math_Float_signBit")
 external private fun Float.signBit(): Boolean
 
-/**
- * Rounds this [Float] value to the nearest integer and converts the result to [Int].
- * Ties are rounded towards positive infinity.
- *
- * Special cases:
- *   - `x.roundToInt() == Int.MAX_VALUE` when `x > Int.MAX_VALUE`
- *   - `x.roundToInt() == Int.MIN_VALUE` when `x < Int.MIN_VALUE`
- *
- * @throws IllegalArgumentException when this value is `NaN`
- * @sample samples.math.MathSamples.Floats.roundToInt
- */
-@SinceKotlin("1.2")
-public actual fun Float.roundToInt(): Int = when {
-    isNaN() -> throw IllegalArgumentException("Cannot round NaN value.")
-    this > Int.MAX_VALUE -> Int.MAX_VALUE
-    this < Int.MIN_VALUE -> Int.MIN_VALUE
-    else -> floor(this + 0.5f).toInt()
-}
-
-/**
- * Rounds this [Float] value to the nearest integer and converts the result to [Long].
- * Ties are rounded towards positive infinity.
- *
- * Special cases:
- *   - `x.roundToLong() == Long.MAX_VALUE` when `x > Long.MAX_VALUE`
- *   - `x.roundToLong() == Long.MIN_VALUE` when `x < Long.MIN_VALUE`
- *
- * @throws IllegalArgumentException when this value is `NaN`
- * @sample samples.math.MathSamples.Floats.roundToLong
- */
-@SinceKotlin("1.2")
-public actual fun Float.roundToLong(): Long = when {
-    isNaN() -> throw IllegalArgumentException("Cannot round NaN value.")
-    this > Long.MAX_VALUE -> Long.MAX_VALUE
-    this < Long.MIN_VALUE -> Long.MIN_VALUE
-    else -> floor(this + 0.5f).toLong()
-}
-
 // endregion
 
 // region ================ Integer Math ========================================
@@ -1382,35 +1208,6 @@ public actual fun Float.roundToLong(): Long = when {
 @SinceKotlin("1.2")
 @GCUnsafeCall("Kotlin_math_absi")
 external public actual fun abs(n: Int): Int
-
-/**
- * Returns the smaller of two values.
- *
- * @sample samples.math.MathSamples.Ints.min
- */
-@SinceKotlin("1.2")
-public actual fun min(a: Int, b: Int): Int = if (a < b) a else b
-
-/**
- * Returns the greater of two values.
- *
- * @sample samples.math.MathSamples.Ints.max
- */
-@SinceKotlin("1.2")
-public actual fun max(a: Int, b: Int): Int = if (a > b) a else b
-
-/**
- * Returns the absolute value of this value.
- *
- * Special cases:
- *   - `Int.MIN_VALUE.absoluteValue` is `Int.MIN_VALUE` due to an overflow
- *
- * @see abs actual function
- * @sample samples.math.MathSamples.Ints.absoluteValue
- */
-@SinceKotlin("1.2")
-public actual val Int.absoluteValue: Int
-    get() = abs(this)
 
 /**
  * Returns the sign of this value:
@@ -1442,35 +1239,6 @@ public actual val Int.sign: Int
 @SinceKotlin("1.2")
 @GCUnsafeCall("Kotlin_math_absl")
 external public actual fun abs(n: Long): Long
-
-/**
- * Returns the smaller of two values.
- *
- * @sample samples.math.MathSamples.Longs.min
- */
-@SinceKotlin("1.2")
-public actual fun min(a: Long, b: Long): Long = if (a < b) a else b
-
-/**
- * Returns the greater of two values.
- *
- * @sample samples.math.MathSamples.Longs.max
- */
-@SinceKotlin("1.2")
-public actual fun max(a: Long, b: Long): Long = if (a > b) a else b
-
-/**
- * Returns the absolute value of this value.
- *
- * Special cases:
- *   - `Long.MIN_VALUE.absoluteValue` is `Long.MIN_VALUE` due to an overflow
- *
- * @see abs function
- * @sample samples.math.MathSamples.Longs.absoluteValue
- */
-@SinceKotlin("1.2")
-public actual val Long.absoluteValue: Long
-    get() = abs(this)
 
 /**
  * Returns the sign of this value:

@@ -195,6 +195,8 @@ public final class org/jetbrains/kotlin/gradle/dsl/KotlinAndroidExtension$Defaul
 }
 
 public abstract interface class org/jetbrains/kotlin/gradle/dsl/KotlinBaseExtension : org/jetbrains/kotlin/gradle/dsl/KotlinTopLevelExtension {
+	public abstract fun getReturnValueCheckerMode ()Lorg/gradle/api/provider/Property;
+	public abstract fun getReturnValueCheckerModeForTests ()Lorg/gradle/api/provider/Property;
 }
 
 public final class org/jetbrains/kotlin/gradle/dsl/KotlinBrowserBundler : java/lang/Enum {
@@ -602,6 +604,14 @@ public final class org/jetbrains/kotlin/gradle/dsl/KotlinVersion$Companion {
 	public final fun getDEFAULT ()Lorg/jetbrains/kotlin/gradle/dsl/KotlinVersion;
 }
 
+public final class org/jetbrains/kotlin/gradle/dsl/ReturnValueCheckerMode : java/lang/Enum {
+	public static final field Check Lorg/jetbrains/kotlin/gradle/dsl/ReturnValueCheckerMode;
+	public static final field Disabled Lorg/jetbrains/kotlin/gradle/dsl/ReturnValueCheckerMode;
+	public static final field Full Lorg/jetbrains/kotlin/gradle/dsl/ReturnValueCheckerMode;
+	public static fun valueOf (Ljava/lang/String;)Lorg/jetbrains/kotlin/gradle/dsl/ReturnValueCheckerMode;
+	public static fun values ()[Lorg/jetbrains/kotlin/gradle/dsl/ReturnValueCheckerMode;
+}
+
 public abstract interface class org/jetbrains/kotlin/gradle/dsl/abi/AbiFilterSetSpec {
 	public abstract fun getAnnotatedWith ()Lorg/gradle/api/provider/SetProperty;
 	public abstract fun getByNames ()Lorg/gradle/api/provider/SetProperty;
@@ -741,6 +751,82 @@ public final class org/jetbrains/kotlin/gradle/dsl/jvm/JvmTargetValidationMode :
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lorg/jetbrains/kotlin/gradle/dsl/jvm/JvmTargetValidationMode;
 	public static fun values ()[Lorg/jetbrains/kotlin/gradle/dsl/jvm/JvmTargetValidationMode;
+}
+
+public final class org/jetbrains/kotlin/gradle/dsl/toolchain/nodejs/BuildPlatform : java/io/Serializable {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lorg/jetbrains/kotlin/gradle/dsl/toolchain/nodejs/BuildPlatform;
+	public static synthetic fun copy$default (Lorg/jetbrains/kotlin/gradle/dsl/toolchain/nodejs/BuildPlatform;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lorg/jetbrains/kotlin/gradle/dsl/toolchain/nodejs/BuildPlatform;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getArch ()Ljava/lang/String;
+	public final fun getOs ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class org/jetbrains/kotlin/gradle/dsl/toolchain/nodejs/DefaultNodeJsToolchainService : org/jetbrains/kotlin/gradle/dsl/toolchain/nodejs/NodeJsToolchainService {
+}
+
+public abstract class org/jetbrains/kotlin/gradle/dsl/toolchain/nodejs/DefaultNodeJsToolchainService$Parameters : org/jetbrains/kotlin/gradle/dsl/toolchain/nodejs/NodeJsToolchainService$Parameters {
+	public fun <init> ()V
+	public abstract fun getDownloadBaseUrl ()Lorg/gradle/api/provider/Property;
+	public abstract fun getInstallationDir ()Lorg/gradle/api/file/DirectoryProperty;
+	public abstract fun getOffline ()Lorg/gradle/api/provider/Property;
+}
+
+public abstract interface class org/jetbrains/kotlin/gradle/dsl/toolchain/nodejs/DisabledNodeJsToolchainService : org/jetbrains/kotlin/gradle/dsl/toolchain/nodejs/NodeJsToolchainService {
+}
+
+public abstract class org/jetbrains/kotlin/gradle/dsl/toolchain/nodejs/NodeJsExecutable {
+	public abstract fun getExecutable ()Lorg/gradle/api/provider/Property;
+	public abstract fun getPlatform ()Lorg/gradle/api/provider/Property;
+	public abstract fun getVersion ()Lorg/gradle/api/provider/Property;
+}
+
+public abstract class org/jetbrains/kotlin/gradle/dsl/toolchain/nodejs/NodeJsRequest {
+	public abstract fun getPlatform ()Lorg/gradle/api/provider/Property;
+	public abstract fun getVersion ()Lorg/gradle/api/provider/Property;
+	public final fun version (Ljava/lang/String;)V
+}
+
+public abstract interface class org/jetbrains/kotlin/gradle/dsl/toolchain/nodejs/NodeJsToolchainManagementDsl {
+	public abstract fun disable ()V
+	public abstract fun toolchainService (Lkotlin/jvm/functions/Function1;)V
+	public abstract fun toolchainService (Lkotlin/reflect/KClass;Lkotlin/jvm/functions/Function1;)V
+	public abstract fun toolchainService (Lkotlin/reflect/KClass;Lorg/gradle/api/Action;)V
+}
+
+public final class org/jetbrains/kotlin/gradle/dsl/toolchain/nodejs/NodeJsToolchainManagementDsl$DefaultImpls {
+	public static fun disable (Lorg/jetbrains/kotlin/gradle/dsl/toolchain/nodejs/NodeJsToolchainManagementDsl;)V
+	public static fun toolchainService (Lorg/jetbrains/kotlin/gradle/dsl/toolchain/nodejs/NodeJsToolchainManagementDsl;Lkotlin/reflect/KClass;Lorg/gradle/api/Action;)V
+}
+
+public abstract interface class org/jetbrains/kotlin/gradle/dsl/toolchain/nodejs/NodeJsToolchainService : org/gradle/api/services/BuildService {
+	public abstract fun request (Lorg/jetbrains/kotlin/gradle/dsl/toolchain/nodejs/NodeJsRequest;)Lorg/gradle/api/provider/Provider;
+}
+
+public abstract interface class org/jetbrains/kotlin/gradle/dsl/toolchain/nodejs/NodeJsToolchainService$Parameters : org/gradle/api/services/BuildServiceParameters {
+}
+
+public final class org/jetbrains/kotlin/gradle/dsl/toolchain/nodejs/NodeJsVersion : java/io/Serializable {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lorg/jetbrains/kotlin/gradle/dsl/toolchain/nodejs/NodeJsVersion;
+	public static synthetic fun copy$default (Lorg/jetbrains/kotlin/gradle/dsl/toolchain/nodejs/NodeJsVersion;Ljava/lang/String;ILjava/lang/Object;)Lorg/jetbrains/kotlin/gradle/dsl/toolchain/nodejs/NodeJsVersion;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getVersion ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class org/jetbrains/kotlin/gradle/dsl/toolchain/nodejs/PreInstalledNodeJsToolchainService : org/jetbrains/kotlin/gradle/dsl/toolchain/nodejs/NodeJsToolchainService {
+}
+
+public abstract class org/jetbrains/kotlin/gradle/dsl/toolchain/nodejs/PreInstalledNodeJsToolchainService$Parameters : org/jetbrains/kotlin/gradle/dsl/toolchain/nodejs/NodeJsToolchainService$Parameters {
+	public fun <init> ()V
+	public abstract fun getNodeJsExecutable ()Lorg/gradle/api/provider/Property;
 }
 
 public abstract interface class org/jetbrains/kotlin/gradle/plugin/CInteropSettings : org/gradle/api/Named {
@@ -1000,6 +1086,17 @@ public abstract interface class org/jetbrains/kotlin/gradle/plugin/KotlinDepende
 	public abstract fun npm (Ljava/io/File;)Lorg/gradle/api/artifacts/Dependency;
 	public abstract fun npm (Ljava/lang/String;Ljava/io/File;)Lorg/gradle/api/artifacts/Dependency;
 	public abstract fun npm (Ljava/lang/String;Ljava/lang/String;)Lorg/gradle/api/artifacts/Dependency;
+	public abstract fun npm (Ljava/lang/String;Lorg/gradle/api/provider/Provider;)V
+	public abstract fun npmDev (Ljava/lang/String;Ljava/io/File;)V
+	public abstract fun npmDev (Ljava/lang/String;Ljava/lang/String;)V
+	public abstract fun npmDev (Ljava/lang/String;Lorg/gradle/api/provider/Provider;)V
+	public abstract fun npmDevDirectory (Ljava/lang/String;Lorg/gradle/api/provider/Provider;)V
+	public abstract fun npmOptional (Ljava/lang/String;Ljava/io/File;)V
+	public abstract fun npmOptional (Ljava/lang/String;Ljava/lang/String;)V
+	public abstract fun npmOptional (Ljava/lang/String;Lorg/gradle/api/provider/Provider;)V
+	public abstract fun npmOptionalDirectory (Ljava/lang/String;Lorg/gradle/api/provider/Provider;)V
+	public abstract fun npmPeer (Ljava/lang/String;Ljava/lang/String;)V
+	public abstract fun npmPeer (Ljava/lang/String;Lorg/gradle/api/provider/Provider;)V
 	public abstract fun optionalNpm (Ljava/io/File;)Lorg/gradle/api/artifacts/Dependency;
 	public abstract fun optionalNpm (Ljava/lang/String;Ljava/io/File;)Lorg/gradle/api/artifacts/Dependency;
 	public abstract fun optionalNpm (Ljava/lang/String;Ljava/lang/String;)Lorg/gradle/api/artifacts/Dependency;
@@ -1496,6 +1593,7 @@ public abstract interface class org/jetbrains/kotlin/gradle/tasks/BaseKotlinComp
 	public abstract fun getMultiPlatformEnabled ()Lorg/gradle/api/provider/Property;
 	public abstract fun getPluginClasspath ()Lorg/gradle/api/file/ConfigurableFileCollection;
 	public abstract fun getPluginOptions ()Lorg/gradle/api/provider/ListProperty;
+	public abstract fun getReturnValueCheckerMode ()Lorg/gradle/api/provider/Property;
 	public abstract fun getSourceSetName ()Lorg/gradle/api/provider/Property;
 	public abstract fun getUseModuleDetection ()Lorg/gradle/api/provider/Property;
 }
@@ -1634,6 +1732,10 @@ public abstract interface class org/jetbrains/kotlin/gradle/tasks/abi/KotlinLega
 
 public abstract interface class org/jetbrains/kotlin/gradle/tasks/abi/KotlinLegacyAbiDumpTask : org/gradle/api/Task {
 	public abstract fun getDumpDir ()Lorg/gradle/api/provider/Provider;
+}
+
+public abstract interface class org/jetbrains/kotlin/gradle/tasks/nodejs/UsesNodeJsToolchainService : org/gradle/api/Task {
+	public abstract fun getNodeJsToolchainService ()Lorg/gradle/api/provider/Property;
 }
 
 public abstract interface class org/jetbrains/kotlin/project/model/LanguageSettings {

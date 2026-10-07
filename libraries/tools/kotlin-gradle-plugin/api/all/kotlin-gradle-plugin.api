@@ -172,6 +172,27 @@ public final class org/jetbrains/kotlin/gradle/dsl/KotlinJsCompile$DefaultImpls 
 	public static fun kotlinOptions (Lorg/jetbrains/kotlin/gradle/dsl/KotlinJsCompile;Lorg/gradle/api/Action;)V
 }
 
+public abstract class org/jetbrains/kotlin/gradle/dsl/KotlinJsProjectExtension : org/jetbrains/kotlin/gradle/dsl/KotlinSingleTargetExtension, org/jetbrains/kotlin/gradle/plugin/KotlinJsCompilerTypeHolder {
+	public fun <init> (Lorg/gradle/api/Project;)V
+	public fun getDefaultJsCompilerType ()Lorg/jetbrains/kotlin/gradle/plugin/KotlinJsCompilerType;
+	public fun getIR ()Lorg/jetbrains/kotlin/gradle/plugin/KotlinJsCompilerType;
+	public synthetic fun getTarget ()Lorg/jetbrains/kotlin/gradle/plugin/KotlinTarget;
+	public synthetic fun getTarget ()Lorg/jetbrains/kotlin/gradle/targets/js/dsl/KotlinJsTargetDsl;
+	public synthetic fun getTargetFuture$kotlin_gradle_plugin_common ()Lorg/jetbrains/kotlin/gradle/utils/Future;
+	public final synthetic fun getTargets ()Lorg/gradle/api/NamedDomainObjectContainer;
+	public final synthetic fun js ()Lorg/jetbrains/kotlin/gradle/targets/js/dsl/KotlinJsTargetDsl;
+	public final synthetic fun js (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lorg/jetbrains/kotlin/gradle/targets/js/dsl/KotlinJsTargetDsl;
+	public final synthetic fun js (Ljava/lang/String;Lorg/gradle/api/Action;)Lorg/jetbrains/kotlin/gradle/targets/js/dsl/KotlinJsTargetDsl;
+	public final synthetic fun js (Lkotlin/jvm/functions/Function1;)Lorg/jetbrains/kotlin/gradle/targets/js/dsl/KotlinJsTargetDsl;
+	public final synthetic fun js (Lorg/gradle/api/Action;)Lorg/jetbrains/kotlin/gradle/targets/js/dsl/KotlinJsTargetDsl;
+	public final synthetic fun js (Lorg/jetbrains/kotlin/gradle/plugin/KotlinJsCompilerType;Lkotlin/jvm/functions/Function1;)Lorg/jetbrains/kotlin/gradle/targets/js/dsl/KotlinJsTargetDsl;
+	public final synthetic fun js (Lorg/jetbrains/kotlin/gradle/plugin/KotlinJsCompilerType;Lorg/gradle/api/Action;)Lorg/jetbrains/kotlin/gradle/targets/js/dsl/KotlinJsTargetDsl;
+	public static synthetic fun js$default (Lorg/jetbrains/kotlin/gradle/dsl/KotlinJsProjectExtension;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lorg/jetbrains/kotlin/gradle/targets/js/dsl/KotlinJsTargetDsl;
+	public static synthetic fun js$default (Lorg/jetbrains/kotlin/gradle/dsl/KotlinJsProjectExtension;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lorg/jetbrains/kotlin/gradle/targets/js/dsl/KotlinJsTargetDsl;
+	public static synthetic fun js$default (Lorg/jetbrains/kotlin/gradle/dsl/KotlinJsProjectExtension;Lorg/jetbrains/kotlin/gradle/plugin/KotlinJsCompilerType;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lorg/jetbrains/kotlin/gradle/targets/js/dsl/KotlinJsTargetDsl;
+	public final synthetic fun registerTargetObserver (Lkotlin/jvm/functions/Function1;)V
+}
+
 public abstract interface class org/jetbrains/kotlin/gradle/dsl/KotlinJvmCompile : org/jetbrains/kotlin/gradle/tasks/KotlinJvmCompile {
 }
 
@@ -344,6 +365,22 @@ public final class org/jetbrains/kotlin/gradle/logging/GradleErrorMessageCollect
 	public fun hasErrors ()Z
 	public final fun report (Ljava/lang/Throwable;Lorg/jetbrains/kotlin/cli/common/messages/CompilerMessageSourceLocation;)V
 	public fun report (Lorg/jetbrains/kotlin/cli/common/messages/CompilerMessageSeverity;Ljava/lang/String;Lorg/jetbrains/kotlin/cli/common/messages/CompilerMessageSourceLocation;)V
+}
+
+public abstract interface class org/jetbrains/kotlin/gradle/npm/KotlinNpmDependency {
+	public abstract fun getName ()Ljava/lang/String;
+	public abstract fun getScope ()Lorg/jetbrains/kotlin/gradle/npm/KotlinNpmDependency$Scope;
+	public abstract fun getVersion ()Ljava/lang/String;
+}
+
+public final class org/jetbrains/kotlin/gradle/npm/KotlinNpmDependency$Scope : java/lang/Enum {
+	public static final field DEV Lorg/jetbrains/kotlin/gradle/npm/KotlinNpmDependency$Scope;
+	public static final field NORMAL Lorg/jetbrains/kotlin/gradle/npm/KotlinNpmDependency$Scope;
+	public static final field OPTIONAL Lorg/jetbrains/kotlin/gradle/npm/KotlinNpmDependency$Scope;
+	public static final field PEER Lorg/jetbrains/kotlin/gradle/npm/KotlinNpmDependency$Scope;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lorg/jetbrains/kotlin/gradle/npm/KotlinNpmDependency$Scope;
+	public static fun values ()[Lorg/jetbrains/kotlin/gradle/npm/KotlinNpmDependency$Scope;
 }
 
 public abstract class org/jetbrains/kotlin/gradle/plugin/AbstractKotlinAndroidPluginWrapper : org/jetbrains/kotlin/gradle/plugin/KotlinBasePluginWrapper {
@@ -1854,6 +1891,9 @@ public abstract class org/jetbrains/kotlin/gradle/plugin/mpp/export/ExportExtens
 }
 
 public abstract interface class org/jetbrains/kotlin/gradle/plugin/mpp/export/SwiftExportConfigurationDsl : org/jetbrains/kotlin/gradle/plugin/mpp/export/SwiftExportModuleOptionsDsl {
+	public abstract fun swiftPackageIntegration ()V
+	public abstract fun swiftPackageIntegration (Lkotlin/jvm/functions/Function1;)V
+	public abstract fun swiftPackageIntegration (Lorg/gradle/api/Action;)V
 	public abstract fun xcodeIntegration ()V
 	public abstract fun xcodeIntegration (Lkotlin/jvm/functions/Function1;)V
 	public abstract fun xcodeIntegration (Lorg/gradle/api/Action;)V
@@ -1873,6 +1913,10 @@ public abstract interface class org/jetbrains/kotlin/gradle/plugin/mpp/export/Sw
 public abstract interface class org/jetbrains/kotlin/gradle/plugin/mpp/export/SwiftExportModuleOptionsDsl {
 	public abstract fun getModuleName ()Lorg/gradle/api/provider/Property;
 	public abstract fun getRootPackage ()Lorg/gradle/api/provider/Property;
+}
+
+public abstract interface class org/jetbrains/kotlin/gradle/plugin/mpp/export/SwiftExportSwiftPackageIntegration : org/jetbrains/kotlin/gradle/plugin/mpp/export/SwiftExportIntegration {
+	public abstract fun getOutputDirectory ()Lorg/gradle/api/file/DirectoryProperty;
 }
 
 public final class org/jetbrains/kotlin/gradle/plugin/mpp/export/SwiftExportVisibility : java/lang/Enum {
@@ -2643,6 +2687,7 @@ public abstract interface class org/jetbrains/kotlin/gradle/targets/js/dsl/Kotli
 	public abstract fun firefox (Ljava/lang/String;)V
 	public abstract fun firefox (Ljava/lang/String;Lorg/gradle/api/Action;)V
 	public abstract fun getAllBrowserRunners ()Lorg/gradle/api/provider/Provider;
+	public abstract fun getBrowserRunners ()Lorg/gradle/api/NamedDomainObjectSet;
 	public abstract fun getDefaultTestsLocationProvider ()Lorg/gradle/api/provider/Provider;
 	public abstract fun webkit (Ljava/lang/String;)V
 	public abstract fun webkit (Ljava/lang/String;Lorg/gradle/api/Action;)V
@@ -3688,25 +3733,6 @@ public final class org/jetbrains/kotlin/gradle/targets/js/npm/NpmDependency$Scop
 	public static fun values ()[Lorg/jetbrains/kotlin/gradle/targets/js/npm/NpmDependency$Scope;
 }
 
-public final class org/jetbrains/kotlin/gradle/targets/js/npm/NpmDependencyDeclaration : java/io/Serializable {
-	public fun <init> (Lorg/jetbrains/kotlin/gradle/targets/js/npm/NpmDependency$Scope;Ljava/lang/String;Ljava/lang/String;)V
-	public final fun component1 ()Lorg/jetbrains/kotlin/gradle/targets/js/npm/NpmDependency$Scope;
-	public final fun component2 ()Ljava/lang/String;
-	public final fun component3 ()Ljava/lang/String;
-	public final fun copy (Lorg/jetbrains/kotlin/gradle/targets/js/npm/NpmDependency$Scope;Ljava/lang/String;Ljava/lang/String;)Lorg/jetbrains/kotlin/gradle/targets/js/npm/NpmDependencyDeclaration;
-	public static synthetic fun copy$default (Lorg/jetbrains/kotlin/gradle/targets/js/npm/NpmDependencyDeclaration;Lorg/jetbrains/kotlin/gradle/targets/js/npm/NpmDependency$Scope;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lorg/jetbrains/kotlin/gradle/targets/js/npm/NpmDependencyDeclaration;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getName ()Ljava/lang/String;
-	public final fun getScope ()Lorg/jetbrains/kotlin/gradle/targets/js/npm/NpmDependency$Scope;
-	public final fun getVersion ()Ljava/lang/String;
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final class org/jetbrains/kotlin/gradle/targets/js/npm/NpmDependencyDeclarationKt {
-	public static final fun uniqueRepresentation (Lorg/jetbrains/kotlin/gradle/targets/js/npm/NpmDependencyDeclaration;)Ljava/lang/String;
-}
-
 public abstract interface class org/jetbrains/kotlin/gradle/targets/js/npm/NpmDependencyExtension : org/jetbrains/kotlin/gradle/targets/js/npm/BaseNpmDependencyExtension, org/jetbrains/kotlin/gradle/targets/js/npm/NpmDependencyWithExternalsExtension, org/jetbrains/kotlin/gradle/targets/js/npm/NpmDirectoryDependencyExtension, org/jetbrains/kotlin/gradle/targets/js/npm/NpmDirectoryDependencyWithExternalsExtension {
 }
 
@@ -4221,12 +4247,6 @@ public final class org/jetbrains/kotlin/gradle/targets/js/npm/resolver/KotlinCom
 
 public final class org/jetbrains/kotlin/gradle/targets/js/npm/resolver/KotlinCompilationNpmResolver$Companion {
 	public final fun getPublicPackageJsonAttribute ()Lorg/gradle/api/attributes/Attribute;
-}
-
-public final class org/jetbrains/kotlin/gradle/targets/js/npm/resolver/KotlinCompilationNpmResolver$ConfigurationVisitor {
-	public fun <init> (Lorg/jetbrains/kotlin/gradle/targets/js/npm/resolver/KotlinCompilationNpmResolver;)V
-	public final fun toPackageJsonProducer ()Lorg/jetbrains/kotlin/gradle/targets/js/npm/resolver/KotlinCompilationNpmResolution;
-	public final fun visit (Lorg/gradle/api/artifacts/Configuration;)V
 }
 
 public final class org/jetbrains/kotlin/gradle/targets/js/npm/resolver/KotlinProjectNpmResolver : java/io/Serializable {
@@ -5788,94 +5808,6 @@ public class org/jetbrains/kotlin/gradle/targets/web/nodejs/NpmToolingEnv {
 	public final fun getVersion ()Ljava/lang/String;
 }
 
-public final class org/jetbrains/kotlin/gradle/targets/web/nodejs/toolchain/BuildPlatform : java/io/Serializable {
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
-	public final fun component1 ()Ljava/lang/String;
-	public final fun component2 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lorg/jetbrains/kotlin/gradle/targets/web/nodejs/toolchain/BuildPlatform;
-	public static synthetic fun copy$default (Lorg/jetbrains/kotlin/gradle/targets/web/nodejs/toolchain/BuildPlatform;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lorg/jetbrains/kotlin/gradle/targets/web/nodejs/toolchain/BuildPlatform;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getArch ()Ljava/lang/String;
-	public final fun getOs ()Ljava/lang/String;
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public abstract class org/jetbrains/kotlin/gradle/targets/web/nodejs/toolchain/DefaultNodeJsToolchainService : org/jetbrains/kotlin/gradle/targets/web/nodejs/toolchain/NodeJsToolchainService {
-	public static final field Companion Lorg/jetbrains/kotlin/gradle/targets/web/nodejs/toolchain/DefaultNodeJsToolchainService$Companion;
-	public fun request (Lorg/jetbrains/kotlin/gradle/targets/web/nodejs/toolchain/NodeJsRequest;)Lorg/gradle/api/provider/Provider;
-}
-
-public final class org/jetbrains/kotlin/gradle/targets/web/nodejs/toolchain/DefaultNodeJsToolchainService$Companion {
-}
-
-public abstract class org/jetbrains/kotlin/gradle/targets/web/nodejs/toolchain/DefaultNodeJsToolchainService$Parameters : org/jetbrains/kotlin/gradle/targets/web/nodejs/toolchain/NodeJsToolchainService$Parameters {
-	public fun <init> ()V
-	public abstract fun getDownloadBaseUrl ()Lorg/gradle/api/provider/Property;
-	public abstract fun getInstallationDir ()Lorg/gradle/api/file/DirectoryProperty;
-	public abstract fun getOffline ()Lorg/gradle/api/provider/Property;
-}
-
-public abstract class org/jetbrains/kotlin/gradle/targets/web/nodejs/toolchain/DisabledNodeJsToolchainService : org/jetbrains/kotlin/gradle/targets/web/nodejs/toolchain/NodeJsToolchainService {
-	public static final field Companion Lorg/jetbrains/kotlin/gradle/targets/web/nodejs/toolchain/DisabledNodeJsToolchainService$Companion;
-	public fun <init> ()V
-	public fun request (Lorg/jetbrains/kotlin/gradle/targets/web/nodejs/toolchain/NodeJsRequest;)Lorg/gradle/api/provider/Provider;
-}
-
-public final class org/jetbrains/kotlin/gradle/targets/web/nodejs/toolchain/DisabledNodeJsToolchainService$Companion {
-}
-
-public abstract class org/jetbrains/kotlin/gradle/targets/web/nodejs/toolchain/NodeJsExecutable {
-	public abstract fun getExecutable ()Lorg/gradle/api/provider/Property;
-	public abstract fun getPlatform ()Lorg/gradle/api/provider/Property;
-	public abstract fun getVersion ()Lorg/gradle/api/provider/Property;
-}
-
-public abstract class org/jetbrains/kotlin/gradle/targets/web/nodejs/toolchain/NodeJsRequest {
-	public abstract fun getPlatform ()Lorg/gradle/api/provider/Property;
-	public abstract fun getVersion ()Lorg/gradle/api/provider/Property;
-	public final fun version (Ljava/lang/String;)V
-}
-
-public abstract interface class org/jetbrains/kotlin/gradle/targets/web/nodejs/toolchain/NodeJsToolchainService : org/gradle/api/services/BuildService {
-	public static final field Companion Lorg/jetbrains/kotlin/gradle/targets/web/nodejs/toolchain/NodeJsToolchainService$Companion;
-	public abstract fun request (Lorg/jetbrains/kotlin/gradle/targets/web/nodejs/toolchain/NodeJsRequest;)Lorg/gradle/api/provider/Provider;
-}
-
-public final class org/jetbrains/kotlin/gradle/targets/web/nodejs/toolchain/NodeJsToolchainService$Companion {
-}
-
-public abstract interface class org/jetbrains/kotlin/gradle/targets/web/nodejs/toolchain/NodeJsToolchainService$Parameters : org/gradle/api/services/BuildServiceParameters {
-}
-
-public final class org/jetbrains/kotlin/gradle/targets/web/nodejs/toolchain/NodeJsVersion : java/io/Serializable {
-	public fun <init> (Ljava/lang/String;)V
-	public final fun component1 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/String;)Lorg/jetbrains/kotlin/gradle/targets/web/nodejs/toolchain/NodeJsVersion;
-	public static synthetic fun copy$default (Lorg/jetbrains/kotlin/gradle/targets/web/nodejs/toolchain/NodeJsVersion;Ljava/lang/String;ILjava/lang/Object;)Lorg/jetbrains/kotlin/gradle/targets/web/nodejs/toolchain/NodeJsVersion;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getVersion ()Ljava/lang/String;
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public abstract class org/jetbrains/kotlin/gradle/targets/web/nodejs/toolchain/PreInstalledNodeJsToolchainService : org/jetbrains/kotlin/gradle/targets/web/nodejs/toolchain/NodeJsToolchainService {
-	public static final field Companion Lorg/jetbrains/kotlin/gradle/targets/web/nodejs/toolchain/PreInstalledNodeJsToolchainService$Companion;
-	public fun request (Lorg/jetbrains/kotlin/gradle/targets/web/nodejs/toolchain/NodeJsRequest;)Lorg/gradle/api/provider/Provider;
-}
-
-public final class org/jetbrains/kotlin/gradle/targets/web/nodejs/toolchain/PreInstalledNodeJsToolchainService$Companion {
-}
-
-public abstract class org/jetbrains/kotlin/gradle/targets/web/nodejs/toolchain/PreInstalledNodeJsToolchainService$Parameters : org/jetbrains/kotlin/gradle/targets/web/nodejs/toolchain/NodeJsToolchainService$Parameters {
-	public fun <init> ()V
-	public abstract fun getNodeJsExecutable ()Lorg/gradle/api/provider/Property;
-}
-
-public abstract interface class org/jetbrains/kotlin/gradle/targets/web/nodejs/toolchain/UsesNodeJsToolchainService : org/gradle/api/Task {
-	public abstract fun getNodeJsToolchainService ()Lorg/gradle/api/provider/Property;
-}
-
 public abstract interface class org/jetbrains/kotlin/gradle/targets/web/npm/CommonNpmResolverPlugin : org/gradle/api/Plugin {
 }
 
@@ -5999,6 +5931,7 @@ public abstract class org/jetbrains/kotlin/gradle/tasks/AbstractKotlinNativeComp
 	public abstract fun getOptimized ()Z
 	public fun getOutputFile ()Lorg/gradle/api/provider/Provider;
 	public abstract fun getOutputKind ()Lorg/jetbrains/kotlin/konan/target/CompilerOutputKind;
+	public abstract fun getReturnValueCheckerMode ()Lorg/gradle/api/provider/Property;
 	public final fun getTarget ()Ljava/lang/String;
 	public fun setCompilerPluginClasspath (Lorg/gradle/api/file/FileCollection;)V
 	public final fun setKotlinPluginData (Lorg/gradle/api/provider/Provider;)V

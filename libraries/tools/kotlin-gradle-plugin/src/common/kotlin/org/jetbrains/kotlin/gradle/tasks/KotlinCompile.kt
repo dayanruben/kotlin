@@ -220,9 +220,10 @@ abstract class KotlinCompile @Inject constructor(
             overrideXJvmDefaultInPresenceOfKotlinDslPlugin(args)
 
             explicitApiMode.orNull?.run { args.explicitApi = toCompilerValue() }
+            returnValueCheckerMode.orNull?.run { args.returnValueChecker = toCompilerValue() }
 
             if (useFirRunner.get()) {
-                @Suppress("DEPRECATION")
+                @Suppress("DEPRECATION_ERROR")
                 if (compilerOptions.languageVersion.orElse(KotlinVersion.DEFAULT).get() < KotlinVersion.KOTLIN_2_0) {
                     reportDiagnostic(
                         KotlinToolingDiagnostics.IcFirMisconfigurationLV(
@@ -348,8 +349,7 @@ abstract class KotlinCompile @Inject constructor(
         args: K2JVMCompilerArguments,
     ) {
         val kotlinCompilerVersion = kotlinCompilerVersion.orNull
-        val shouldSkipCheck = runViaBuildToolsApi.get() &&
-                kotlinCompilerVersion != null &&
+        val shouldSkipCheck = kotlinCompilerVersion != null &&
                 kotlinCompilerVersion <= KotlinToolingVersion(2, 2, 19, null)
         if (!shouldSkipCheck && kotlinDslPluginIsPresent.get() && args.freeArgs.any { it.startsWith("-Xjvm-default") }) {
             val xJvmDefaultArg = args.freeArgs.first { it.startsWith("-Xjvm-default") }

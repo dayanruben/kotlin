@@ -3518,6 +3518,12 @@ public class PsiParsingTestGenerated extends AbstractPsiParsingTest {
     }
 
     @Test
+    @TestMetadata("codeBlockWithBlockComment.kt")
+    public void testCodeBlockWithBlockComment() {
+      run("codeBlockWithBlockComment.kt");
+    }
+
+    @Test
     @TestMetadata("CodeBlocks.kt")
     public void testCodeBlocks() {
       run("CodeBlocks.kt");
@@ -3638,6 +3644,12 @@ public class PsiParsingTestGenerated extends AbstractPsiParsingTest {
     }
 
     @Test
+    @TestMetadata("kt89933.kt")
+    public void testKt89933() {
+      run("kt89933.kt");
+    }
+
+    @Test
     @TestMetadata("Markdown.kt")
     public void testMarkdown() {
       run("Markdown.kt");
@@ -3743,6 +3755,12 @@ public class PsiParsingTestGenerated extends AbstractPsiParsingTest {
     @TestMetadata("TwoTags.kt")
     public void testTwoTags() {
       run("TwoTags.kt");
+    }
+
+    @Test
+    @TestMetadata("unclosedCodeBlocks.kt")
+    public void testUnclosedCodeBlocks() {
+      run("unclosedCodeBlocks.kt");
     }
   }
 
