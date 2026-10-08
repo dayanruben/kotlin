@@ -676,6 +676,7 @@ public final class org/jetbrains/kotlin/gradle/plugin/ProjectLocalConfigurations
 public final class org/jetbrains/kotlin/gradle/plugin/SubpluginEnvironment {
 	public static final field Companion Lorg/jetbrains/kotlin/gradle/plugin/SubpluginEnvironment$Companion;
 	public fun <init> (Ljava/util/List;Ljava/lang/String;)V
+	public fun <init> (Ljava/util/List;Lorg/gradle/api/provider/Provider;)V
 	public final fun addSubpluginOptions (Lorg/gradle/api/Project;Lorg/jetbrains/kotlin/gradle/plugin/KotlinCompilation;)Ljava/util/List;
 }
 
@@ -2521,6 +2522,9 @@ public abstract class org/jetbrains/kotlin/gradle/targets/js/KotlinWasmTarget : 
 	public fun d8 (Lorg/gradle/api/Action;)V
 	public fun getD8 ()Lorg/jetbrains/kotlin/gradle/targets/js/dsl/KotlinWasmD8Dsl;
 	public fun isD8Configured ()Z
+	public fun nodejs ()V
+	public fun nodejs (Lkotlin/jvm/functions/Function1;)V
+	public fun nodejs (Lorg/gradle/api/Action;)V
 	public fun wasmtime ()V
 	public fun wasmtime (Lkotlin/jvm/functions/Function1;)V
 	public fun wasmtime (Lorg/gradle/api/Action;)V
@@ -2870,6 +2874,9 @@ public final class org/jetbrains/kotlin/gradle/targets/js/dsl/KotlinWasmTargetDs
 }
 
 public abstract interface class org/jetbrains/kotlin/gradle/targets/js/dsl/KotlinWasmWasiTargetDsl : org/jetbrains/kotlin/gradle/plugin/mpp/HasBinaries, org/jetbrains/kotlin/gradle/targets/js/dsl/KotlinTargetWithNodeJsDsl, org/jetbrains/kotlin/gradle/targets/js/dsl/KotlinWasmTargetDsl {
+	public abstract fun nodejs ()V
+	public abstract fun nodejs (Lkotlin/jvm/functions/Function1;)V
+	public abstract fun nodejs (Lorg/gradle/api/Action;)V
 	public abstract fun wasmtime ()V
 	public abstract fun wasmtime (Lkotlin/jvm/functions/Function1;)V
 	public abstract fun wasmtime (Lorg/gradle/api/Action;)V
@@ -2883,6 +2890,7 @@ public final class org/jetbrains/kotlin/gradle/targets/js/dsl/KotlinWasmWasiTarg
 	public static synthetic fun getPreset (Lorg/jetbrains/kotlin/gradle/targets/js/dsl/KotlinWasmWasiTargetDsl;)Lorg/jetbrains/kotlin/gradle/plugin/KotlinTargetPreset;
 	public static fun mavenPublication (Lorg/jetbrains/kotlin/gradle/targets/js/dsl/KotlinWasmWasiTargetDsl;Lkotlin/jvm/functions/Function1;)V
 	public static fun nodejs (Lorg/jetbrains/kotlin/gradle/targets/js/dsl/KotlinWasmWasiTargetDsl;)V
+	public static fun nodejs (Lorg/jetbrains/kotlin/gradle/targets/js/dsl/KotlinWasmWasiTargetDsl;Lkotlin/jvm/functions/Function1;)V
 	public static fun nodejs (Lorg/jetbrains/kotlin/gradle/targets/js/dsl/KotlinWasmWasiTargetDsl;Lorg/gradle/api/Action;)V
 	public static fun wasmtime (Lorg/jetbrains/kotlin/gradle/targets/js/dsl/KotlinWasmWasiTargetDsl;)V
 	public static fun wasmtime (Lorg/jetbrains/kotlin/gradle/targets/js/dsl/KotlinWasmWasiTargetDsl;Lorg/gradle/api/Action;)V
@@ -3403,7 +3411,7 @@ public final class org/jetbrains/kotlin/gradle/targets/js/nodejs/NodeJsEnvSpec$C
 	public final fun getEXTENSION_NAME ()Ljava/lang/String;
 }
 
-public abstract class org/jetbrains/kotlin/gradle/targets/js/nodejs/NodeJsExec : org/gradle/api/tasks/AbstractExecTask, org/jetbrains/kotlin/gradle/targets/js/npm/RequiresNpmDependenciesTask {
+public abstract class org/jetbrains/kotlin/gradle/targets/js/nodejs/NodeJsExec : org/gradle/api/tasks/AbstractExecTask, org/jetbrains/kotlin/gradle/targets/js/npm/RequiresNpmDependenciesTask, org/jetbrains/kotlin/gradle/tasks/nodejs/UsesNodeJsToolchainService {
 	public static final field Companion Lorg/jetbrains/kotlin/gradle/targets/js/nodejs/NodeJsExec$Companion;
 	public fun <init> (Lorg/jetbrains/kotlin/gradle/targets/js/ir/KotlinJsIrCompilation;)V
 	protected fun exec ()V
@@ -4538,7 +4546,7 @@ public final class org/jetbrains/kotlin/gradle/targets/js/testing/mocha/KotlinMo
 public final class org/jetbrains/kotlin/gradle/targets/js/testing/mocha/KotlinMocha$Companion {
 }
 
-public abstract class org/jetbrains/kotlin/gradle/targets/js/typescript/TypeScriptValidationTask : org/gradle/api/DefaultTask, org/jetbrains/kotlin/gradle/targets/js/npm/RequiresNpmDependenciesTask {
+public abstract class org/jetbrains/kotlin/gradle/targets/js/typescript/TypeScriptValidationTask : org/gradle/api/DefaultTask, org/jetbrains/kotlin/gradle/targets/js/npm/RequiresNpmDependenciesTask, org/jetbrains/kotlin/gradle/tasks/nodejs/UsesNodeJsToolchainService {
 	public static final field Companion Lorg/jetbrains/kotlin/gradle/targets/js/typescript/TypeScriptValidationTask$Companion;
 	public static final field NAME Ljava/lang/String;
 	public final fun getCompilation ()Lorg/jetbrains/kotlin/gradle/targets/js/ir/KotlinJsIrCompilation;
@@ -4557,7 +4565,7 @@ public final class org/jetbrains/kotlin/gradle/targets/js/webpack/Infrastructure
 	public final fun setValue (Z)V
 }
 
-public abstract class org/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpack : org/gradle/api/DefaultTask, org/jetbrains/kotlin/gradle/report/UsesBuildMetricsService, org/jetbrains/kotlin/gradle/targets/js/dsl/WebpackRulesDsl, org/jetbrains/kotlin/gradle/targets/js/npm/RequiresNpmDependenciesTask {
+public abstract class org/jetbrains/kotlin/gradle/targets/js/webpack/KotlinWebpack : org/gradle/api/DefaultTask, org/jetbrains/kotlin/gradle/report/UsesBuildMetricsService, org/jetbrains/kotlin/gradle/targets/js/dsl/WebpackRulesDsl, org/jetbrains/kotlin/gradle/targets/js/npm/RequiresNpmDependenciesTask, org/jetbrains/kotlin/gradle/tasks/nodejs/UsesNodeJsToolchainService {
 	public fun cssSupport (Lorg/gradle/api/Action;)V
 	public final fun doExecute ()V
 	public final fun getArgs ()Ljava/util/List;
