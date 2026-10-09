@@ -2306,6 +2306,12 @@ public class SourceLikeResolveCandidatesFirTreeConsistencyTestGenerated extends 
     }
 
     @Test
+    @TestMetadata("arrayOperator.kt")
+    public void testArrayOperator() {
+      run("arrayOperator.kt");
+    }
+
+    @Test
     @TestMetadata("companionBlockOf.kt")
     public void testCompanionBlockOf() {
       run("companionBlockOf.kt");
@@ -2339,6 +2345,12 @@ public class SourceLikeResolveCandidatesFirTreeConsistencyTestGenerated extends 
     @TestMetadata("customNonGenericCollectionOverload.kt")
     public void testCustomNonGenericCollectionOverload() {
       run("customNonGenericCollectionOverload.kt");
+    }
+
+    @Test
+    @TestMetadata("doubleArrayOperator.kt")
+    public void testDoubleArrayOperator() {
+      run("doubleArrayOperator.kt");
     }
 
     @Test
@@ -2399,6 +2411,12 @@ public class SourceLikeResolveCandidatesFirTreeConsistencyTestGenerated extends 
     @TestMetadata("uintArrayAnnotation.kt")
     public void testUintArrayAnnotation() {
       run("uintArrayAnnotation.kt");
+    }
+
+    @Test
+    @TestMetadata("ulongArrayOperator.kt")
+    public void testUlongArrayOperator() {
+      run("ulongArrayOperator.kt");
     }
   }
 

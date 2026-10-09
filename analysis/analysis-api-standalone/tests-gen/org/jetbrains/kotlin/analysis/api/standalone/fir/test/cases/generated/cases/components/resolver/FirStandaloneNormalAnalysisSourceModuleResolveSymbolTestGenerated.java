@@ -2304,6 +2304,12 @@ public class FirStandaloneNormalAnalysisSourceModuleResolveSymbolTestGenerated e
     }
 
     @Test
+    @TestMetadata("arrayOperator.kt")
+    public void testArrayOperator() {
+      run("arrayOperator.kt");
+    }
+
+    @Test
     @TestMetadata("companionBlockOf.kt")
     public void testCompanionBlockOf() {
       run("companionBlockOf.kt");
@@ -2337,6 +2343,12 @@ public class FirStandaloneNormalAnalysisSourceModuleResolveSymbolTestGenerated e
     @TestMetadata("customNonGenericCollectionOverload.kt")
     public void testCustomNonGenericCollectionOverload() {
       run("customNonGenericCollectionOverload.kt");
+    }
+
+    @Test
+    @TestMetadata("doubleArrayOperator.kt")
+    public void testDoubleArrayOperator() {
+      run("doubleArrayOperator.kt");
     }
 
     @Test
@@ -2397,6 +2409,12 @@ public class FirStandaloneNormalAnalysisSourceModuleResolveSymbolTestGenerated e
     @TestMetadata("uintArrayAnnotation.kt")
     public void testUintArrayAnnotation() {
       run("uintArrayAnnotation.kt");
+    }
+
+    @Test
+    @TestMetadata("ulongArrayOperator.kt")
+    public void testUlongArrayOperator() {
+      run("ulongArrayOperator.kt");
     }
   }
 

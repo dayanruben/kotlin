@@ -1200,6 +1200,18 @@ public class OutOfContentRootGetOrBuildFirTestGenerated extends AbstractOutOfCon
     }
 
     @Test
+    @TestMetadata("stdlibArrayOperator.kt")
+    public void testStdlibArrayOperator() {
+      run("stdlibArrayOperator.kt");
+    }
+
+    @Test
+    @TestMetadata("stdlibDoubleArrayOperator.kt")
+    public void testStdlibDoubleArrayOperator() {
+      run("stdlibDoubleArrayOperator.kt");
+    }
+
+    @Test
     @TestMetadata("stdlibSequenceOperator.kt")
     public void testStdlibSequenceOperator() {
       run("stdlibSequenceOperator.kt");
@@ -1215,6 +1227,12 @@ public class OutOfContentRootGetOrBuildFirTestGenerated extends AbstractOutOfCon
     @TestMetadata("stdlibSetWithoutStdlib.kt")
     public void testStdlibSetWithoutStdlib() {
       run("stdlibSetWithoutStdlib.kt");
+    }
+
+    @Test
+    @TestMetadata("stdlibULongArrayOperator.kt")
+    public void testStdlibULongArrayOperator() {
+      run("stdlibULongArrayOperator.kt");
     }
   }
 
@@ -2313,20 +2331,6 @@ public class OutOfContentRootGetOrBuildFirTestGenerated extends AbstractOutOfCon
     @TestMetadata("typedQualifiedPartOfQualifiedCall.kt")
     public void testTypedQualifiedPartOfQualifiedCall() {
       run("typedQualifiedPartOfQualifiedCall.kt");
-    }
-  }
-
-  @Nested
-  @TestMetadata("analysis/low-level-api-fir/testData/getOrBuildFir/repl")
-  @TestDataPath("$PROJECT_ROOT")
-  public class Repl {
-    private void run(String fileName) {
-      runTest("analysis/low-level-api-fir/testData/getOrBuildFir/repl/" + fileName);
-    }
-
-    @Test
-    public void testAllFilesPresentInRepl() {
-      KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/low-level-api-fir/testData/getOrBuildFir/repl"), Pattern.compile("^(.+)\\.(kt)$"), null, true);
     }
   }
 

@@ -118,6 +118,8 @@ class NativeSecondStageCompilationConfig(
     }
     val inlineForPerformance get() = !debug && !smallBinary
 
+    // The Gradle plugin enables assertions for debuggable binaries, and the distribution caches are built accordingly.
+    val defaultAsserts = !optimizationsEnabled
     val assertsEnabled = configuration.enableAssertions
 
     val sanitizer = configuration.get(BinaryOptions.sanitizer)?.takeIf {
@@ -242,8 +244,9 @@ class NativeSecondStageCompilationConfig(
     val fixedBlockPageSize: UInt
         get() = configuration.get(BinaryOptions.fixedBlockPageSize) ?: defaultFixedBlockPageSize
 
+    private val defaultConcurrentWeakSweep = true
     val concurrentWeakSweep: Boolean
-        get() = configuration.get(BinaryOptions.concurrentWeakSweep) ?: true
+        get() = configuration.get(BinaryOptions.concurrentWeakSweep) ?: defaultConcurrentWeakSweep
 
     val concurrentMarkMaxIterations: UInt
         get() = configuration.get(BinaryOptions.concurrentMarkMaxIterations) ?: 100U
@@ -523,6 +526,8 @@ class NativeSecondStageCompilationConfig(
             append("-ccall_mode${cCallMode.name}")
         if (latin1Strings != defaultLatin1Strings)
             append("-latin1_strings${if (latin1Strings) "ENABLE" else "DISABLE"}")
+        if (assertsEnabled != defaultAsserts)
+            append("-asserts${if (assertsEnabled) "ENABLE" else "DISABLE"}")
     }
 
     private val systemCacheFlavorString = buildString {
@@ -550,6 +555,8 @@ class NativeSecondStageCompilationConfig(
             append("-fixed_block_page_size$fixedBlockPageSize")
         if (pagedAllocator != defaultPagedAllocator)
             append("-paged_allocator${if (pagedAllocator) "TRUE" else "FALSE"}")
+        if (concurrentWeakSweep != defaultConcurrentWeakSweep)
+            append("-concurrent_weak_sweep${if (concurrentWeakSweep) "TRUE" else "FALSE"}")
         if (minidumpLocation != null)
             append("-with_crash_dumps")
         if (runtimeLogsEnabled)
