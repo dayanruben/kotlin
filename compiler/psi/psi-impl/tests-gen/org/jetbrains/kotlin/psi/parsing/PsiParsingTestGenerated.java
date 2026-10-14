@@ -3008,6 +3008,12 @@ public class PsiParsingTestGenerated extends AbstractPsiParsingTest {
     }
 
     @Test
+    @TestMetadata("scriptDestructuringEntries.kts")
+    public void testScriptDestructuringEntries() {
+      run("scriptDestructuringEntries.kts");
+    }
+
+    @Test
     @TestMetadata("shortNameBasedDestructuringWithRenaming.kt")
     public void testShortNameBasedDestructuringWithRenaming() {
       run("shortNameBasedDestructuringWithRenaming.kt");
@@ -4432,6 +4438,12 @@ public class PsiParsingTestGenerated extends AbstractPsiParsingTest {
     }
 
     @Test
+    @TestMetadata("FunctionExpressionBody.kt")
+    public void testFunctionExpressionBody() {
+      run("FunctionExpressionBody.kt");
+    }
+
+    @Test
     @TestMetadata("IfKeywordRBrace.kt")
     public void testIfKeywordRBrace() {
       run("IfKeywordRBrace.kt");
@@ -4645,6 +4657,12 @@ public class PsiParsingTestGenerated extends AbstractPsiParsingTest {
     @TestMetadata("PackageRecovery.kt")
     public void testPackageRecovery() {
       run("PackageRecovery.kt");
+    }
+
+    @Test
+    @TestMetadata("PropertyAccessorExpressionBody.kt")
+    public void testPropertyAccessorExpressionBody() {
+      run("PropertyAccessorExpressionBody.kt");
     }
 
     @Test
