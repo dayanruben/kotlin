@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.fir.declarations.isInlineClass
 import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.FirSmartCastExpression
+import org.jetbrains.kotlin.fir.isPlatformValueClass
 import org.jetbrains.kotlin.fir.isPrimitiveType
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.toClassSymbol
@@ -78,7 +79,10 @@ fun ConeKotlinType.toTypeInfo(session: FirSession): TypeInfo {
         isEnumClass = boundsSymbols.any { it.isEnumClass },
         isPrimitive = bounds.any { it.isPrimitiveOrNullablePrimitive },
         isBuiltin = boundsSymbols.any { it.isBuiltin },
-        isFullValueClassOrObject = boundsSymbols.any { (it as? FirRegularClassSymbol)?.isFullValueClass == true },
+        isFullValueClassOrObject = boundsSymbols.any { symbol ->
+            symbol is FirRegularClassSymbol &&
+                (symbol.isFullValueClass || symbol.isPlatformValueClass(session) || symbol.isMappedToPlatformValueClass(session))
+        },
         isInlineValueClass = boundsSymbols.any { (it as? FirRegularClassSymbol)?.isInlineClass == true },
         isAnnotationClass = boundsSymbols.any { it.isAnnotationClass },
         isDataClassOrObject = boundsSymbols.any { it.isData },

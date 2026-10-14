@@ -133,9 +133,51 @@ fun FirClassSymbol<*>.isSupertypeOf(other: FirClassSymbol<*>, session: FirSessio
     return isSupertypeOf(other, mutableSetOf())
 }
 
-fun ConeKotlinType.isValueClass(session: FirSession): Boolean {
+private fun ConeKotlinType.isKotlinValueClass(session: FirSession): Boolean {
     // Value classes have `inline` or `value` modifier in FIR
     return toRegularClassSymbol(session)?.isInlineOrValue == true
+}
+
+/**
+ * Whether this type is a value class type: a Kotlin inline or full value class, or a value class type of the platform
+ * (see [isPlatformValueClassType]).
+ */
+fun ConeKotlinType.isValueClass(session: FirSession): Boolean =
+    isKotlinValueClass(session) || isPlatformValueClassType(session)
+
+/**
+ * Whether this type is a value class type of the platform, like a Java value class. Like javac, this includes type parameters, captured
+ * types and intersection types bounded by such a class. A Kotlin class whose platform class is a value class, like `kotlin.Number` for
+ * `java.lang.Number` or `kotlin.Int` for `java.lang.Integer`, is one too.
+ *
+ * Unlike [FirRegularClassSymbol.isPlatformValueClass], which checks only the class itself.
+ */
+private fun ConeKotlinType.isPlatformValueClassType(
+    session: FirSession,
+    visited: MutableSet<FirTypeParameterSymbol> = mutableSetOf(),
+): Boolean = unwrapToSimpleTypeUsingLowerBound().isPlatformValueClassType(session, visited)
+
+private fun ConeSimpleKotlinType.isPlatformValueClassType(session: FirSession, visited: MutableSet<FirTypeParameterSymbol>): Boolean =
+    when (this) {
+        is ConeIntersectionType -> intersectedTypes.any { it.isPlatformValueClassType(session, visited) }
+        is ConeTypeParameterType ->
+            visited.add(lookupTag.symbol) &&
+                    lookupTag.symbol.resolvedBounds.any { it.coneType.isPlatformValueClassType(session, visited) }
+        is ConeCapturedType -> constructor.supertypes.orEmpty().any { it.isPlatformValueClassType(session, visited) }
+        is ConeClassLikeType -> toRegularClassSymbol(session)?.let {
+            it.isPlatformValueClass(session) || it.isMappedToPlatformValueClass(session)
+        } == true
+        is ConeUnionType, is ConeTypeVariableType, is ConeStubTypeForTypeVariableInSubtyping, is ConeIntegerLiteralType,
+            -> false
+    }
+
+fun ConeKotlinType.isFlexiblePrimitive(): Boolean {
+    return this is ConeFlexibleType && lowerBound.isPrimitiveOrNullablePrimitive && upperBound.isPrimitiveOrNullablePrimitive
+}
+
+fun FirRegularClassSymbol.isMappedToPlatformValueClass(session: FirSession): Boolean {
+    val platformClassId = session.platformClassMapper.getCorrespondingPlatformClass(classId) ?: return false
+    return (platformClassId.toSymbol(session) as? FirRegularClassSymbol)?.isPlatformValueClass(session) == true
 }
 
 fun ConeKotlinType.isInlineClass(session: FirSession): Boolean =

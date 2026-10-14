@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.expressions.toResolvedCallableSymbol
 import org.jetbrains.kotlin.fir.isDisabled
 import org.jetbrains.kotlin.fir.isEnabled
+import org.jetbrains.kotlin.fir.isPlatformValueClass
 import org.jetbrains.kotlin.fir.resolve.defaultType
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.getContainingClassSymbol
@@ -161,7 +162,7 @@ sealed class FirValueClassDeclarationChecker(mppKind: MppCheckerKind) : FirRegul
                     FirErrors.VALUE_CLASS_CANNOT_EXTEND_CLASSES,
                     kind.valueModifierPrefix,
                 )
-            } else if (!supertypeSymbol.isFullValueClass && !supertypeSymbol.classId.isRecordId() &&
+            } else if (!supertypeSymbol.isValueClassSupertype() &&
                 !(kind.isWillBecomeValueClass && supertypeSymbol.willBecomeKotlinOrJdkValueClass(context.session))
             ) {
                 reportOn(
@@ -321,7 +322,9 @@ sealed class FirValueClassDeclarationChecker(mppKind: MppCheckerKind) : FirRegul
                 val jvmInlineAnnotation = context.session.annotationPlatformSupport.jvmInlineAnnotationClassId
                 val hasJvmInlineAnnotation = jvmInlineAnnotation != null && declaration.hasAnnotation(jvmInlineAnnotation, context.session)
                 val valueModifier = declaration.getModifier(VALUE_KEYWORD)
-                if (primaryConstructorParametersByName.size > 1 && !hasJvmInlineAnnotation && valueModifier != null) {
+                if (
+                    primaryConstructorParametersByName.size > 1 && !hasJvmInlineAnnotation && valueModifier != null && !declaration.isInline
+                ) {
                     reporter.reportOn(
                         valueModifier.source, FirErrors.UNSUPPORTED_FEATURE, LanguageFeature.FullValueClasses to context.languageVersionSettings
                     )
@@ -532,4 +535,8 @@ sealed class FirValueClassDeclarationChecker(mppKind: MppCheckerKind) : FirRegul
 
     private fun ClassId.isRecordId(): Boolean =
         relativeClassName == recordFqName && packageFqName == javaLangFqName
+
+    context(context: CheckerContext)
+    private fun FirRegularClassSymbol.isValueClassSupertype(): Boolean =
+        isFullValueClass || isPlatformValueClass(context.session) || classId.isRecordId() || isMappedToPlatformValueClass(context.session)
 }
