@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.gradle.plugin.diagnostics.KotlinToolingDiagnostics
 import org.jetbrains.kotlin.gradle.testbase.*
 import org.jetbrains.kotlin.gradle.uklibs.applyMultiplatform
 import org.jetbrains.kotlin.gradle.uklibs.include
+import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.swiftexport.ExperimentalSwiftExportDsl
@@ -155,8 +156,6 @@ class SwiftExportIT : KGPBaseTest() {
                 )
 
                 assertFileExists(libShared.toPath())
-
-                assertHasDiagnostic(KotlinToolingDiagnostics.ExperimentalFeatureWarning, "Swift Export")
             }
 
             // The run is per target, so a Release build reuses it and only links and packages again.
@@ -636,6 +635,13 @@ class SwiftExportIT : KGPBaseTest() {
                 assertEquals(
                     setOf("Shared", "SharedDepOne", "ExportedKotlinPackages", "KotlinRuntimeSupport"),
                     actualModules
+                )
+
+                // The paths are relative to the directory of the modules file, so the output can be moved.
+                val sharedFiles = modules.single { it["name"]?.jsonPrimitive?.content == "Shared" }.getValue("files").jsonObject
+                assertEquals(
+                    listOf("files/Shared/Shared.swift", "files/Shared/Shared.kt", "files/Shared/Shared.h"),
+                    listOf("swiftApi", "kotlinBridges", "cHeaderBridges").map { sharedFiles.getValue(it).jsonPrimitive.content },
                 )
             }
 

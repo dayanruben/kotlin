@@ -282,6 +282,7 @@ val gradleVersions = listOf(
     "9.5.1",
     "9.6.1",
     "9.7.0",
+    "9.8.1",
 )
 
 // Keep in sync with testTags.kt
@@ -383,6 +384,12 @@ if (project.kotlinBuildProperties.isTeamcityBuild.get()) {
             group = gradleVersionTaskGroup
             dependsOn(tasksByGradleVersion)
         }
+    }
+
+    tasks.register("kgpWasmTestsGroupedByGradleVersion") {
+        group = null
+        description = "KT-85475 Temporary task - registered to avoid breaking TC."
+        // The actual task will be registered in a later PR https://github.com/JetBrains/kotlin/pull/8916
     }
 }
 

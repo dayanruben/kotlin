@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.fir.declarations.FirRegularClass
 import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
 import org.jetbrains.kotlin.fir.diagnostics.DiagnosticKind
 import org.jetbrains.kotlin.fir.java.declarations.FirJavaClass
+import org.jetbrains.kotlin.fir.java.resolveSupertypesOnAir
 import org.jetbrains.kotlin.fir.resolve.substitution.substitutorByMap
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
@@ -107,10 +108,10 @@ internal fun resolveQualifiedNameToClassIdFromParts(
  *
  * [fullResolution] selects the flavor. `true` is the full primary path. `false` is the
  * reentrance-safe fallback used while an inherited-inner-class walk
- * ([resolveInheritedInnerClassToClassId]) is already in progress: it skips Step 1 (the local-scope
- * member-type lookup that would recurse back into the same walk) and probes class existence via
- * the source-index-aware [tryResolveInherited] rather than [tryResolve]. Every import step still
- * uses the same full package/class split in both flavors.
+ * ([resolveInheritedInnerClassToClassId]) is already in progress: it checks only declared member
+ * types in the enclosing-class chain (not inherited ones), and the remaining steps probe class
+ * existence via the source-index-aware [tryResolveInherited] rather than [tryResolve]. Every import
+ * step still uses the same full package/class split in both flavors.
  */
 context(c: JavaResolutionContext)
 internal fun resolveSimpleNameToClassIdImpl(
@@ -118,9 +119,7 @@ internal fun resolveSimpleNameToClassIdImpl(
     fullResolution: Boolean,
 ): ClassId? {
     // JLS 6.4.1: member types of the enclosing class shadow single-type imports.
-    if (fullResolution) {
-        resolveFromEnclosingClasses(simpleName)?.let { return it }
-    }
+    resolveFromEnclosingClasses(simpleName, includeInherited = fullResolution)?.let { return it }
     // JLS 6.4.1: same-file top-level types shadow single-type imports.
     resolveFromSameFile(simpleName, fullResolution)?.let { return it }
     // JLS 7.5.1: single-type imports.
@@ -143,6 +142,8 @@ internal fun resolveSimpleNameToClassIdImpl(
 /**
  * Step 1: member types of the enclosing classes, declared and inherited (JLS 6.4.1 / 6.5.2);
  * these shadow single-type imports, so this step runs before [resolveFromExplicitImport].
+ * With [includeInherited] = `false` only declared member types are checked; this is used during
+ * inherited-supertype walks to avoid recursively starting another inherited walk.
  *
  * Walks the containing-class chain from innermost to outermost, at each level probing the
  * declared member type and then the inherited ones — the lookups must interleave level by level
@@ -152,17 +153,15 @@ internal fun resolveSimpleNameToClassIdImpl(
  * same-package cross-file classes, so [resolveFromSamePackage] picks them up.
  */
 context(c: JavaResolutionContext)
-private fun resolveFromEnclosingClasses(simpleName: String): ClassId? {
+private fun resolveFromEnclosingClasses(simpleName: String, includeInherited: Boolean): ClassId? {
     val nameId = Name.identifier(simpleName)
     var current: JavaClass? = c.scopeContext.containingClass
     while (current != null) {
-        val fqName = current.fqName
-        if (fqName != null) {
-            val containingId = fqNameToClassId(fqName)
+        current.classId?.let { containingId ->
             val declared = containingId.createNestedClassId(nameId)
             if (tryResolve(declared)) return declared
             // Inherited member types, restricted to this level so the interleaving holds.
-            resolveInheritedInnerClassToClassId(simpleName, current)?.let { return it }
+            if (includeInherited) resolveInheritedInnerClassToClassId(simpleName, current)?.let { return it }
         }
         current = current.outerClass
     }
@@ -327,11 +326,13 @@ private fun findInheritedNestedClass(
 ): ClassId? = resolveInheritedInnerClassToClassId(nestedName, classifierAdapterFor(outerClassId))
 
 /**
- * Builtins- and typealias-filtered class-existence probe: `true` if [classId] is known to the
- * session's symbol provider and denotes a real class (not a Kotlin builtin, not a `typealias`).
- * Returns `false` for sessions with no symbol provider.
+ * Class-existence probe: first checks whether [classId] can be found in the Java source index,
+ * avoiding re-entering the composite symbol provider while an enclosing source class is being
+ * built. If the source finder misses (including when only the outer class exists), falls back to
+ * the provider so generated members remain resolvable. Provider results must denote real classes
+ * (not Kotlin builtins or `typealias`es). Returns `false` if neither source nor provider has it.
  *
- * Both filters exist to match PSI's file-backed class finder, which only resolves a Java type
+ * The provider-result filters match PSI's file-backed class finder, which only resolves a Java type
  * reference when an actual `.class`/`.java` file exists:
  *  - `origin != BuiltIns` drops the `kotlin.*` builtins that FIR's symbol provider bundles into
  *    the compiler but PSI never sees;
@@ -342,6 +343,10 @@ private fun findInheritedNestedClass(
  */
 context(c: JavaResolutionContext)
 private fun tryResolve(classId: ClassId): Boolean {
+    val finder = c.fileContext.classFinder
+    if (finder != null && finder.isClassInIndex(classId) && finder.findClass(JavaClassFinder.Request(classId)) != null) {
+        return true
+    }
     val symbol = c.fileContext.session.cycleSafeClassLikeSymbol(classId) ?: return false
     if (symbol is FirTypeAliasSymbol) return false
     return symbol.origin != FirDeclarationOrigin.BuiltIns
@@ -564,9 +569,9 @@ internal fun directSupertypeClassIds(classId: ClassId): List<ClassId> =
             }
 
             // 3. Kotlin / built-in / deserialized arm.
-            firClass.supertypeRefsForJavaResolution(c.fileContext.session).map { ref ->
+            firClass.resolveSupertypesOnAir(c.fileContext.session).map { ref ->
                 // A ref that stayed unresolved makes this a partial answer, which must not be cached.
-                ((ref as? FirResolvedTypeRef)?.coneType as? ConeClassLikeType)?.lookupTag?.classId
+                (ref.coneTypeOrNull as? ConeClassLikeType)?.lookupTag?.classId
                     ?: return@cycleGuardedSupertypeWalk null
             }
         }
@@ -613,21 +618,6 @@ internal fun getFirstStarImportCandidate(simpleName: String): ClassId? {
     val starPackage = c.fileContext.imports.typeStarImports.firstOrNull() ?: return null
     return ClassId(starPackage, Name.identifier(simpleName))
 }
-
-context(c: JavaResolutionContext)
-private fun fqNameToClassId(fqName: FqName): ClassId {
-    val fqnString = fqName.asString()
-    val pkgString = c.packageFqName.asString()
-    val className = if (pkgString.isEmpty()) {
-        fqnString
-    } else if (fqnString.startsWith(pkgString) && fqnString.length > pkgString.length && fqnString[pkgString.length] == '.') {
-        fqnString.substring(pkgString.length + 1)
-    } else {
-        fqnString
-    }
-    return ClassId(c.packageFqName, FqName(className), isLocal = false)
-}
-
 
 /**
  * Resolves a FqName to a ClassId by trying all package/class splits from longest package to

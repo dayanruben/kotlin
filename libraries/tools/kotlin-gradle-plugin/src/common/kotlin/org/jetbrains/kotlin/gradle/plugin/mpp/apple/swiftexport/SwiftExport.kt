@@ -13,7 +13,10 @@ import org.gradle.api.artifacts.result.ResolvedDependencyResult
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskProvider
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
+import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.Companion.kotlinPropertiesProvider
+import org.jetbrains.kotlin.gradle.plugin.diagnostics.KotlinToolingDiagnostics
+import org.jetbrains.kotlin.gradle.plugin.diagnostics.reportDiagnosticOncePerBuild
 import org.jetbrains.kotlin.gradle.plugin.internal.kotlinSecondaryVariantsDataSharing
 import org.jetbrains.kotlin.gradle.plugin.mpp.export.internal.consumeSwiftExportMetadata
 import org.jetbrains.kotlin.gradle.plugin.mpp.export.internal.configureSwiftExportMetadataArtifactView
@@ -249,6 +252,18 @@ private fun Project.registerSwiftExportRun(
     val outputDirectory = layout.buildDirectory.dir("${names.outputDirectory}/${target.name}")
 
     return locateOrRegisterTask<SwiftExportTask>(swiftExportTaskName) { task ->
+        // When the task is configured, so a run restored from the build cache still warns. Not on registration:
+        // under Xcode the run is registered for every project with Apple targets, Swift Export or not.
+        if (!kotlinPropertiesProvider.swiftExportIgnoreExperimental) {
+            reportDiagnosticOncePerBuild(
+                KotlinToolingDiagnostics.ExperimentalFeatureWarning(
+                    "Swift Export",
+                    "https://kotl.in/1cr522",
+                    "To suppress this message add '${PropertiesProvider.PropertyNames.KOTLIN_NATIVE_SUPPRESS_SWIFT_EXPORT_EXPERIMENTAL_WARNING}=true' to your gradle.properties"
+                )
+            )
+        }
+
         task.description = "Run ${target.name} Swift Export process for ${names.integration}"
         task.group = taskGroup
 
@@ -286,17 +301,17 @@ private fun Project.registerSwiftExportRun(
         }
         task.exportedModules.set(exportedModules)
         task.dependencyOptionsOverrides.set(dependencyOptionsOverrides)
-        task.mainCompilationOutputFiles.from(mainCompilation.compileTaskProvider.map { it.outputs.files })
 
-        task.ignoreExperimentalDiagnostic.set(kotlinPropertiesProvider.swiftExportIgnoreExperimental)
         task.customJvmArgs.set(kotlinPropertiesProvider.swiftExportJvmArgs)
         task.mainModuleInput.moduleName.set(swiftApiModuleName)
         task.mainModuleInput.flattenPackage.set(swiftApiFlattenPackage)
         task.kotlinNativeProvider.set(
             mainCompilation.compileTaskProvider.flatMap { it.kotlinNativeProvider }
         )
+        // `map`, not `flatMap`. `outputFile` is itself derived with a `flatMap` and has no producer attached, so the
+        // dependency on the compile task has to come from the task provider.
         task.mainModuleInput.artifact.fileProvider(
-            mainCompilation.compileTaskProvider.flatMap { it.outputFile }
+            mainCompilation.compileTaskProvider.map { it.outputFile.get() }
         )
 
         // Output
@@ -384,7 +399,7 @@ private fun Project.registerPackageGeneration(
         // Input
         task.kotlinRuntime.set(swiftExportKotlinRuntime)
 
-        task.swiftModulesFile.set(swiftExportTask.flatMap { it.parameters.swiftModulesFile })
+        task.swiftExportOutputDirectory.set(swiftExportTask.flatMap { it.parameters.outputDirectory })
         task.swiftLibraryName.set(swiftApiLibraryName)
         task.swiftApiModuleName.set(swiftApiModuleName)
 

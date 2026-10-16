@@ -9,8 +9,8 @@ import com.google.common.base.StandardSystemProperty
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.backend.common.linkage.partial.partialLinkageConfig
 import org.jetbrains.kotlin.backend.konan.ir.BridgesPolicy
-import org.jetbrains.kotlin.backend.konan.library.KlibDAG
 import org.jetbrains.kotlin.backend.konan.library.KlibDAGBuilder
+import org.jetbrains.kotlin.backend.konan.library.KlibDAGBuilder.Parameters
 import org.jetbrains.kotlin.backend.konan.library.deserialize
 import org.jetbrains.kotlin.backend.konan.objcexport.ObjCEntryPoints
 import org.jetbrains.kotlin.backend.konan.objcexport.readObjCEntryPoints
@@ -388,6 +388,8 @@ class NativeSecondStageCompilationConfig(
     internal val produceStaticFramework get() = configuration.staticFramework
 
     override val loadedKlibs = loadNativeKlibs(configuration, target)
+    internal val klibDag = configuration.serializedKlibDag?.deserialize(loadedKlibs.all)
+            ?: KlibDAGBuilder(Parameters(loadedKlibs.all) { it.isExplicitlySpecifiedByUserInCLIArgument }).build()
 
     internal val externalDependenciesFile = configuration.externalDependencies?.let(::Path)
 
@@ -600,13 +602,10 @@ class NativeSecondStageCompilationConfig(
         else -> null
     }
 
-    internal var cacheSupport: CacheSupport = createCacheSupport(
-            klibDag = configuration.serializedKlibDag?.deserialize(loadedKlibs.all)
-                    ?: KlibDAGBuilder(loadedKlibs.all) { it.isExplicitlySpecifiedByUserInCLIArgument }.build()
-    )
+    internal var cacheSupport: CacheSupport = createCacheSupport()
         private set
 
-    private fun createCacheSupport(klibDag: KlibDAG) = CacheSupport(
+    private fun createCacheSupport() = CacheSupport(
             configuration = configuration,
             klibDag = klibDag,
             ignoreCacheReason = ignoreCacheReason,
@@ -618,8 +617,8 @@ class NativeSecondStageCompilationConfig(
     )
 
     internal fun reloadCacheSupport() {
-        // Reuse CachedKlibs.
-        cacheSupport = createCacheSupport(cacheSupport.klibDag)
+        // Reuse KlibDag, do not build it once again.
+        cacheSupport = createCacheSupport()
     }
 
     internal val cachedLibraries: CachedLibraries

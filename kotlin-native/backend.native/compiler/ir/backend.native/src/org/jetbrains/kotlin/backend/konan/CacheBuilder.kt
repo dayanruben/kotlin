@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.analyzer.CompilationErrorException
 import org.jetbrains.kotlin.backend.common.serialization.FingerprintHash
 import org.jetbrains.kotlin.backend.common.serialization.SerializedIrFileFingerprint
 import org.jetbrains.kotlin.backend.common.serialization.SerializedKlibFingerprint
-import org.jetbrains.kotlin.backend.konan.library.KlibDAG
 import org.jetbrains.kotlin.backend.konan.util.compilerFingerprint
 import org.jetbrains.kotlin.backend.konan.util.reportCompilationErrorAndThrow
 import org.jetbrains.kotlin.cli.reportLog
@@ -22,15 +21,13 @@ import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.library.KotlinLibrary
 import org.jetbrains.kotlin.library.isNativeStdlib
 import org.jetbrains.kotlin.library.metadata.isCInteropLibrary
+import org.jetbrains.kotlin.library.newCompanionInitializationEnabled
 import org.jetbrains.kotlin.library.uniqueName
-import java.nio.channels.FileChannel
-import java.nio.channels.FileLock
-import java.nio.channels.OverlappingFileLockException
 import java.nio.file.Path
-import java.nio.file.StandardOpenOption
 import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
 import org.jetbrains.kotlin.io.canonicalPathString
+import org.jetbrains.kotlin.io.withExclusiveFileLock
 import org.jetbrains.kotlin.konan.config.NativeConfigurationKeys.DEBUG_PREFIX_MAP
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.absolute
@@ -41,6 +38,7 @@ import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 import kotlin.io.path.pathString
 import kotlin.io.path.writeText
+import kotlin.time.Duration.Companion.milliseconds
 
 // TODO: deleteRecursively might throw an exception!
 class CacheBuilder(
@@ -58,13 +56,8 @@ class CacheBuilder(
             && (config.isFinalBinary || config.produce.isFullCache)
             && (autoCacheableFrom.isNotEmpty() || icEnabled)
 
-    // Note: The order of libraries is not important here.
-    private val klibDag: KlibDAG
-        get() = config.cacheSupport.klibDag
-
     // Note: It's not totally clear, but likely the libraries in `uniqueNameToLibrary` should be in the reverse topo-order.
-    private val uniqueNameToLibrary by lazy { klibDag.librariesReverseTopoSorted.associateBy { it.uniqueName } }
-    private val uniqueNameToHash = mutableMapOf<String, FingerprintHash>()
+    private val uniqueNameToLibrary by lazy { config.klibDag.librariesReverseTopoSorted.associateBy { it.uniqueName } }
 
     private val caches = mutableMapOf<KotlinLibrary, CachedLibraries.Cache>()
     private val cacheRootDirectories = mutableMapOf<KotlinLibrary, String>()
@@ -132,10 +125,10 @@ class CacheBuilder(
     // contribute to the fingerprint: changes in the per-file cached dependencies are tracked by the dirty-file analysis,
     // and the distribution libraries only change together with the compiler fingerprint (they live in compiler's dist directory).
     private fun computeDependenciesFingerprint(library: KotlinLibrary): FingerprintHash {
-        val monolithicallyCachedDependencies = klibDag.getAllDependencies(library).filter {
+        val monolithicallyCachedDependencies = config.klibDag.getAllDependencies(library).filter {
             !it.isCachedPerFile && !it.isImplicitlyLoadedFromKotlinNativeDistribution && !it.isNativeStdlib
         }
-        return CachedLibraries.computeDependenciesFingerprint(monolithicallyCachedDependencies, uniqueNameToHash)
+        return CachedLibraries.computeDependenciesFingerprint(monolithicallyCachedDependencies)
     }
 
     private val currentCompilerFingerprint by lazy { config.distribution.compilerFingerprint }
@@ -158,6 +151,8 @@ class CacheBuilder(
                 "was produced by a different compiler version"
             metadata.dependenciesFingerprint != computeDependenciesFingerprint(library) ->
                 "was produced against different dependencies"
+            metadata.newCompanionInitialization != library.newCompanionInitializationEnabled ->
+                "was produced with a different companion initialization order"
             cache is CachedLibraries.Cache.Monolithic
                     && metadata.hash != SerializedKlibFingerprint(library.path.toFile()).klibFingerprint ->
                 "does not match the current content of the library"
@@ -172,7 +167,7 @@ class CacheBuilder(
         val lastRebuiltArchives = mutableListOf<Path>()
 
         // Note: The libraries should be in the reverse topo-order here!
-        klibDag.librariesReverseTopoSorted.forEach { library ->
+        config.klibDag.librariesReverseTopoSorted.forEach { library ->
             // For MinGW target avoid compiling caches for anything except stdlib.
             if (config.target == KonanTarget.MINGW_X64 && !library.isNativeStdlib) {
                 return@forEach
@@ -188,7 +183,7 @@ class CacheBuilder(
             } else {
                 if (cache == null) externalLibrariesToCache += library
             }
-            klibDag.getDirectDependencies(library).forEach { dependency ->
+            config.klibDag.getDirectDependencies(library).forEach { dependency ->
                 dependableLibraries.getOrPut(dependency) { mutableListOf() }.add(library)
             }
         }
@@ -215,6 +210,9 @@ class CacheBuilder(
         // The dirty-file check doesn't cover the monolithically cached cinterop libraries either: their caches are looked up
         // by the library name, so a changed library would silently reuse the stale cache (KT-87273). Each cache records
         // the fingerprint of its library, so force a rebuild whenever it doesn't match the current library.
+        // The dirty-file check doesn't notice the library-wide switch of the companion initialization order either: it is
+        // only recorded in the klib manifest (with `-Xcompanion-blocks`), yet affects the code generated for every file
+        // of the library (KT-89390). Each cache records the order it was produced with, so force a full rebuild on a mismatch.
         // Caches produced by compilers older than 2.2.20 don't have the metadata at all; rebuild them as well (KT-87202).
         val staleCaches = icedLibraries.mapNotNull { library ->
             val cache = caches[library] ?: return@mapNotNull null
@@ -386,7 +384,7 @@ class CacheBuilder(
     }
 
     private fun buildLibraryCache(library: KotlinLibrary, isExternal: Boolean, filesToCache: List<String>): List<Path> {
-        val dependencies = klibDag.getAllDependencies(library).toList()
+        val dependencies = config.klibDag.getAllDependencies(library).toList()
         val dependencyCaches = dependencies.map {
             cacheRootDirectories[it] ?: run {
                 configuration.reportLog("SKIPPING ${library.path} as some of the dependencies aren't cached")
@@ -407,7 +405,7 @@ class CacheBuilder(
         val libraryCacheDirectory = when {
             library.isImplicitlyLoadedFromKotlinNativeDistribution || library.isNativeStdlib -> config.systemCacheDirectory
             isExternal -> CachedLibraries.computeLibraryCacheDirectory(
-                    config.autoCacheDirectory, library, klibDag, uniqueNameToHash)
+                    config.autoCacheDirectory, library, config.klibDag)
             else -> config.incrementalCacheDirectory!!
         }
         val libraryCache = libraryCacheDirectory.resolve(
@@ -452,25 +450,13 @@ class CacheBuilder(
 
     /**
      * If [lockFile] is `null`, performs [buildAction] without any synchronization.
-     * Otherwise, acquires an OS-level file lock on [lockFile], calls [skipBuildAction] under the lock
-     * to check whether the build should be skipped (e.g. the cache was already built by another process),
+     * Otherwise, acquires an OS-level file lock on [lockFile] (see [withExclusiveFileLock]), calls [skipBuildAction]
+     * under the lock to check whether the build should be skipped (e.g. the cache was already built by another process),
      * and if not, runs [buildAction] under the lock.
-     * The lock file is created if it didn't exist before.
      *
      * Note: it is not absolutely necessary to always achieve mutual exclusion: the [buildAction] is
      * thread-safe and idempotent. The goal of the synchronization is to avoid memory pressure
      * caused by simultaneous build of the cache for a large library like stdlib.
-     *
-     * The lock file is intentionally **never deleted**. If you delete the lock file after
-     * releasing the lock, this race appears:
-     *  1. Process A holds a lock on `cache.lock`.
-     *  2. Process B has already opened that file and is blocked waiting on the lock.
-     *  3. Process A releases the lock and deletes `cache.lock`.
-     *  4. Process C creates a new `cache.lock` and locks that new file.
-     *  5. Process B acquires the lock on the old, now-unlinked inode it opened earlier.
-     *
-     * Now B and C both think they own "the" cache lock, but they are locking different
-     * filesystem inodes. That breaks mutual exclusion.
      */
     private fun buildUnderFileLock(
             lockFile: Path?,
@@ -481,30 +467,8 @@ class CacheBuilder(
             return buildAction()
         }
 
-        FileChannel.open(
-                lockFile.absolute(),
-                StandardOpenOption.CREATE,
-                StandardOpenOption.READ,
-                StandardOpenOption.WRITE
-        ).use { channel ->
-            channel.acquireLockWithRetry().use {
-                if (skipBuildAction()) return
-                buildAction()
-            }
-        }
-    }
-
-    private fun FileChannel.acquireLockWithRetry(): FileLock {
-        while (true) {
-            try {
-                return this.lock()
-            } catch (_: OverlappingFileLockException) {
-                // Another thread in the same JVM holds the lock. Just wait:
-                // — if that thread dies with a crash, the whole process dies.
-                // - if that thread fails with an exception, the lock is released.
-                // - if that thread hangs, we might be tight on resources, so waiting is wise.
-                Thread.sleep(200L)
-            }
+        withExclusiveFileLock(lockFile, retryTimeout = 200.milliseconds) {
+            if (!skipBuildAction()) buildAction()
         }
     }
 
@@ -599,7 +563,7 @@ class CacheBuilder(
             }
             if (filesToCache.isNotEmpty())
                 this.filesToCache = filesToCache
-            serializedKlibDag = klibDag.serialize() // Put the DAG of dependencies to compiler configuration to avoid re-computing it again.
+            serializedKlibDag = config.klibDag.serialize() // Put the DAG of dependencies to compiler configuration to avoid re-computing it again.
         }
 
         recordRebuiltCacheFiles(library, makePerFileCache, filesToCache)

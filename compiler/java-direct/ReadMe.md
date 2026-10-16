@@ -6,7 +6,8 @@ with a lightweight "direct" implementation.
 
 ## Status
 
-The module is functional and integrated into the compiler via the compiler option (`-Xjava-direct`).
+The module is functional and used by the compiler for Java sources by default; `-Xjava-direct=false` switches back to the
+PSI-based facade.
 The old PSI-based java class finder is still used for binary classes (via `CombinedJavaClassFinder`) due to some
 quirks of the FIR providers architecture. On the next iteration it should be replaced with FIR-based symbol providers.
 
@@ -239,5 +240,6 @@ The new java facade builder is introduced to allow substituting the implementati
 
 ### Tests
 
-The module contains unit tests and also "steals" all phased diagnostics and box tests that contain Java files from the main compiler
-testdata.
+The module contains unit tests only. Java facade behavior end-to-end is covered by the main compiler test suites. 
+JVM tests that use the PSI FIR parser use the PSI Java facade; all other tests use java-direct. 
+`USE_PSI_JAVA_FACADE` can be used to override this choice.

@@ -14,14 +14,13 @@ import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.*
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.work.DisableCachingByDefault
-import org.jetbrains.kotlin.gradle.plugin.diagnostics.KotlinToolingDiagnostics
-import org.jetbrains.kotlin.gradle.plugin.diagnostics.UsesKotlinToolingDiagnostics
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.ModuleMapGenerator
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.SerializationTools
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftimport.SwiftImportFingerprintedCoordinationService
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftimport.sharedPackageRootFor
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.internal.GradleSwiftExportModule
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.SwiftPackagePlatform
+import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.swiftPackagePlatformNames
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.internal.swiftModulesFile
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.utils.CommaSeparatedEntriesBuilder
@@ -32,6 +31,7 @@ import org.jetbrains.kotlin.gradle.utils.emitListItems
 import org.jetbrains.kotlin.gradle.utils.getFile
 import org.jetbrains.kotlin.gradle.utils.newInstance
 import org.jetbrains.kotlin.incremental.createDirectory
+import org.jetbrains.kotlin.konan.target.Family
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
@@ -42,38 +42,32 @@ import javax.inject.Inject
  * The output of Swift Export for one Kotlin target.
  */
 internal abstract class SwiftExportTargetOutput {
-    /** The name the target has in the build script. */
-    @get:Input
-    abstract val targetName: Property<String>
-
     @get:Input
     abstract val target: Property<KonanTarget>
 
-    @get:InputFile
+    /** The output directory of the run: the modules file and the generated files it lists. */
+    @get:InputDirectory
     @get:PathSensitive(PathSensitivity.RELATIVE)
-    abstract val swiftModulesFile: RegularFileProperty
+    abstract val outputDirectory: DirectoryProperty
 
-    /** The generated files. [swiftModulesFile] has their paths, but not their content. */
-    @get:InputFiles
-    @get:PathSensitive(PathSensitivity.RELATIVE)
-    abstract val files: ConfigurableFileCollection
+    @get:Internal
+    val swiftModulesFile: Provider<RegularFile>
+        get() = outputDirectory.swiftModulesFile
 }
 
 internal fun ObjectFactory.SwiftExportTargetOutput(
     target: KotlinNativeTarget,
     swiftExportTask: TaskProvider<SwiftExportTask>,
 ): SwiftExportTargetOutput = newInstance<SwiftExportTargetOutput>().apply {
-    targetName.set(target.name)
     this.target.set(target.konanTarget)
-    swiftModulesFile.set(swiftExportTask.flatMap { it.parameters.swiftModulesFile })
-    files.from(swiftExportTask.flatMap { it.parameters.outputDirectory })
+    outputDirectory.set(swiftExportTask.flatMap { it.parameters.outputDirectory })
 }
 
 @DisableCachingByDefault(because = "Swift Export is experimental, so no caching for now")
 internal abstract class GenerateSPMPackageFromSwiftExport @Inject constructor(
     objectFactory: ObjectFactory,
     private val fileSystem: FileSystemOperations,
-) : DefaultTask(), UsesKotlinToolingDiagnostics {
+) : DefaultTask() {
     init {
         onlyIf { HostManager.hostIsMac }
         collectIncludes.convention(false)
@@ -108,10 +102,15 @@ internal abstract class GenerateSPMPackageFromSwiftExport @Inject constructor(
     @get:PathSensitive(PathSensitivity.RELATIVE)
     abstract val kotlinRuntime: DirectoryProperty
 
-    @get:InputFile
+    /** The output directory of the run: the modules file and the generated files it lists. Xcode flow only. */
     @get:Optional
+    @get:InputDirectory
     @get:PathSensitive(PathSensitivity.RELATIVE)
-    abstract val swiftModulesFile: RegularFileProperty
+    abstract val swiftExportOutputDirectory: DirectoryProperty
+
+    @get:Internal
+    val swiftModulesFile: Provider<RegularFile>
+        get() = swiftExportOutputDirectory.swiftModulesFile
 
     @get:Input
     val swiftPMImportHasDependencies: Property<Boolean> = objectFactory.property(Boolean::class.java).convention(false)
@@ -163,58 +162,46 @@ internal abstract class GenerateSPMPackageFromSwiftExport @Inject constructor(
     @TaskAction
     fun generate() {
         val targetModules = deserializeTargetModules()
-        requireSameModuleGraph(targetModules)
-        val swiftModules = targetModules.firstOrNull()?.modules ?: deserializeSwiftModules()
+        val packageModules = if (targetModules.isEmpty()) {
+            deserializeSwiftModules().map { SwiftPackageModule(it, variants = emptyMap(), dependencyPlatforms = emptyMap()) }
+        } else {
+            combineSwiftExportModules(targetModules)
+        }
 
         // Gradle keeps what a previous run left in an output directory, such as the sources of a renamed module.
         fileSystem.delete { it.delete(sourcesPath, includesPath) }
-        createSPMSources(swiftModules, targetModules)
-        createPackageManifest(swiftModules)
+        createSPMSources(packageModules, packageTargets = targetModules.map { it.target }.toSet())
+        createPackageManifest(packageModules)
         createKotlinRuntimeTarget()
     }
 
     private fun deserializeSwiftModules(): List<GradleSwiftExportModule> {
-        check(swiftModulesFile.isPresent) { "Neither targetOutputs nor swiftModulesFile is set for $path" }
-        val modulesFile = swiftModulesFile.getFile().readText()
-        val swiftModules = SerializationTools.readFromJson(modulesFile)
-        return swiftModules.modules
+        check(swiftExportOutputDirectory.isPresent) { "Neither targetOutputs nor swiftExportOutputDirectory is set for $path" }
+        return readSwiftModules(swiftModulesFile.getFile())
     }
 
     private fun deserializeTargetModules(): List<SwiftExportTargetModules> = targetOutputs.get().map { output ->
         SwiftExportTargetModules(
-            output.targetName.get(),
             output.target.get(),
-            SerializationTools.readFromJson(output.swiftModulesFile.getFile().readText()).modules,
+            readSwiftModules(output.swiftModulesFile.getFile()),
         )
     }
 
-    /**
-     * Only the content of the generated files is combined. The modules and their dependencies have to be the
-     * same for every target.
-     */
-    private fun requireSameModuleGraph(targetModules: List<SwiftExportTargetModules>) {
-        val mismatch = findSwiftExportModuleGraphMismatch(targetModules) ?: return
-        // Fatal, so the task fails here.
-        reportDiagnostic(
-            KotlinToolingDiagnostics.SwiftExportPackageModulesMismatch(
-                referenceTarget = mismatch.referenceTarget,
-                otherTarget = mismatch.otherTarget,
-                differences = mismatch.differences,
-            )
-        )
-    }
+    private fun readSwiftModules(modulesFile: File): List<GradleSwiftExportModule> =
+        SerializationTools.readFromJson(modulesFile.readText(), baseDirectory = modulesFile.parentFile).modules
 
     /**
-     * Writes the [source] file of [module] into [destination], combined from [targetModules] if there are any.
+     * Writes the [source] file of [packageModule] into [destination], combined from its variants if there are any.
      */
     private fun createSource(
-        module: GradleSwiftExportModule,
-        targetModules: List<SwiftExportTargetModules>,
+        packageModule: SwiftPackageModule,
+        packageTargets: Set<KonanTarget>,
         destination: File,
         language: SwiftPackageSourceLanguage,
         source: (GradleSwiftExportModule) -> File,
     ) {
-        if (targetModules.isEmpty()) {
+        val module = packageModule.module
+        if (packageModule.variants.isEmpty()) {
             fileSystem.copy {
                 it.from(source(module))
                 it.into(destination)
@@ -222,23 +209,22 @@ internal abstract class GenerateSPMPackageFromSwiftExport @Inject constructor(
             return
         }
 
-        val variants = targetModules.map { target ->
-            SwiftExportSourceVariant(target.target, source(target.modules.single { it.name == module.name }).readText())
-        }
+        val variants = packageModule.variants.map { (target, variant) -> SwiftExportSourceVariant(target, source(variant).readText()) }
         destination.createDirectory()
-        destination.resolve(source(module).name).writeText(combineSwiftExportSources(variants, language))
+        destination.resolve(source(module).name).writeText(combineSwiftExportSources(variants, language, packageTargets))
     }
 
-    private fun createSPMSources(modules: List<GradleSwiftExportModule>, targetModules: List<SwiftExportTargetModules>) {
-        modules.forEach { module ->
+    private fun createSPMSources(packageModules: List<SwiftPackageModule>, packageTargets: Set<KonanTarget>) {
+        packageModules.forEach { packageModule ->
+            val module = packageModule.module
             val swiftModulePath = sourcesPath.getFile().resolve(module.name).apply { createDirectory() }
-            createSource(module, targetModules, swiftModulePath, SwiftPackageSourceLanguage.SWIFT) { it.swiftApiFile }
+            createSource(packageModule, packageTargets, swiftModulePath, SwiftPackageSourceLanguage.SWIFT) { it.swiftApiFile }
 
             if (module is GradleSwiftExportModule.BridgesToKotlin) {
                 val bridgeModulePath = sourcesPath.getFile().resolve(module.bridgeName).apply { createDirectory() }
                 val includePath = bridgeModulePath.resolve("include")
 
-                createSource(module, targetModules, includePath, SwiftPackageSourceLanguage.C_HEADER) { it.bridgeHeaderFile }
+                createSource(packageModule, packageTargets, includePath, SwiftPackageSourceLanguage.C_HEADER) { it.bridgeHeaderFile }
 
                 createModuleMap(includePath, module.bridgeName, module.name)
                 bridgeModulePath.resolve("linkingStub.c").writeText("\n")
@@ -284,7 +270,7 @@ internal abstract class GenerateSPMPackageFromSwiftExport @Inject constructor(
         appendToOtherIncludes(kotlinRuntimeModule, kotlinRuntimeIncludePath)
     }
 
-    private fun createPackageManifest(modules: List<GradleSwiftExportModule>) {
+    private fun createPackageManifest(packageModules: List<SwiftPackageModule>) {
         val manifest = packagePath.getFile().resolve("Package.swift")
         val cinteropImport = if (
             swiftPMImportHasDependencies.get() && swiftPMImportProductName.isPresent && swiftPMImportPackageRoot.isPresent
@@ -299,7 +285,7 @@ internal abstract class GenerateSPMPackageFromSwiftExport @Inject constructor(
             )
         } else null
         val content = SPMManifestGenerator.generateManifest(
-            swiftApiModule, swiftLibrary, kotlinRuntimeModule, modules, cinteropImport, kotlinBinaryTargetName.orNull,
+            swiftApiModule, swiftLibrary, kotlinRuntimeModule, packageModules, cinteropImport, kotlinBinaryTargetName.orNull,
             platforms.get()
         )
         manifest.writeText(content)
@@ -333,7 +319,7 @@ internal object SPMManifestGenerator {
         swiftApiModule: String,
         swiftLibrary: String,
         kotlinRuntime: String,
-        modules: List<GradleSwiftExportModule>,
+        modules: List<SwiftPackageModule>,
         cinteropImport: CinteropPackageImport? = null,
         kotlinBinaryTarget: String? = null,
         platforms: List<SwiftPackagePlatform> = emptyList(),
@@ -356,7 +342,7 @@ internal object SPMManifestGenerator {
                         block(".library(", ")") {
                             commaSeparatedEntries {
                                 entry { line("name: \"$swiftLibrary\"") }
-                                entry { line("targets: [${modules.productTargets().joinToString(", ")}]") }
+                                entry { line("targets: [${modules.map { it.module }.productTargets().joinToString(", ")}]") }
                             }
                         }
                     }
@@ -410,11 +396,12 @@ internal object SPMManifestGenerator {
         name: String,
         dependencies: List<String>? = null,
         rawDependencies: List<String> = emptyList(),
+        dependencyPlatforms: Map<String, Set<Family>> = emptyMap(),
     ) {
         block(".target(", ")") {
             commaSeparatedEntries {
                 entry { line("name: \"$name\"") }
-                val deps = (dependencies?.map { "\"$it\"" } ?: emptyList()) + rawDependencies
+                val deps = (dependencies?.map { targetDependency(it, dependencyPlatforms[it]) } ?: emptyList()) + rawDependencies
                 if (deps.isNotEmpty()) {
                     entry { line("dependencies: [${deps.joinToString(", ")}]") }
                 }
@@ -422,15 +409,22 @@ internal object SPMManifestGenerator {
         }
     }
 
+    private fun targetDependency(name: String, families: Set<Family>?): String {
+        if (families == null) return "\"$name\""
+        val platforms = swiftPackagePlatformNames.filterKeys { it in families }.values
+        return ".target(name: \"$name\", condition: .when(platforms: [${platforms.joinToString(", ") { ".$it" }}]))"
+    }
+
     private fun CommaSeparatedEntriesBuilder.emitTargetDefinitions(
-        modules: List<GradleSwiftExportModule>,
+        modules: List<SwiftPackageModule>,
         kotlinRuntime: String,
         cinteropProductExpression: String?,
     ) {
         // The reexported cinterop's `import`s live in the Swift API targets, so each gets the product dependency.
         val rawDependencies = listOfNotNull(cinteropProductExpression)
-        modules.forEach { module ->
-            entry { emitTarget(module.name, module.spmDependencies(kotlinRuntime), rawDependencies) }
+        modules.forEach { packageModule ->
+            val module = packageModule.module
+            entry { emitTarget(module.name, module.spmDependencies(kotlinRuntime), rawDependencies, packageModule.dependencyPlatforms) }
             if (module is GradleSwiftExportModule.BridgesToKotlin) {
                 entry { emitTarget(module.bridgeName) }
             }
