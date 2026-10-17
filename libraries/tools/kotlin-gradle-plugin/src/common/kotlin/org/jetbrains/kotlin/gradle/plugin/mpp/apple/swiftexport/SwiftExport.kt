@@ -111,6 +111,7 @@ internal fun Project.registerSwiftExportRunAndBinary(
 
     val swiftApiModuleName = swiftExportConfiguration
         .moduleName
+        .map { it.also(::validateSwiftExportModuleName) }
         .orElse(provider { project.name.normalizedSwiftExportModuleName.also { validateSwiftExportModuleName(it) } })
 
     val taskNamePrefix = lowerCamelCaseName(
@@ -141,6 +142,14 @@ internal fun Project.registerSwiftExportRunAndBinary(
         freeCompilerArgs = swiftExportConfiguration.freeCompilerArgs,
         swiftExportTask = swiftExportTask
     )
+
+    // The SwiftPM import cinterop klib is reexported, so the exported API can expose the imported types.
+    target.whenSwiftPMImportCinteropAvailable { cinterop ->
+        swiftExportTask.configure { task ->
+            task.cinteropModuleName.set(cinterop.moduleName)
+            task.cinteropModuleArtifact.fileProvider(cinterop.klib)
+        }
+    }
 
     swiftExportConfiguration.addBinary(staticLibrary)
 
@@ -197,13 +206,6 @@ internal fun Project.registerSwiftExportTask(
         packageBuildTask = packageBuild,
         mergeLibrariesTask = mergeLibrariesTask
     )
-
-    target.whenSwiftPMImportCinteropAvailable { cinterop ->
-        swiftExportTask.configure { task ->
-            task.cinteropModuleName.set(cinterop.moduleName)
-            task.cinteropModuleArtifact.fileProvider(cinterop.klib)
-        }
-    }
 
     swiftPMImportProductsOrNull()?.let { products ->
         packageGenerationTask.configure { task ->

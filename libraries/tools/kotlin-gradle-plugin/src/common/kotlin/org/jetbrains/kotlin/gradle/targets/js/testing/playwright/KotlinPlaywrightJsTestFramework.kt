@@ -14,6 +14,7 @@ import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.*
+import org.gradle.work.NormalizeLineEndings
 import org.jetbrains.kotlin.gradle.ExperimentalNodeJsToolchainDsl
 import org.jetbrains.kotlin.gradle.dsl.toolchain.nodejs.NodeJsRequest
 import org.jetbrains.kotlin.gradle.internal.testing.TCServiceMessagesClientSettings
@@ -66,6 +67,7 @@ internal class KotlinPlaywrightJsTestFramework(
         val webkitRunners: ListProperty<WebkitRunnerInput> = objects.listProperty()
 
         @get:InputDirectory
+        @get:NormalizeLineEndings
         val playwrightBrowsersDirectory: DirectoryProperty = objects.directoryProperty()
 
         /**
@@ -105,6 +107,7 @@ internal class KotlinPlaywrightJsTestFramework(
 
         @get:Optional
         @get:InputFile
+        @get:NormalizeLineEndings
         val customBrowserExecutable: RegularFileProperty = objects.fileProperty()
 
         @get:Input

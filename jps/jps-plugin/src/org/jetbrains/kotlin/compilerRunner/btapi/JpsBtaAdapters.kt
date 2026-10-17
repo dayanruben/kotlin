@@ -9,10 +9,8 @@ import org.jetbrains.kotlin.buildtools.api.CompilerMessageRenderer
 import org.jetbrains.kotlin.buildtools.api.KotlinLogger
 import org.jetbrains.kotlin.buildtools.api.jps.jvm.incremental.CompilerIncrementalCache
 import org.jetbrains.kotlin.buildtools.api.jps.jvm.incremental.CompilerIncrementalCompilationComponents
-import org.jetbrains.kotlin.buildtools.api.jps.jvm.incremental.CompilerPackagePartData
 import org.jetbrains.kotlin.buildtools.api.jps.jvm.incremental.CompilerTargetId
 import org.jetbrains.kotlin.buildtools.api.jps.jvm.incremental.trackers.CompilerEnumWhenTracker
-import org.jetbrains.kotlin.buildtools.api.jps.jvm.incremental.trackers.CompilerExpectActualTracker
 import org.jetbrains.kotlin.buildtools.api.jps.jvm.incremental.trackers.CompilerFileMappingTracker
 import org.jetbrains.kotlin.buildtools.api.jps.jvm.incremental.trackers.CompilerImportTracker
 import org.jetbrains.kotlin.buildtools.api.jps.jvm.incremental.trackers.CompilerInlineConstTracker
@@ -22,14 +20,12 @@ import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.compilerRunner.OutputItemsCollector
 import org.jetbrains.kotlin.incremental.components.EnumWhenTracker
-import org.jetbrains.kotlin.incremental.components.ExpectActualTracker
 import org.jetbrains.kotlin.incremental.components.ImportTracker
 import org.jetbrains.kotlin.incremental.components.InlineConstTracker
 import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.incremental.components.Position
 import org.jetbrains.kotlin.incremental.components.ScopeKind
 import org.jetbrains.kotlin.load.kotlin.incremental.components.IncrementalCache
-import java.io.File
 import java.nio.file.Path
 
 /*
@@ -136,16 +132,6 @@ internal class JpsBtaLookupTracker(private val delegate: LookupTracker) : Compil
     }
 }
 
-internal class JpsBtaExpectActualTracker(private val delegate: ExpectActualTracker) : CompilerExpectActualTracker {
-    override fun report(expectFilePath: Path, actualFilePath: Path) {
-        delegate.report(expectFilePath.toFile(), actualFilePath.toFile())
-    }
-
-    override fun reportExpectOfLenientStub(expectFilePath: Path) {
-        delegate.reportExpectOfLenientStub(expectFilePath.toFile())
-    }
-}
-
 internal class JpsBtaInlineConstTracker(private val delegate: InlineConstTracker) : CompilerInlineConstTracker {
     override fun report(filePath: Path, owner: String, name: String, constType: String) {
         delegate.report(filePath.toString(), owner, name, constType)
@@ -167,24 +153,7 @@ internal class JpsBtaImportTracker(private val delegate: ImportTracker) : Compil
 internal class JpsBtaIncrementalCache(private val delegate: IncrementalCache) : CompilerIncrementalCache {
     override fun getObsoletePackageParts(): Collection<String> = delegate.getObsoletePackageParts()
 
-    override fun getObsoleteMultifileClasses(): Collection<String> = delegate.getObsoleteMultifileClasses()
-
-    override fun getStableMultifileFacadeParts(facadeInternalName: String): Collection<String>? =
-        delegate.getStableMultifileFacadeParts(facadeInternalName)
-
-    override fun getPackagePartData(partInternalName: String): CompilerPackagePartData? =
-        delegate.getPackagePartData(partInternalName)?.let {
-            CompilerPackagePartData(it.data, it.strings)
-        }
-
     override fun getModuleMappingData(): ByteArray? = delegate.getModuleMappingData()
-
-    override fun getMetadata(fragmentName: String): Map<String, ByteArray> =
-        delegate.getMetadata(fragmentName).mapKeys { it.key.path }
-
-    override fun getClassFilePath(internalClassName: String): String = delegate.getClassFilePath(internalClassName)
-
-    override fun close() = delegate.close()
 }
 
 /**

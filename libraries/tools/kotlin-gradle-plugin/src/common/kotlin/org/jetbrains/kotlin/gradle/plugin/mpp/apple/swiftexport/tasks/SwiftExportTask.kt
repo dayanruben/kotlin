@@ -16,6 +16,7 @@ import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.SetProperty
 import org.gradle.api.tasks.*
+import org.gradle.work.NormalizeLineEndings
 import org.gradle.workers.WorkerExecutor
 import org.jetbrains.kotlin.gradle.plugin.diagnostics.ToolingDiagnostic
 import org.jetbrains.kotlin.gradle.plugin.diagnostics.UsesKotlinToolingDiagnostics
@@ -60,6 +61,7 @@ internal abstract class SwiftExportTask @Inject constructor(
 
         /** The klib to translate. Wired from the compile task, so the dependency on it comes with the file. */
         @get:InputFiles
+        @get:NormalizeLineEndings
         @get:PathSensitive(PathSensitivity.RELATIVE)
         abstract val artifact: RegularFileProperty
     }
@@ -72,6 +74,7 @@ internal abstract class SwiftExportTask @Inject constructor(
     abstract val cinteropModuleName: Property<String>
 
     @get:InputFiles
+    @get:NormalizeLineEndings
     @get:Optional
     @get:PathSensitive(PathSensitivity.RELATIVE)
     abstract val cinteropModuleArtifact: RegularFileProperty
@@ -80,6 +83,7 @@ internal abstract class SwiftExportTask @Inject constructor(
     abstract val kotlinNativeProvider: Property<KotlinNativeProvider>
 
     @get:Classpath
+    @get:NormalizeLineEndings
     abstract val swiftExportClasspath: ConfigurableFileCollection
 
     @get:Nested
@@ -99,6 +103,7 @@ internal abstract class SwiftExportTask @Inject constructor(
      * Up-to-date tracking of [exportConfiguration]'s backing configuration.
      */
     @get:Classpath
+    @get:NormalizeLineEndings
     abstract val exportConfigurationFiles: ConfigurableFileCollection
 
     /**
@@ -116,6 +121,7 @@ internal abstract class SwiftExportTask @Inject constructor(
      * Up-to-date tracking of [apiConfiguration]'s backing configuration.
      */
     @get:Classpath
+    @get:NormalizeLineEndings
     abstract val apiConfigurationFiles: ConfigurableFileCollection
 
     /**
@@ -145,6 +151,7 @@ internal abstract class SwiftExportTask @Inject constructor(
      * Up-to-date tracking of [metadataConfiguration]'s backing configuration.
      */
     @get:InputFiles
+    @get:NormalizeLineEndings
     @get:PathSensitive(PathSensitivity.RELATIVE)
     abstract val metadataConfigurationFiles: ConfigurableFileCollection
 
@@ -162,6 +169,7 @@ internal abstract class SwiftExportTask @Inject constructor(
      * the subproject metadata producers run before this task executes, so their JSON exists when [run] reads it.
      */
     @get:InputFiles
+    @get:NormalizeLineEndings
     @get:PathSensitive(PathSensitivity.RELATIVE)
     val sharedMetadataFiles: List<FileCollection>
         get() = sharedMetadata.orNull?.let { listOf(it.files) } ?: emptyList()

@@ -164,6 +164,7 @@ abstract class AbstractKotlinNativeCompile<
     internal val konanDistribution = project.nativeProperties.actualNativeHomeDirectory
 
     @get:Classpath
+    @get:NormalizeLineEndings
     override val libraries: ConfigurableFileCollection by providerFactory.provider {
         val nativeCompilation = compilation.tcs.compilation as AbstractKotlinNativeCompilation
         if (nativeCompilation.crossCompilationOnCurrentHostSupported) {
@@ -174,9 +175,11 @@ abstract class AbstractKotlinNativeCompile<
     }
 
     @get:Classpath
+    @get:NormalizeLineEndings
     internal val friendModule: FileCollection = objectFactory.fileCollection().from({ compilation.friendPaths })
 
     @get:Classpath
+    @get:NormalizeLineEndings
     internal val refinesModule: FileCollection = objectFactory.fileCollection().from({ compilation.refinesPaths })
 
     @get:Input
@@ -224,6 +227,7 @@ abstract class AbstractKotlinNativeCompile<
 
     @Optional
     @Classpath
+    @NormalizeLineEndings
     open var compilerPluginClasspath: FileCollection? = null
 
     /**
@@ -803,11 +807,13 @@ abstract class CInteropProcess @Inject internal constructor(params: Params) :
 
     @get:IgnoreEmptyDirectories
     @get:InputFiles
+    @get:NormalizeLineEndings
     @get:PathSensitive(PathSensitivity.RELATIVE)
     val allHeadersDirs: Set<File> get() = settings.includeDirs.allHeadersDirs.files
 
     @get:IgnoreEmptyDirectories
     @get:InputFiles
+    @get:NormalizeLineEndings
     @get:PathSensitive(PathSensitivity.RELATIVE)
     val headerFilterDirs: Set<File> get() = settings.includeDirs.headerFilterDirs.files
 

@@ -13,6 +13,7 @@ import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileSystemOperations
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.tasks.*
+import org.gradle.work.NormalizeLineEndings
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmProject.Companion.NODE_MODULES
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmProject.Companion.PACKAGE_JSON
 import org.jetbrains.kotlin.gradle.utils.getFile
@@ -39,6 +40,7 @@ internal abstract class DistributionWithImportMapTask : DefaultTask() {
      */
     @get:PathSensitive(PathSensitivity.RELATIVE)
     @get:InputDirectory
+    @get:NormalizeLineEndings
     abstract val mainDirectory: DirectoryProperty
 
     /**
@@ -48,6 +50,7 @@ internal abstract class DistributionWithImportMapTask : DefaultTask() {
      */
     @get:PathSensitive(PathSensitivity.RELATIVE)
     @get:InputFile
+    @get:NormalizeLineEndings
     abstract val importMapLoader: RegularFileProperty
 
     /**
@@ -55,6 +58,7 @@ internal abstract class DistributionWithImportMapTask : DefaultTask() {
      */
     @get:PathSensitive(PathSensitivity.RELATIVE)
     @get:InputFile
+    @get:NormalizeLineEndings
     abstract val importMapFile: RegularFileProperty
 
     /**

@@ -63,13 +63,35 @@ Js:
 ```
 
 Entries under `include` and `exclude` can be directory paths or glob patterns. A directory path matches the directory and all its
-descendants. When entries overlap, the most specific matching entry takes precedence.
-A domain is changed when any file belonging to it is changed.
+descendants. A domain is changed when any file belonging to it is changed.
+
+Similar to `.gitignore`, the order of entries matters:
+
+- `include` and `exclude` entries are each evaluated in declaration order and the **last matching entry wins**.
+- Entries starting with `!` are negated and must be declared after the entries they negate:
+  `!` under `include` removes a path included by a previous `include` entry,
+  `!` under `exclude` revokes the exclusion of a path by a previous `exclude` entry.
+- `exclude` entries can only **narrow** the paths matched by `include` entries: an `exclude` entry wins over
+  `include` entries matching the same path or its parent directories, but it never adds a path to the domain.
+- Entries matching a path take precedence over entries matching its parent directories.
+  As with `.gitignore`, paths inside an excluded directory cannot be re-included by a `!` entry.
+
+```yaml
+Native:
+  include:
+    - "native"
+  exclude:
+    - "native/swift"       # 'native/swift' and all its descendants do not belong to 'Native'
+    - "native/foo/*"
+    - "!native/foo/bar"    # 'native/foo/bar' belongs to 'Native' again, as it is still included by 'native'
+    - "!native/swift/baz"  # has no effect: 'native/swift/baz' is inside the excluded directory 'native/swift'
+    - "!js"                # has no effect: 'exclude' entries cannot add paths to a domain
+```
 
 ## Running all tests on changes in another domain
 
 Use `mustRunAllTestsOnChangesIn` to require all tests in this domain to run and pass when a listed domain is changed.
-In the example above, all `Js` tests are required for merging to master when `CoreLibs` is changed.
+In the `Js` example above, all `Js` tests are required for merging to master when `CoreLibs` is changed.
 This declaration does not require all `CoreLibs` tests to run when only `Js` is changed.
 List every domain whose changes should require these tests explicitly: the declaration is **not transitive**.
 
@@ -85,6 +107,18 @@ ignore:
 
 Ignored paths belong to no domain. Ignore rules override all domain `include` and `exclude` rules; `ignore` is not a domain.
 Entries can be directory paths or glob patterns. Directories include all descendants; `*.md` matches only root-level Markdown files.
+
+Similar to `.gitignore`, the order of entries matters: entries are evaluated in declaration order and the **last matching entry wins**.
+Entries starting with `!` re-include paths ignored by a previous entry, so they must be declared after the entries they negate.
+As with `.gitignore`, paths inside an ignored directory cannot be re-included.
+
+```yaml
+ignore:
+  - "**/README.md"
+  - "!license/README.md" # 'license/README.md' is not ignored
+  - "docs"
+  - "!docs/foo.md"       # has no effect: 'docs/foo.md' is inside the ignored directory 'docs'
+```
 
 If all changed files are ignored, no tests (including smoke and `@MustRunAlways` tests) or compilation are required before merging to master.
 Codeowner approval can suffice. Mixed changes follow the normal rules for non-ignored files.
@@ -295,7 +329,10 @@ This may be useful if your task does not support partial execution
 ### Checking which files belong to each domain
 
 [domains.dump.txt](domains.dump.txt) lists the files belonging to each domain. CI checks that it matches the domain declarations.
-Its `ignored:` section lists globally ignored paths and takes precedence over domain entries.
+[domains.ignore.dump.txt](domains.ignore.dump.txt) lists globally ignored paths, which take precedence over domain entries.
+CI checks that this dump contains all currently ignored paths. Extra entries are allowed only if the current ignore rules
+still ignore those paths, for example files absent from the current checkout. Entries no longer covered by the rules must be removed.
+Entry order and formatting do not matter for the ignore dump.
 Run the same check locally from the repository root:
 
 ```shell
@@ -304,7 +341,7 @@ Run the same check locally from the repository root:
 
 ### Updating the dump
 
-Changes to `domains.yaml` might require an update of the dump file. Update it from the repository root with:
+Changes to `domains.yaml` might require an update of the dump files. Update both from the repository root with:
 
 ```shell
 ./gradlew :repo:codebase-tests:updateDomainsDump -Pkotlin.native.enabled=true
