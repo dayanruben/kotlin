@@ -18,6 +18,7 @@ Read these before assessing any class:
 - `repo/test-runtime/src/main/kotlin/org/jetbrains/kotlin/test/federation/annotations.kt` — annotation source/KDoc.
 - `repo/test-runtime/src/main/generated/annotations.kt` — the generated, concrete `@MustRunOnChangesIn<Domain>` annotations (one per domain).
 - `repo/domains.yaml` — domain definitions; confirms which domain a module path belongs to (this module's path already maps to `Gradle`).
+- `libraries/tools/kotlin-gradle-plugin-integration-tests/src/test/kotlin/org/jetbrains/kotlin/gradle/testbase/testTags.kt` - defines common test annotations, some of which are annotated with Test Federation annotations.
 
 ## Per-class procedure
 
@@ -47,12 +48,17 @@ Input can be a single test class or a list of test classes; all of them live und
 5. **Avoid `@MustRunAlways`.** Reserve it only for fundamental "always must pass" smoke tests (e.g.
    `SimpleKotlinGradleIT`/`KotlinGradleIT`). For ordinary feature/behavior tests, pick the most concrete
    `@MustRunOnChangesIn<Domain>` instead — do not use `@MustRunAlways` as a catch-all.
-6. **Domain-specific annotations — add at class or method level where necessary, on top of the baseline
+6. **Do not add domain-specific annotations if existing test tags annotations already include them**. Check for  
+   test tags annotations on test classes and methods, and look them up in `testTags.kt`: if they already include Test
+   Federation annotations, do not add them. Example: tests annotated with `@NativeGradlePluginTests`
+   are automatically annotated with `@MustRunOnChangesInNative`, since `@NativeGradlePluginTests` is itself
+   annotated with `@MustRunOnChangesInNative` - no need to add it again.
+7. **Domain-specific annotations — add at class or method level where necessary, on top of the baseline
    `@MustRunOnChangesInGradle`:** if some or all tests in the class also depend on a domain outside `Gradle` (per
    point 2), add the corresponding `@MustRunOnChangesIn<Domain>` annotation(s) in addition to the class-level
    `@MustRunOnChangesInGradle` from point 3. Do not treat a domain-specific annotation as a substitute for the
    `Gradle` one — both are kept.
-7. **Class-level vs. per-method for domain-specific annotations:** place a domain-specific annotation on the class
+8. **Class-level vs. per-method for domain-specific annotations:** place a domain-specific annotation on the class
    when every test in the class shares the same domain dependency. Switch to **per-method** domain-specific
    annotations when tests differ in what they exercise — annotate each test method with only the domain(s) it
    actually depends on, rather than over-annotating the whole class. When asked to convert class-level to per-method,
@@ -60,8 +66,15 @@ Input can be a single test class or a list of test classes; all of them live und
    **If every method already carries its own domain-specific annotation(s), do not also repeat that domain-specific
    annotation at the class level** — it would be redundant. `@MustRunOnChangesInGradle` is the exception and always
    stays at the class level (see point 3), since it applies uniformly regardless of per-method domain differences.
-8. **Imports:** add the corresponding `org.jetbrains.kotlin.testFederation.MustRunOnChangesIn<Domain>` import(s), keeping
+9. **Imports:** add the corresponding `org.jetbrains.kotlin.testFederation.MustRunOnChangesIn<Domain>` import(s), keeping
    import ordering consistent with the file's existing style.
+
+## Workflow
+
+- If input is a list of test classes, work on every class sequentially, not in parallel.
+- Before proceeding to the next class, ask the user to validate the changes and commit them manually.
+- Wait for the user's approval before proceeding to the next class.
+- Never commit changes automatically.
 
 ## Running table
 
@@ -79,14 +92,6 @@ assessed (keep "Changes made" very brief — a few words, not a sentence):
 Use `Annotated` / `Already annotated` / `Annotated (per-method)` etc. for Status.
 
 Print the table at the end of the run in Markdown format, so it can be included in the pull request description.
-
-## Commit conventions
-
-- A separate commit should be created for every modified class. 
-- Commit message subject: `Mark <ClassName> with <AnnotationName>` (e.g. `Mark DifferentClassloadersIT with MustRunOnChangesInGradle`).
-  If multiple annotations were added, name the most relevant one or summarize concisely.
-- Commit description: only the ticket ID, `KT-87614` — nothing else.
-- Before committing, check `git status`/`git diff` to confirm exactly which file(s) are pending and uncommitted.
 
 ## Verification
 

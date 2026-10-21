@@ -12,8 +12,11 @@ import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompilerExecutionStrategy
 import org.jetbrains.kotlin.gradle.testbase.*
 import org.jetbrains.kotlin.gradle.util.checkedReplace
+import org.jetbrains.kotlin.testFederation.MustRunOnChangesInBuildToolsApi
+import org.jetbrains.kotlin.testFederation.MustRunOnChangesInCompilerInfrastructure
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
+import kotlin.io.path.absolutePathString
 import kotlin.io.path.appendText
 import kotlin.io.path.createFile
 import kotlin.io.path.createParentDirectories
@@ -90,6 +93,7 @@ class ExecutionStrategyJvmIT : ExecutionStrategyIT() {
     }
 }
 
+@MustRunOnChangesInBuildToolsApi
 abstract class ExecutionStrategyIT : KGPDaemonsBaseTest() {
     @DisplayName("Compilation via Kotlin daemon")
     @GradleTest
@@ -208,6 +212,7 @@ abstract class ExecutionStrategyIT : KGPDaemonsBaseTest() {
 
     @DisplayName("KT-75820: The legacy in-process mode properly reports compilation warnings/errors")
     @GradleTest
+    @MustRunOnChangesInCompilerInfrastructure
     fun testInProcessWithCompilationWarning(gradleVersion: GradleVersion) {
         project(
             projectName = "kotlinBuiltins",
@@ -236,8 +241,8 @@ abstract class ExecutionStrategyIT : KGPDaemonsBaseTest() {
                         Problem found: Kotlin compiler: DEPRECATION (id: kotlin:compiler:warning:DEPRECATION)
                           Kotlin compiler warning
                             'constructor(): A' is deprecated. deprecated for test.
-                            Location: ${mainKt.toRealPath()}
-                        """.trimIndent()
+                            Location: ${mainKt.toRealPath().absolutePathString().normalizePath()}
+                        """.trimIndent().normalizeLineEndings()
                     )
                 }
             }
