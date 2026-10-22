@@ -49,6 +49,7 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.java.JavaVisibilities
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.StandardTypes
 import org.jetbrains.kotlin.fir.backend.jvm.FirJvmTypeMapper
 import org.jetbrains.kotlin.fir.declarations.DirectDeclarationsAccess
 import org.jetbrains.kotlin.fir.declarations.FirProperty
@@ -533,7 +534,7 @@ internal class KaFirJavaInteroperabilityComponent(
         }
 
         val identifier = property.name.identifierOrNullIfSpecial ?: return null
-        if (hasPrefixlessAccessorNames(property)) {
+        if (with(lightClassBridge) { property.hasPrefixlessAccessorNames }) {
             return identifier
         }
 
@@ -542,18 +543,6 @@ internal class KaFirJavaInteroperabilityComponent(
         } else {
             JvmAbi.setterName(identifier)
         }
-    }
-
-    /**
-     * Whether accessors of [property] are named after the property itself, without the `get`/`set` prefix.
-     *
-     * @see org.jetbrains.kotlin.backend.jvm.mapping.MethodSignatureMapper
-     */
-    context(_: KaSession)
-    private fun hasPrefixlessAccessorNames(property: KaPropertySymbol): Boolean {
-        val containingClass = property.containingDeclaration as? KaClassSymbol ?: return false
-        return containingClass.classKind == KaClassKind.ANNOTATION_CLASS ||
-                JvmStandardClassIds.Annotations.JvmRecord in containingClass.annotations
     }
 
 }
@@ -704,8 +693,8 @@ private class AnonymousTypesSubstitutor(
         val firClassNode = type.lookupTag.toSymbol(session) as? FirClassSymbol
         firClassNode?.resolvedSuperTypes?.singleOrNull()?.let { return it }
 
-        return if (type.isMarkedNullable) session.builtinTypes.nullableAnyType.coneType
-        else session.builtinTypes.anyType.coneType
+        return if (type.isMarkedNullable) StandardTypes.NullableAny
+        else StandardTypes.Any
     }
 
     private fun ConeKotlinType.hasRecursiveTypeArgument(

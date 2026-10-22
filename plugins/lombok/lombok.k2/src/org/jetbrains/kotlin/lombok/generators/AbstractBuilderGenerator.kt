@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.descriptors.java.JavaVisibilities
 import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.StandardTypes
 import org.jetbrains.kotlin.fir.analysis.checkers.getAllowedAnnotationTargets
 import org.jetbrains.kotlin.fir.analysis.checkers.typeParameterSymbols
 import org.jetbrains.kotlin.fir.caches.FirCache
@@ -375,16 +376,19 @@ abstract class AbstractBuilderGenerator<T : AbstractBuilder>(session: FirSession
                 // setter, `clearName`) asks that name for an identifier, which a special name refuses with an
                 // `IllegalStateException`. Nothing sensible can be generated for such an item anyway: skip it,
                 // the way `FirLombokBuilderChecker` skips it when reporting.
-                if (item.name.isSpecial) continue
+                val itemName = item.name
+                if (itemName.isSpecial) continue
 
-                val itemProperty = (item.symbol as? FirPropertySymbol) ?: promotedProperties[item.name]
-                val singularAnnotation = item.symbol.getCompilerRequiredAnnotationByClassId(LombokNames.SINGULAR_ID)
+                val itemSymbol = item.symbol
+                val itemProperty = (itemSymbol as? FirPropertySymbol) ?: promotedProperties[itemName]
+                val singularAnnotation = itemSymbol.getCompilerRequiredAnnotationByClassId(LombokNames.SINGULAR_ID)
                     ?: itemProperty?.findAnnotationOnPropertyOrField(LombokNames.SINGULAR_ID)
                 val singular: Singular? = singularAnnotation?.let { Singular.extract(it, session) }
                 // `@Builder.Default` is `@Target(FIELD)` alone, so it is never on the parameter itself.
                 val hasBuilderDefault = itemProperty?.findAnnotationOnPropertyOrField(LombokNames.BUILDER_DEFAULT_ID) != null
+                val newSource = item.source?.fakeElement(KtFakeSourceElementKind.PluginGenerated.Default)
 
-                generatedVariables.addIfNonClashing(item.name, existingVariableNames) {
+                generatedVariables.addIfNonClashing(itemName, existingVariableNames) {
                     val key = BuilderGeneratorKey(BuilderDeclarationType.Field)
                     if (builderSymbol.hasJavaOrigin) {
                         buildJavaField {
@@ -403,10 +407,10 @@ abstract class AbstractBuilderGenerator<T : AbstractBuilder>(session: FirSession
                             isVar = false
                             symbol = FirFieldSymbol(CallableId(builderSymbol.classId, it))
                             dispatchReceiverType = builderSymbol.defaultType()
-                            source = item.source?.fakeElement(KtFakeSourceElementKind.PluginGenerated.Default)
+                            source = newSource
                         }.symbol
                     } else {
-                        val substitutedType = substitutor.substituteOrSelf(item.returnTypeRef.coneType)
+                        val substitutedType = substitutor.substituteOrSelf(itemSymbol.resolvedReturnType)
                         // A `@Singular` builder field always holds a nullable, mutable collection (`null` == "not yet
                         // created"), regardless of the entity property's own type/nullability — mirrors Lombok's
                         // Java codegen, which always backs a `@Singular` field with a lazily initialized mutable collection.
@@ -424,27 +428,23 @@ abstract class AbstractBuilderGenerator<T : AbstractBuilder>(session: FirSession
                         ) {
                             modality = Modality.FINAL
                             visibility = Visibilities.Private
-                            item.source?.let { itemSource ->
-                                source = itemSource.fakeElement(KtFakeSourceElementKind.PluginGenerated.Default)
-                            }
+                            source = newSource
                         }.symbol
                     }
                 }
 
                 if (!builderSymbol.hasJavaOrigin && hasBuilderDefault && singular == null) {
-                    generatedVariables.addIfNonClashing(Name.identifier(item.name.identifier + $$"$set"), existingVariableNames) {
+                    generatedVariables.addIfNonClashing(Name.identifier(itemName.identifier + $$"$set"), existingVariableNames) {
                         createMemberProperty(
                             owner = builderSymbol,
-                            key = BuilderGeneratorKey(BuilderDeclarationType.DefaultFlagField(item.name)),
+                            key = BuilderGeneratorKey(BuilderDeclarationType.DefaultFlagField(itemName)),
                             name = it,
-                            returnType = session.builtinTypes.booleanType.coneType,
+                            returnType = StandardTypes.Boolean,
                             isVal = false,
                         ) {
                             modality = Modality.FINAL
                             visibility = Visibilities.Private
-                            item.source?.let { itemSource ->
-                                source = itemSource.fakeElement(KtFakeSourceElementKind.PluginGenerated.Default)
-                            }
+                            source = newSource
                         }.symbol
                     }
                 }
@@ -453,7 +453,7 @@ abstract class AbstractBuilderGenerator<T : AbstractBuilder>(session: FirSession
                     null -> {
                         generatedFunctions.addSetterMethod(
                             builder,
-                            item,
+                            itemSymbol,
                             substitutor,
                             builderSymbol = builderSymbol,
                             existingFunctionNames = existingFunctionNames
@@ -463,7 +463,7 @@ abstract class AbstractBuilderGenerator<T : AbstractBuilder>(session: FirSession
                         generatedFunctions.addMethodsForSingularFields(
                             builder,
                             singular,
-                            item,
+                            itemSymbol,
                             substitutor,
                             builderSymbol = builderSymbol,
                             existingFunctionNames = existingFunctionNames
@@ -767,7 +767,7 @@ abstract class AbstractBuilderGenerator<T : AbstractBuilder>(session: FirSession
 
     private fun MutableMap<Name, FirNamedFunctionSymbol>.addSetterMethod(
         builder: AbstractBuilder,
-        item: FirVariable,
+        item: FirVariableSymbol<*>,
         substitutor: ConeSubstitutor,
         builderSymbol: FirClassSymbol<*>,
         existingFunctionNames: Set<Name>,
@@ -778,6 +778,7 @@ abstract class AbstractBuilderGenerator<T : AbstractBuilder>(session: FirSession
         val visibility = builder.builderFunctionsVisibility(builderSymbol) ?: return
 
         addIfNonClashing(setterName, existingFunctionNames) {
+            @OptIn(SymbolInternals::class)
             createJavaOrKotlinMemberFunction(
                 owner = builderSymbol,
                 name = it,
@@ -791,9 +792,9 @@ abstract class AbstractBuilderGenerator<T : AbstractBuilder>(session: FirSession
                         // by name via the owning declaration's `javaTypeParameterStack`, which is populated with the
                         // builder's copied type parameters (see `populateTypeParametersMapping`), so no substitution is needed.
                         typeRef = if (builderSymbol.hasJavaOrigin)
-                            item.returnTypeRef
+                            item.fir.returnTypeRef
                         else
-                            substitutor.substituteOrSelf(item.returnTypeRef.coneType).toFirResolvedTypeRef()
+                            substitutor.substituteOrSelf(item.resolvedReturnType).toFirResolvedTypeRef()
                     )
                 ),
                 returnTypeRef = builderType.toFirResolvedTypeRef(),
@@ -852,12 +853,12 @@ abstract class AbstractBuilderGenerator<T : AbstractBuilder>(session: FirSession
     private fun MutableMap<Name, FirNamedFunctionSymbol>.addMethodsForSingularFields(
         builder: AbstractBuilder,
         singular: Singular,
-        item: FirVariable,
+        item: FirVariableSymbol<*>,
         substitutor: ConeSubstitutor,
         builderSymbol: FirClassSymbol<*>,
         existingFunctionNames: Set<Name>,
     ) {
-        val typeRef = item.returnTypeRef
+        @OptIn(SymbolInternals::class) val typeRef = if (builderSymbol.hasJavaOrigin) item.fir.returnTypeRef else item.resolvedReturnTypeRef
 
         val typeId = when (typeRef) {
             is FirJavaTypeRef -> ((typeRef.type as? JavaClassifierType)?.classifier as? JavaClass)?.fqName?.let(ClassId::topLevel)

@@ -1040,7 +1040,7 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
             block.replaceIsUnitCoerced(true)
         } else {
             // Bottom-up propagation: from the return type of the last expression in the block to the block type
-            block.writeResultType(session)
+            block.writeResultType()
         }
 
         dataFlowAnalyzer.exitBlock(block)
@@ -1430,7 +1430,7 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
 
         when (resolved.operation) {
             IS, NOT_IS -> {
-                resolved.resultType = session.builtinTypes.booleanType.coneType
+                resolved.resultType = StandardTypes.Boolean
             }
             AS -> {
                 resolved.resultType = conversionTypeRef.coneType
@@ -2331,7 +2331,7 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
                     indexedAccessAugmentedAssignment.operation.toAugmentedAssignSourceKind()
                 )
             }.also {
-                it.replaceConeTypeOrNull(session.builtinTypes.unitType.coneType)
+                it.replaceConeTypeOrNull(StandardTypes.Unit)
             }
         }
     }

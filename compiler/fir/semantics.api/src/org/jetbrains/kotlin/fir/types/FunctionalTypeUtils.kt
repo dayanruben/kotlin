@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.builtins.functions.FunctionTypeKind
 import org.jetbrains.kotlin.builtins.functions.isBasicFunctionOrKFunction
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.SessionAndScopeSessionHolder
+import org.jetbrains.kotlin.fir.StandardTypes
 import org.jetbrains.kotlin.fir.computeTypeAttributes
 import org.jetbrains.kotlin.fir.declarations.FirFunction
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
@@ -293,20 +294,20 @@ fun ConeKotlinType.contextParameterTypes(session: FirSession): List<ConeKotlinTy
     if (!isSomeFunctionType(session)) return emptyList()
     return fullyExpandedType(session).let { expanded ->
         val contextParameter = expanded.typeArguments.take(expanded.contextParameterNumberForFunctionType)
-        contextParameter.map { it.typeOrDefault(session.builtinTypes.nothingType.coneType) }
+        contextParameter.map { it.typeOrDefault(StandardTypes.Nothing) }
     }
 }
 
 fun ConeKotlinType.receiverType(session: FirSession): ConeKotlinType? {
     if (!isSomeFunctionType(session) || !isExtensionFunctionType(session)) return null
     return fullyExpandedType(session).let { expanded ->
-        expanded.typeArguments[expanded.contextParameterNumberForFunctionType].typeOrDefault(session.builtinTypes.nothingType.coneType)
+        expanded.typeArguments[expanded.contextParameterNumberForFunctionType].typeOrDefault(StandardTypes.Nothing)
     }
 }
 
 fun ConeClassLikeType.returnType(session: FirSession): ConeKotlinType {
     // TODO: add requirement
-    return fullyExpandedType(session).typeArguments.last().typeOrDefault(session.builtinTypes.nullableAnyType.coneType)
+    return fullyExpandedType(session).typeArguments.last().typeOrDefault(StandardTypes.NullableAny)
 }
 
 fun ConeClassLikeType.valueParameterTypesWithoutReceivers(session: FirSession): List<ConeKotlinType> {
@@ -316,12 +317,12 @@ fun ConeClassLikeType.valueParameterTypesWithoutReceivers(session: FirSession): 
     val receiversNumber = expandedType.contextParameterNumberForFunctionType + if (expandedType.isExtensionFunctionType) 1 else 0
     val valueParameters = expandedType.typeArguments.drop(receiversNumber).dropLast(1)
 
-    return valueParameters.map { it.typeOrDefault(session.builtinTypes.nothingType.coneType) }
+    return valueParameters.map { it.typeOrDefault(StandardTypes.Nothing) }
 }
 
 fun ConeClassLikeType.valueParameterTypesIncludingReceiver(session: FirSession): List<ConeKotlinType> {
     // TODO: add requirement
-    return fullyExpandedType(session).typeArguments.dropLast(1).map { it.typeOrDefault(session.builtinTypes.nothingType.coneType) }
+    return fullyExpandedType(session).typeArguments.dropLast(1).map { it.typeOrDefault(StandardTypes.Nothing) }
 }
 
 private fun ConeTypeProjection.typeOrDefault(default: ConeKotlinType): ConeKotlinType = when (this) {

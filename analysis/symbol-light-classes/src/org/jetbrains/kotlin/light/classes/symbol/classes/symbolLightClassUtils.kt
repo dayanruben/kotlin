@@ -889,6 +889,8 @@ private fun hasMangledNameDueToInlineClasses(symbol: KaCallableSymbol): Boolean 
     // On the JVM, an accessor has the receiver, the context parameters, and the type of its property, while the symbol
     // itself only has the receiver
     val declaration = (symbol as? KaPropertyAccessorSymbol)?.containingDeclaration as? KaCallableSymbol ?: symbol
+    if (declaration is KaPropertySymbol && declaration.hasPrefixlessAccessorNames) return false
+
     val hasInlineClassInReturnType = hasInlineClassInReturnType(declaration)
     val isSetter = symbol is KaPropertySetterSymbol
 
@@ -905,6 +907,21 @@ private fun hasMangledNameDueToInlineClasses(symbol: KaCallableSymbol): Boolean 
 
     return isMangledBySignature || isNonMaterializedInlineClassMember(symbol, owner)
 }
+
+/**
+ * Whether the accessors of this property are named after the property itself, without the `get`/`set` prefix, as for the
+ * properties of annotation classes and [JvmRecord] classes.
+ *
+ * The JVM backend returns such names before applying any mangling,
+ * see `org.jetbrains.kotlin.backend.jvm.mapping.MethodSignatureMapper.mapFunctionName`.
+ */
+context(_: KaSession)
+internal val KaPropertySymbol.hasPrefixlessAccessorNames: Boolean
+    get() {
+        val containingClass = containingDeclaration as? KaClassSymbol ?: return false
+        return containingClass.classKind == KaClassKind.ANNOTATION_CLASS ||
+                JvmStandardClassIds.Annotations.JvmRecord in containingClass.annotations
+    }
 
 /**
  * The declaration that owns the JVM method for [symbol], or `null` if the method is placed into a file facade class.

@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.builtins.functions.AllowedToUsedOnlyInK1
 import org.jetbrains.kotlin.builtins.functions.FunctionTypeKind
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.fir.StandardTypes
 import org.jetbrains.kotlin.fir.declarations.utils.modality
 import org.jetbrains.kotlin.fir.diagnostics.ConeIntermediateDiagnostic
 import org.jetbrains.kotlin.fir.isPrimitiveNumberOrUnsignedNumberType
@@ -40,19 +41,19 @@ interface ConeInferenceContext : TypeSystemInferenceExtensionContext, ConeTypeCo
     val symbolProvider: FirSymbolProvider get() = session.symbolProvider
 
     override fun nullableNothingType(): ConeClassLikeType {
-        return session.builtinTypes.nullableNothingType.coneType
+        return StandardTypes.NullableNothing
     }
 
     override fun nullableAnyType(): ConeClassLikeType {
-        return session.builtinTypes.nullableAnyType.coneType
+        return StandardTypes.NullableAny
     }
 
     override fun nothingType(): ConeClassLikeType {
-        return session.builtinTypes.nothingType.coneType
+        return StandardTypes.Nothing
     }
 
     override fun anyType(): ConeClassLikeType {
-        return session.builtinTypes.anyType.coneType
+        return StandardTypes.Any
     }
 
     override fun createFlexibleType(lowerBound: RigidTypeMarker, upperBound: RigidTypeMarker): ConeKotlinType {

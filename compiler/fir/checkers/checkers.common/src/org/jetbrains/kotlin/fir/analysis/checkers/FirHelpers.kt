@@ -567,7 +567,7 @@ context(context: CheckerContext, reporter: DiagnosticReporter)
 internal fun checkCondition(condition: FirExpression) {
     val coneType = condition.resolvedType.fullyExpandedType().lowerBoundIfFlexible()
     if (coneType !is ConeErrorType &&
-        !coneType.isSubtypeOf(context.session.typeContext, context.session.builtinTypes.booleanType.coneType)
+        !coneType.isSubtypeOf(context.session.typeContext, StandardTypes.Boolean)
     ) {
         if (condition is FirFunctionCall &&
             condition.origin == FirFunctionCallOrigin.Operator &&
@@ -738,7 +738,7 @@ fun FirElement.isLhsOfAssignment(): Boolean {
 
 fun ConeKotlinType.leastUpperBound(session: FirSession): ConeKotlinType {
     val upperBounds = collectUpperBounds(session.typeContext).takeIf { it.isNotEmpty() }
-        ?: return session.builtinTypes.nullableAnyType.coneType
+        ?: return StandardTypes.NullableAny
     return ConeTypeIntersector.intersectTypes(session.typeContext, upperBounds)
 }
 

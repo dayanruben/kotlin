@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.KtRealPsiSourceElement
 import org.jetbrains.kotlin.constant.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.StandardTypes
 import org.jetbrains.kotlin.fir.expressions.FirAnnotation
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.FirLiteralExpression
@@ -187,7 +188,7 @@ internal class StubBasedAnnotationDeserializer(private val session: FirSession) 
                 buildCollectionLiteral {
                     source = KtRealPsiSourceElement(sourceElement)
                     // Not quite precise, yet doesn't require annotation resolution
-                    coneTypeOrNull = (inferArrayValueType(value.value) ?: session.builtinTypes.anyType.coneType).createArrayType()
+                    coneTypeOrNull = (inferArrayValueType(value.value) ?: StandardTypes.Any).createArrayType()
 
                     argumentList = buildArgumentList {
                         value.value.mapTo(arguments) { resolveValue(sourceElement, it) }
@@ -232,24 +233,24 @@ internal class StubBasedAnnotationDeserializer(private val session: FirSession) 
             }
 
             return when (firstValue) {
-                is BooleanValue -> session.builtinTypes.booleanType.coneType
-                is ByteValue -> session.builtinTypes.byteType.coneType
-                is CharValue -> session.builtinTypes.charType.coneType
-                is ShortValue -> session.builtinTypes.shortType.coneType
-                is IntValue -> session.builtinTypes.intType.coneType
-                is LongValue -> session.builtinTypes.longType.coneType
-                is UByteValue -> session.builtinTypes.byteType.coneType
-                is UShortValue -> session.builtinTypes.shortType.coneType
-                is UIntValue -> session.builtinTypes.intType.coneType
-                is ULongValue -> session.builtinTypes.longType.coneType
-                is DoubleValue -> session.builtinTypes.doubleType.coneType
-                is FloatValue -> session.builtinTypes.floatType.coneType
+                is BooleanValue -> StandardTypes.Boolean
+                is ByteValue -> StandardTypes.Byte
+                is CharValue -> StandardTypes.Char
+                is ShortValue -> StandardTypes.Short
+                is IntValue -> StandardTypes.Int
+                is LongValue -> StandardTypes.Long
+                is UByteValue -> StandardTypes.Byte
+                is UShortValue -> StandardTypes.Short
+                is UIntValue -> StandardTypes.Int
+                is ULongValue -> StandardTypes.Long
+                is DoubleValue -> StandardTypes.Double
+                is FloatValue -> StandardTypes.Float
                 is AnnotationValue -> session.builtinTypes.annotationType.coneType
-                is StringValue -> session.builtinTypes.stringType.coneType
+                is StringValue -> StandardTypes.String
                 is EnumValue -> firstValue.enumClassId.constructClassLikeType(ConeTypeProjection.EMPTY_ARRAY, isMarkedNullable = false)
                 is ArrayValue -> values.firstNotNullOfOrNull { inferArrayValueType((it as ArrayValue).value) }?.createArrayType()
                 is KClassValue -> {
-                    val kClassType = session.builtinTypes.anyType.coneType
+                    val kClassType = StandardTypes.Any
                     StandardClassIds.KClass.constructClassLikeType(arrayOf(kClassType), isMarkedNullable = false)
                 }
                 else -> null
