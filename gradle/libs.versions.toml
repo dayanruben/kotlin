@@ -1,5 +1,5 @@
 [versions]
-kotlin-release = "2.4.20"
+kotlin-release = "2.5.0-Beta2"
 dexMemberList = "4.1.1"
 dokka = "2.3.0-Beta"
 gradle-custom-user-data = "2.4.0"
@@ -42,6 +42,7 @@ android-gradle-plugin-latest = "9.3.0"
 android-tools = "31.13.2"
 gradle-node-plugin = "7.0.2"
 lincheck = "2.28.1"
+archunit = "1.5.1"
 xerces = "2.12.2"
 caffeine = "2.9.3" # We cannot use the latest version of Caffeine (`3.x`) because it doesn't support Java 8.
 compose-stable = "1.7.0-alpha08" # Used for Compose compiler plugin tests
@@ -59,7 +60,7 @@ fastutil = "8.5.14-jb1"
 rwmutex-idea = "0.0.10"
 # Wasm specific
 wasmedge = "0.16.3"
-wasmtime = "49.0.1"
+wasmtime = "50.0.0"
 jscTahoe = "312950"
 jscLinux = "312950"
 jscWindows = "312950"
@@ -171,6 +172,7 @@ junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher
 junit-platform-suite = { module = "org.junit.platform:junit-platform-suite", version.ref = "junit-platform" }
 opentest4j = { module = "org.opentest4j:opentest4j", version.ref = "opentest4j" }
 lincheck = { module = "org.jetbrains.kotlinx:lincheck", version.ref = "lincheck" }
+archunit = { module = "com.tngtech.archunit:archunit", version.ref = "archunit" }
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
 protobuf-java = { module = "com.google.protobuf:protobuf-java", version.ref = "protobuf" }
 protobuf-java-compose-test = { module = "com.google.protobuf:protobuf-java", version.ref = "protobufComposeTest" }

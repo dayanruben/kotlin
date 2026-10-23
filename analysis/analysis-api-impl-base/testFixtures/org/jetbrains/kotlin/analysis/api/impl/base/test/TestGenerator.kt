@@ -114,18 +114,14 @@ fun AnalysisApiTestGroup.generateAnalysisApiTests() {
             model(data, "singleByPsi", excludeDirsRecursively = excludeDirs)
         }
 
-        test<AbstractResolveCallTest>(init = singleByPsiInit)
-        test<AbstractResolveCandidatesTest>(init = singleByPsiInit)
-        test<AbstractResolveSymbolTest>(init = singleByPsiInit)
+        test<AbstractResolveSingleByPsiTest>(init = singleByPsiInit)
 
         group(filter = testModuleKindIs(TestModuleKind.SourceLike)) {
             val allByPsiInit: TestGroup.TestClass.(data: AnalysisApiTestConfiguratorFactoryData) -> Unit = { data ->
                 model(data, "allByPsi")
             }
 
-            test<AbstractResolveCallByFileTest>(init = allByPsiInit)
-            test<AbstractResolveCandidatesByFileTest>(init = allByPsiInit)
-            test<AbstractResolveSymbolByFileTest>(init = allByPsiInit)
+            test<AbstractResolveAllByPsiTest>(init = allByPsiInit)
 
             test<AbstractResolveSymbolWithResolveExtensionTest> {
                 model(it, "resolveExtensions")
@@ -650,35 +646,7 @@ private fun AnalysisApiTestGroup.generateAnalysisApiComponentsTestsForSourceLike
     }
 
     component("typeRelationChecker") {
-        test<AbstractTypeEqualityTest> {
-            model(it, "subtypingAndEquality")
-        }
-
-        test<AbstractLenientTypeEqualityTest> {
-            model(it, "subtypingAndEquality")
-        }
-
-        test<AbstractSubtypingTest> {
-            model(it, "subtypingAndEquality")
-        }
-
-        test<AbstractLenientSubtypingTest> {
-            model(it, "subtypingAndEquality")
-        }
-
-        test<AbstractNonLenientClassIdSubtypingTypeRelationTest> {
-            model(it, "subtypingAndEquality")
-        }
-
-        test<AbstractLenientClassIdSubtypingTypeRelationTest> {
-            model(it, "subtypingAndEquality")
-        }
-
-        test<AbstractNonLenientClassSymbolSubtypingTypeRelationTest> {
-            model(it, "subtypingAndEquality")
-        }
-
-        test<AbstractLenientClassSymbolSubtypingTypeRelationTest> {
+        test<AbstractTypeRelationCheckerTest> {
             model(it, "subtypingAndEquality")
         }
     }

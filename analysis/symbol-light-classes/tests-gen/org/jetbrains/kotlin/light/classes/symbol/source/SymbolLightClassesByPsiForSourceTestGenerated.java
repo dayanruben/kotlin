@@ -305,9 +305,21 @@ public class SymbolLightClassesByPsiForSourceTestGenerated extends AbstractSymbo
   }
 
   @Test
+  @TestMetadata("jvmRecordWithInternalProperties.kt")
+  public void testJvmRecordWithInternalProperties() {
+    run("jvmRecordWithInternalProperties.kt");
+  }
+
+  @Test
   @TestMetadata("jvmRecordWithUnsignedComponent.kt")
   public void testJvmRecordWithUnsignedComponent() {
     run("jvmRecordWithUnsignedComponent.kt");
+  }
+
+  @Test
+  @TestMetadata("jvmStaticInAnnotationClassCompanion.kt")
+  public void testJvmStaticInAnnotationClassCompanion() {
+    run("jvmStaticInAnnotationClassCompanion.kt");
   }
 
   @Test
@@ -1383,6 +1395,32 @@ public class SymbolLightClassesByPsiForSourceTestGenerated extends AbstractSymbo
   }
 
   @Nested
+  @TestMetadata("analysis/symbol-light-classes/testData/lightClassByPsi/compilationErrors")
+  @TestDataPath("$PROJECT_ROOT")
+  public class CompilationErrors {
+    private void run(String fileName) {
+      runTest("analysis/symbol-light-classes/testData/lightClassByPsi/compilationErrors/" + fileName);
+    }
+
+    @Test
+    public void testAllFilesPresentInCompilationErrors() {
+      KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/symbol-light-classes/testData/lightClassByPsi/compilationErrors"), Pattern.compile("^([^.]+)\\.(kt|kts)$"), null, true);
+    }
+
+    @Test
+    @TestMetadata("nonLocalDestructuringDeclarations.kt")
+    public void testNonLocalDestructuringDeclarations() {
+      run("nonLocalDestructuringDeclarations.kt");
+    }
+
+    @Test
+    @TestMetadata("onlyTopLevelDestructuringDeclarations.kt")
+    public void testOnlyTopLevelDestructuringDeclarations() {
+      run("onlyTopLevelDestructuringDeclarations.kt");
+    }
+  }
+
+  @Nested
   @TestMetadata("analysis/symbol-light-classes/testData/lightClassByPsi/facades")
   @TestDataPath("$PROJECT_ROOT")
   public class Facades {
@@ -2381,6 +2419,12 @@ public class SymbolLightClassesByPsiForSourceTestGenerated extends AbstractSymbo
       }
 
       @Test
+      @TestMetadata("jvmStaticVariableAnnotationClassCompanion.kt")
+      public void testJvmStaticVariableAnnotationClassCompanion() {
+        run("jvmStaticVariableAnnotationClassCompanion.kt");
+      }
+
+      @Test
       @TestMetadata("jvmStaticVariableCompanion.kt")
       public void testJvmStaticVariableCompanion() {
         run("jvmStaticVariableCompanion.kt");
@@ -2396,6 +2440,12 @@ public class SymbolLightClassesByPsiForSourceTestGenerated extends AbstractSymbo
       @TestMetadata("jvmStaticVariableCompanionClassAnnotation.kt")
       public void testJvmStaticVariableCompanionClassAnnotation() {
         run("jvmStaticVariableCompanionClassAnnotation.kt");
+      }
+
+      @Test
+      @TestMetadata("jvmStaticVariableJvmRecordCompanion.kt")
+      public void testJvmStaticVariableJvmRecordCompanion() {
+        run("jvmStaticVariableJvmRecordCompanion.kt");
       }
 
       @Test
@@ -2481,6 +2531,12 @@ public class SymbolLightClassesByPsiForSourceTestGenerated extends AbstractSymbo
     @Test
     public void testAllFilesPresentInScripts() {
       KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/symbol-light-classes/testData/lightClassByPsi/scripts"), Pattern.compile("^([^.]+)\\.(kt|kts)$"), null, true);
+    }
+
+    @Test
+    @TestMetadata("DestructuringDeclarations.kts")
+    public void testDestructuringDeclarations() {
+      run("DestructuringDeclarations.kts");
     }
 
     @Test

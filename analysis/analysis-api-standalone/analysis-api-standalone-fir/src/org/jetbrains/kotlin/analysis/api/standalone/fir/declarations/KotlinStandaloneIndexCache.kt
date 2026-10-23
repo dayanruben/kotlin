@@ -9,6 +9,7 @@ package org.jetbrains.kotlin.analysis.api.standalone.fir.declarations
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.compiled.ClassFileDecompilers
 import com.intellij.util.containers.CollectionFactory
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtImplementationDetail
 import org.jetbrains.kotlin.psi.stubs.impl.KotlinFileStubImpl
 
@@ -23,12 +24,32 @@ import org.jetbrains.kotlin.psi.stubs.impl.KotlinFileStubImpl
  */
 internal class KotlinStandaloneIndexCache {
     private val stubs = CollectionFactory.createConcurrentWeakKeySoftValueMap<VirtualFile, KotlinFileStubImpl>()
+    private val packageNames = CollectionFactory.createConcurrentWeakKeySoftValueMap<VirtualFile, FqName>()
+    private val indexRecords = CollectionFactory.createConcurrentWeakKeySoftValueMap<VirtualFile, KotlinStandaloneFileIndexRecords>()
     private val roots = CollectionFactory.createConcurrentWeakKeySoftValueMap<VirtualFile, Set<SharedIndexableDecompiledFile>>()
 
     fun getOrBuildStub(
         compiledFile: VirtualFile,
         stubBuilder: (VirtualFile) -> KotlinFileStubImpl,
     ): KotlinFileStubImpl = stubs.computeIfAbsent(compiledFile, stubBuilder)
+
+    /**
+     * Computing the package name of a decompiled file requires its stub,
+     * so without this cache each test would build stubs for all library files.
+     */
+    fun getOrComputePackageName(
+        compiledFile: VirtualFile,
+        packageNameComputer: (VirtualFile) -> FqName,
+    ): FqName = packageNames.computeIfAbsent(compiledFile, packageNameComputer)
+
+    /**
+     * The records refer to the indexed elements only by their ordinals, so they can be shared between projects.
+     */
+    fun getIndexRecords(compiledFile: VirtualFile): KotlinStandaloneFileIndexRecords? = indexRecords[compiledFile]
+
+    fun putIndexRecords(compiledFile: VirtualFile, records: KotlinStandaloneFileIndexRecords) {
+        indexRecords[compiledFile] = records
+    }
 
     /** @see SharedIndexableDecompiledFile */
     fun getOrProcessBinaryRoot(

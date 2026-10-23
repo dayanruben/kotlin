@@ -305,9 +305,21 @@ public class SymbolLightClassesByPsiForLibraryTestGenerated extends AbstractSymb
   }
 
   @Test
+  @TestMetadata("jvmRecordWithInternalProperties.kt")
+  public void testJvmRecordWithInternalProperties() {
+    run("jvmRecordWithInternalProperties.kt");
+  }
+
+  @Test
   @TestMetadata("jvmRecordWithUnsignedComponent.kt")
   public void testJvmRecordWithUnsignedComponent() {
     run("jvmRecordWithUnsignedComponent.kt");
+  }
+
+  @Test
+  @TestMetadata("jvmStaticInAnnotationClassCompanion.kt")
+  public void testJvmStaticInAnnotationClassCompanion() {
+    run("jvmStaticInAnnotationClassCompanion.kt");
   }
 
   @Test
@@ -2369,6 +2381,12 @@ public class SymbolLightClassesByPsiForLibraryTestGenerated extends AbstractSymb
       }
 
       @Test
+      @TestMetadata("jvmStaticVariableAnnotationClassCompanion.kt")
+      public void testJvmStaticVariableAnnotationClassCompanion() {
+        run("jvmStaticVariableAnnotationClassCompanion.kt");
+      }
+
+      @Test
       @TestMetadata("jvmStaticVariableCompanion.kt")
       public void testJvmStaticVariableCompanion() {
         run("jvmStaticVariableCompanion.kt");
@@ -2384,6 +2402,12 @@ public class SymbolLightClassesByPsiForLibraryTestGenerated extends AbstractSymb
       @TestMetadata("jvmStaticVariableCompanionClassAnnotation.kt")
       public void testJvmStaticVariableCompanionClassAnnotation() {
         run("jvmStaticVariableCompanionClassAnnotation.kt");
+      }
+
+      @Test
+      @TestMetadata("jvmStaticVariableJvmRecordCompanion.kt")
+      public void testJvmStaticVariableJvmRecordCompanion() {
+        run("jvmStaticVariableJvmRecordCompanion.kt");
       }
 
       @Test

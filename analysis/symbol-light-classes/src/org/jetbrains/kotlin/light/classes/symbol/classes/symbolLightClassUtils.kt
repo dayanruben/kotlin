@@ -851,6 +851,10 @@ context(_: KaSession)
 internal fun computeJavaMethodName(symbol: KaCallableSymbol, defaultName: String, ignoreInlineClassMangling: Boolean): String? {
     symbol.jvmNameFromAnnotation?.let { return it }
 
+    // Neither of the manglings below applies to such accessors
+    val property = (symbol as? KaPropertyAccessorSymbol)?.containingDeclaration as? KaPropertySymbol
+    if (property?.hasPrefixlessAccessorNames == true) return defaultName
+
     // 'JvmName' above wins over inline class mangling, so the check has to be performed afterwards
     if (!ignoreInlineClassMangling && hasMangledNameDueToInlineClasses(symbol)) return null
 
@@ -889,8 +893,6 @@ private fun hasMangledNameDueToInlineClasses(symbol: KaCallableSymbol): Boolean 
     // On the JVM, an accessor has the receiver, the context parameters, and the type of its property, while the symbol
     // itself only has the receiver
     val declaration = (symbol as? KaPropertyAccessorSymbol)?.containingDeclaration as? KaCallableSymbol ?: symbol
-    if (declaration is KaPropertySymbol && declaration.hasPrefixlessAccessorNames) return false
-
     val hasInlineClassInReturnType = hasInlineClassInReturnType(declaration)
     val isSetter = symbol is KaPropertySetterSymbol
 
@@ -922,6 +924,16 @@ internal val KaPropertySymbol.hasPrefixlessAccessorNames: Boolean
         return containingClass.classKind == KaClassKind.ANNOTATION_CLASS ||
                 JvmStandardClassIds.Annotations.JvmRecord in containingClass.annotations
     }
+
+/**
+ * Whether this property is a member of an annotation class, which the JVM backend compiles to an abstract annotation method.
+ *
+ * Unlike checking the light class that receives the accessor, this excludes the static accessors which `@JvmStatic` copies from
+ * the companion object into the annotation class.
+ */
+context(_: KaSession)
+internal val KaPropertySymbol.isAnnotationClassMember: Boolean
+    get() = (containingDeclaration as? KaClassSymbol)?.classKind == KaClassKind.ANNOTATION_CLASS
 
 /**
  * The declaration that owns the JVM method for [symbol], or `null` if the method is placed into a file facade class.
