@@ -471,6 +471,13 @@ private fun KaDiagnosticConverterBuilder.addConversions3() {
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions4() {
+    add(FirWebCommonErrors.JS_MODULE_PROHIBITED_ON_MEMBER) { firDiagnostic ->
+        JsModuleProhibitedOnMemberImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
     add(FirErrors.LATEINIT_INTRINSIC_CALL_ON_NON_ACCESSIBLE_PROPERTY) { firDiagnostic ->
         LateinitIntrinsicCallOnNonAccessiblePropertyImpl(
             firSymbolBuilder.buildSymbol(firDiagnostic.a),
@@ -548,12 +555,6 @@ private fun KaDiagnosticConverterBuilder.addConversions5() {
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions6() {
-    add(FirJsErrors.JS_MODULE_PROHIBITED_ON_NON_NATIVE) { firDiagnostic ->
-        JsModuleProhibitedOnNonNativeImpl(
-            firDiagnostic as KtDiagnosticWithSource,
-            token,
-        )
-    }
     add(FirErrors.CLASS_LITERAL_LHS_NOT_A_CLASS) { firDiagnostic ->
         ClassLiteralLhsNotAClassImpl(
             firDiagnostic as KtDiagnosticWithSource,
@@ -808,6 +809,13 @@ private fun KaDiagnosticConverterBuilder.addConversions12() {
     add(FirErrors.REDUNDANT_ANNOTATION) { firDiagnostic ->
         RedundantAnnotationImpl(
             firDiagnostic.a,
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirWebCommonErrors.JS_MODULE_PROHIBITED_ON_EXTERNAL_INTERFACE) { firDiagnostic ->
+        JsModuleProhibitedOnExternalInterfaceImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -2964,6 +2972,12 @@ private fun KaDiagnosticConverterBuilder.addConversions63() {
             token,
         )
     }
+    add(FirWebCommonErrors.JS_MODULE_PROHIBITED_IN_FILE_WITH_JS_QUALIFIER) { firDiagnostic ->
+        JsModuleProhibitedInFileWithJsQualifierImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
     add(FirErrors.INAPPLICABLE_OPERATOR_MODIFIER) { firDiagnostic ->
         InapplicableOperatorModifierImpl(
             firDiagnostic.a,
@@ -3879,6 +3893,7 @@ private fun KaDiagnosticConverterBuilder.addConversions83() {
     }
     add(FirWebCommonErrors.JS_MODULE_PROHIBITED_ON_VAR) { firDiagnostic ->
         JsModuleProhibitedOnVarImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -4040,6 +4055,7 @@ private fun KaDiagnosticConverterBuilder.addConversions86() {
     }
     add(FirErrors.INLINE_CLASS_DEPRECATED) { firDiagnostic ->
         InlineClassDeprecatedImpl(
+            firDiagnostic.a,
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -4047,6 +4063,13 @@ private fun KaDiagnosticConverterBuilder.addConversions86() {
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions87() {
+    add(FirWebCommonErrors.NATIVE_ANNOTATIONS_ALLOWED_ONLY_ON_MEMBER_FUN) { firDiagnostic ->
+        NativeAnnotationsAllowedOnlyOnMemberFunImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
     add(FirErrors.DELEGATED_PROPERTY_INSIDE_VALUE_CLASS) { firDiagnostic ->
         DelegatedPropertyInsideValueClassImpl(
             firDiagnostic as KtDiagnosticWithSource,
@@ -4761,8 +4784,16 @@ private fun KaDiagnosticConverterBuilder.addConversions102() {
             token,
         )
     }
+    add(FirWebCommonErrors.JS_MODULE_PROHIBITED_ON_NON_EXTERNAL) { firDiagnostic ->
+        JsModuleProhibitedOnNonExternalImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
     add(FirWebCommonErrors.NESTED_JS_MODULE_PROHIBITED) { firDiagnostic ->
         NestedJsModuleProhibitedImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -4947,6 +4978,12 @@ private fun KaDiagnosticConverterBuilder.addConversions105() {
     add(FirErrors.EXPRESSION_OF_NULLABLE_TYPE_IN_CLASS_LITERAL_LHS) { firDiagnostic ->
         ExpressionOfNullableTypeInClassLiteralLhsImpl(
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirJvmErrors.JVM_INLINE_ON_VALUE_OBJECT) { firDiagnostic ->
+        JvmInlineOnValueObjectImpl(
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -6612,6 +6649,14 @@ private fun KaDiagnosticConverterBuilder.addConversions138() {
     }
     add(FirErrors.MIXING_SUSPEND_AND_NON_SUSPEND_SUPERTYPES) { firDiagnostic ->
         MixingSuspendAndNonSuspendSupertypesImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirJvmErrors.VALUE_CLASS_EXTENDS_VALUE_CLASS_COMPILED_AS_IDENTITY_CLASS) { firDiagnostic ->
+        ValueClassExtendsValueClassCompiledAsIdentityClassImpl(
+            firSymbolBuilder.classifierBuilder.buildClassLikeSymbol(firDiagnostic.a),
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.b),
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -8715,13 +8760,6 @@ private fun KaDiagnosticConverterBuilder.addConversions188() {
 private fun KaDiagnosticConverterBuilder.addConversions189() {
     add(FirErrors.ANNOTATION_CLASS_MEMBER) { firDiagnostic ->
         AnnotationClassMemberImpl(
-            firDiagnostic as KtDiagnosticWithSource,
-            token,
-        )
-    }
-    add(FirJsErrors.NATIVE_ANNOTATIONS_ALLOWED_ONLY_ON_MEMBER_OR_EXTENSION_FUN) { firDiagnostic ->
-        NativeAnnotationsAllowedOnlyOnMemberOrExtensionFunImpl(
-            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )

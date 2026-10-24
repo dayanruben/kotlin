@@ -28,6 +28,54 @@ public class PluginInteractionFirBlackBoxCodegenTestGenerated extends AbstractPl
   }
 
   @Test
+  @TestMetadata("lombokEqualsAndHashCodeAndSerialization.kt")
+  public void testLombokEqualsAndHashCodeAndSerialization() {
+    run("lombokEqualsAndHashCodeAndSerialization.kt");
+  }
+
+  @Test
+  @TestMetadata("lombokLogAndMetaSerializableCompanion.kt")
+  public void testLombokLogAndMetaSerializableCompanion() {
+    run("lombokLogAndMetaSerializableCompanion.kt");
+  }
+
+  @Test
+  @TestMetadata("lombokLogAndMetaSerializableExplicitCompanion.kt")
+  public void testLombokLogAndMetaSerializableExplicitCompanion() {
+    run("lombokLogAndMetaSerializableExplicitCompanion.kt");
+  }
+
+  @Test
+  @TestMetadata("lombokLogAndSerializableCompanion.kt")
+  public void testLombokLogAndSerializableCompanion() {
+    run("lombokLogAndSerializableCompanion.kt");
+  }
+
+  @Test
+  @TestMetadata("lombokLogAndSerializableExplicitCompanion.kt")
+  public void testLombokLogAndSerializableExplicitCompanion() {
+    run("lombokLogAndSerializableExplicitCompanion.kt");
+  }
+
+  @Test
+  @TestMetadata("lombokNoArgsConstructorAndSerialization.kt")
+  public void testLombokNoArgsConstructorAndSerialization() {
+    run("lombokNoArgsConstructorAndSerialization.kt");
+  }
+
+  @Test
+  @TestMetadata("lombokStaticFactoryInDeclaredCompanionAndSerialization.kt")
+  public void testLombokStaticFactoryInDeclaredCompanionAndSerialization() {
+    run("lombokStaticFactoryInDeclaredCompanionAndSerialization.kt");
+  }
+
+  @Test
+  @TestMetadata("lombokToStringAndSerialization.kt")
+  public void testLombokToStringAndSerialization() {
+    run("lombokToStringAndSerialization.kt");
+  }
+
+  @Test
   @TestMetadata("noArgAndSupertypesGenerator.kt")
   public void testNoArgAndSupertypesGenerator() {
     run("noArgAndSupertypesGenerator.kt");
