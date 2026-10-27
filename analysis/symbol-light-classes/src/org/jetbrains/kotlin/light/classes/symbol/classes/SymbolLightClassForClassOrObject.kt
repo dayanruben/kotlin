@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.light.classes.symbol.annotations.ExcludeAnnotationFilter
 import org.jetbrains.kotlin.light.classes.symbol.annotations.GranularAnnotationsBox
+import org.jetbrains.kotlin.light.classes.symbol.annotations.JvmInlineAdditionalAnnotationsProvider
 import org.jetbrains.kotlin.light.classes.symbol.annotations.SymbolAnnotationsProvider
 import org.jetbrains.kotlin.light.classes.symbol.fields.SymbolLightField
 import org.jetbrains.kotlin.light.classes.symbol.fields.SymbolLightFieldForEnumEntry
@@ -58,12 +59,15 @@ internal class SymbolLightClassForClassOrObject : SymbolLightClassForNamedClassL
      *
      * A [full value class](https://github.com/Kotlin/KEEP/blob/main/proposals/KEEP-0454-better-immutability-value-classes-MFVC.md)
      * and a value object are compiled as regular classes, so they are not inline value classes even though they have the
-     * `value` modifier. The distinction cannot be made from PSI alone, as it depends on the `@JvmInline` annotation, the
-     * target platform, and the `FullValueClasses` language feature, so the flag is computed from the class symbol.
+     * `value` modifier. The distinction cannot be made from PSI alone: unless the class has the `inline` modifier, it depends on
+     * the `@JvmInline` annotation, the target platform, and the `FullValueClasses` language feature, so the flag is computed
+     * from the class symbol.
      *
      * @see KaNamedClassSymbol.isInline
      */
-    val isInlineClass: Boolean
+    val isInlineClass: Boolean by lazyPub {
+        withClassSymbol { it.isInline }
+    }
 
     constructor(
         useSiteModule: KaModule,
@@ -73,21 +77,17 @@ internal class SymbolLightClassForClassOrObject : SymbolLightClassForNamedClassL
         classSymbol = classSymbol,
     ) {
         require(classSymbol.classKind != KaClassKind.INTERFACE && classSymbol.classKind != KaClassKind.ANNOTATION_CLASS)
-        isInlineClass = classSymbol.isInline
     }
 
     private constructor(
         classOrObjectDeclaration: KtClassOrObject?,
         classSymbolPointer: KaSymbolPointer<KaNamedClassSymbol>,
         useSiteModule: KaModule,
-        isInlineClass: Boolean,
     ) : super(
         classOrObjectDeclaration = classOrObjectDeclaration,
         classSymbolPointer = classSymbolPointer,
         useSiteModule = useSiteModule,
-    ) {
-        this.isInlineClass = isInlineClass
-    }
+    )
 
     override fun getModifierList(): PsiModifierList = cachedValue {
         SymbolLightClassModifierList(
@@ -95,6 +95,7 @@ internal class SymbolLightClassForClassOrObject : SymbolLightClassForNamedClassL
             modifiersBox = GranularModifiersBox(computer = ::computeModifiers),
             annotationsBox = GranularAnnotationsBox(
                 annotationsProvider = SymbolAnnotationsProvider(useSiteModule, symbolPointer),
+                additionalAnnotationsProvider = JvmInlineAdditionalAnnotationsProvider,
                 annotationFilter = ExcludeAnnotationFilter.JvmExposeBoxed,
             ),
         )
@@ -373,6 +374,5 @@ internal class SymbolLightClassForClassOrObject : SymbolLightClassForNamedClassL
         classOrObjectDeclaration = classOrObjectDeclaration,
         classSymbolPointer = symbolPointer,
         useSiteModule = useSiteModule,
-        isInlineClass = isInlineClass,
     )
 }
