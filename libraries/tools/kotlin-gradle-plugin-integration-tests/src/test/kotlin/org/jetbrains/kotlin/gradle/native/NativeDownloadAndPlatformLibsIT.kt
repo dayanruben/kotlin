@@ -348,12 +348,6 @@ class NativeDownloadAndPlatformLibsIT : KGPBaseTest() {
     @RequiredXCodeVersion(minSupportedMajor = 26, minSupportedMinor = 0)
     @GradleTest
     fun shouldDownloadLightNativeBundleWithMaven(gradleVersion: GradleVersion) {
-        // FIXME: We have to use CURRENT for cinterop generation when testing the light bundle (KT-71419). Always use CURRENT after KTI-1928 is done
-        val kotlinNativeVersion = if (HostManager.hostIsMac) {
-            defaultBuildOptions.nativeOptions.version
-        } else {
-            TestVersions.Kotlin.STABLE_RELEASE
-        }
         nativeProject(
             "native-download-maven",
             gradleVersion = gradleVersion,
@@ -364,14 +358,7 @@ class NativeDownloadAndPlatformLibsIT : KGPBaseTest() {
                     "KT-90282"
                 )
         ) {
-            val nativeOptions = buildOptions.nativeOptions.copy(
-                distributionType = "light",
-                version = kotlinNativeVersion,
-            )
-            build(
-                "assemble",
-                buildOptions = buildOptions.copy(nativeOptions = nativeOptions),
-            ) {
+            buildWithLightDist("assemble") {
                 assertOutputContains("Unpack Kotlin/Native compiler to ")
                 assertOutputContains(generateRegex)
             }
@@ -473,6 +460,7 @@ class NativeDownloadAndPlatformLibsIT : KGPBaseTest() {
         }
     }
 
+    @OptIn(EnvironmentalVariablesOverride::class)
     private fun TestProject.buildWithLightDist(
         vararg tasks: String,
         buildOptions: BuildOptions = this.buildOptions,
@@ -481,7 +469,12 @@ class NativeDownloadAndPlatformLibsIT : KGPBaseTest() {
         build(
             *tasks,
             buildOptions = buildOptions.copy(
-                nativeOptions = buildOptions.nativeOptions.copy(distributionType = "light")
+                nativeOptions = buildOptions.nativeOptions.copy(distributionType = "light"),
+
+            ),
+            // FIXME: Workaround for KT-90608, remove once https://github.com/JetBrains/kotlin/pull/9247 is merged.
+            environmentVariables = EnvironmentalVariables(
+                buildOptions.konanDataDir?.let { mapOf("KONAN_DATA_DIR" to it.absolutePathString()) }.orEmpty()
             ),
             assertions = assertions
         )
