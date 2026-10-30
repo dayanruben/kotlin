@@ -8,6 +8,8 @@ package org.jetbrains.kotlin.generators.tests
 import org.jetbrains.kotlin.generators.dsl.junit5.generateTestGroupSuiteWithJUnit5
 import org.jetbrains.kotlin.generators.model.annotation
 import org.jetbrains.kotlin.generators.util.TestGeneratorUtil
+import org.jetbrains.kotlin.generators.util.TestGeneratorUtil.KT_WITHOUT_UNDERSCORE_PREFIX
+import org.jetbrains.kotlin.generators.util.TestGeneratorUtil.WITHOUT_UNDERSCORE_PREFIX
 import org.jetbrains.kotlin.incremental.*
 import org.jetbrains.kotlin.js.test.JsEs6Test
 import org.jetbrains.kotlin.js.test.JsInlineAnonymousFunctionsTest
@@ -31,13 +33,13 @@ fun main(args: Array<String>) {
     generateTestGroupSuiteWithJUnit5(args) {
         testGroup(testsRoot, "compiler/testData/klib/partial-linkage") {
             testClass<AbstractJsPartialLinkageWithICTestCase> {
-                model(pattern = "^([^_](.+))$", recursive = false)
+                model(pattern = WITHOUT_UNDERSCORE_PREFIX, recursive = false)
             }
             testClass<AbstractJsPartialLinkageNoICTestCase> {
-                model(pattern = "^([^_](.+))$", recursive = false)
+                model(pattern = WITHOUT_UNDERSCORE_PREFIX, recursive = false)
             }
             testClass<AbstractJsPartialLinkageNoICES6TestCase>(annotations = listOf(es6())) {
-                model(pattern = "^([^_](.+))$", recursive = false)
+                model(pattern = WITHOUT_UNDERSCORE_PREFIX, recursive = false)
             }
         }
 
@@ -54,27 +56,27 @@ fun main(args: Array<String>) {
 
         testGroup(testsRoot, "js/js.translator/testData/incremental") {
             testClass<AbstractJsInvalidationPerFileTest> {
-                model("invalidation/", pattern = "^([^_](.+))$", recursive = false)
+                model("invalidation/", pattern = WITHOUT_UNDERSCORE_PREFIX, recursive = false)
             }
 
             testClass<AbstractJsInvalidationPerModuleTest> {
-                model("invalidation/", pattern = "^([^_](.+))$", recursive = false)
+                model("invalidation/", pattern = WITHOUT_UNDERSCORE_PREFIX, recursive = false)
             }
 
             testClass<AbstractJsES6InvalidationPerFileTest>(annotations = listOf(es6())) {
-                model("invalidation/", pattern = "^([^_](.+))$", recursive = false)
+                model("invalidation/", pattern = WITHOUT_UNDERSCORE_PREFIX, recursive = false)
             }
 
             testClass<AbstractJsES6InvalidationPerModuleTest>(annotations = listOf(es6())) {
-                model("invalidation/", pattern = "^([^_](.+))$", recursive = false)
+                model("invalidation/", pattern = WITHOUT_UNDERSCORE_PREFIX, recursive = false)
             }
 
             testClass<AbstractJsInvalidationPerFileWithPLTest> {
-                model("invalidationWithPL/", pattern = "^([^_](.+))$", recursive = false)
+                model("invalidationWithPL/", pattern = WITHOUT_UNDERSCORE_PREFIX, recursive = false)
             }
 
             testClass<AbstractJsInvalidationPerModuleWithPLTest> {
-                model("invalidationWithPL/", pattern = "^([^_](.+))$", recursive = false)
+                model("invalidationWithPL/", pattern = WITHOUT_UNDERSCORE_PREFIX, recursive = false)
             }
         }
 
@@ -92,61 +94,61 @@ fun main(args: Array<String>) {
 
         testGroup(testsRoot, "js/js.translator/testData/box", testRunnerMethodName = "runTest0") {
             testClass<AbstractPsiJsBoxTest> {
-                model(pattern = "^([^_](.+))\\.kt$", excludeDirs = listOf("es6classes"))
+                model(pattern = KT_WITHOUT_UNDERSCORE_PREFIX, excludeDirs = listOf("es6classes"))
             }
 
             testClass<AbstractLightTreeJsBoxTest> {
-                model(pattern = "^([^_](.+))\\.kt$", excludeDirs = listOf("es6classes"))
+                model(pattern = KT_WITHOUT_UNDERSCORE_PREFIX, excludeDirs = listOf("es6classes"))
             }
 
             testClass<AbstractJsES6BoxTest>(annotations = listOf(es6())) {
-                model(pattern = "^([^_](.+))\\.kt$")
+                model(pattern = KT_WITHOUT_UNDERSCORE_PREFIX)
             }
 
             testClass<AbstractJsBoxWithInlineAnonymousFunctionsTest>(annotations = listOf(inlineAnonymousFunctions())) {
-                model(pattern = "^([^_](.+))\\.kt$", excludeDirs = listOf("es6classes"))
+                model(pattern = KT_WITHOUT_UNDERSCORE_PREFIX, excludeDirs = listOf("es6classes"))
             }
 
             testClass<AbstractJsES6BoxWithInlineAnonymousFunctionsTest>(annotations = listOf(es6(), inlineAnonymousFunctions())) {
-                model(pattern = "^([^_](.+))\\.kt$")
+                model(pattern = KT_WITHOUT_UNDERSCORE_PREFIX)
             }
 
             testClass<AbstractJsSwcBoxTest>(annotations = listOf(swcTag())) {
-                model(pattern = "^([^_](.+))\\.kt$")
+                model(pattern = KT_WITHOUT_UNDERSCORE_PREFIX)
             }
         }
 
         testGroup(testsRoot, "js/js.translator/testData/typescript-export/js", testRunnerMethodName = "runTest0") {
             testClass<AbstractJsTypeScriptExportTest> {
-                model(pattern = "^([^_](.+))\\.kt$")
+                model(pattern = KT_WITHOUT_UNDERSCORE_PREFIX)
             }
 
             testClass<AbstractJsTypeScriptWholeFileExportTest> {
-                model(pattern = "^([^_](.+))\\.kt$")
+                model(pattern = KT_WITHOUT_UNDERSCORE_PREFIX)
             }
 
             testClass<AbstractJsES6TypeScriptExportTest>(annotations = listOf(es6())) {
-                model(pattern = "^([^_](.+))\\.kt$")
+                model(pattern = KT_WITHOUT_UNDERSCORE_PREFIX)
             }
 
             testClass<AbstractJsES6TypeScriptWholeFileExportTest>(annotations = listOf(es6())) {
-                model(pattern = "^([^_](.+))\\.kt$")
+                model(pattern = KT_WITHOUT_UNDERSCORE_PREFIX)
             }
 
             testClass<AbstractJsAnalysisApiTypeScriptExportTest> {
-                model(pattern = "^([^_](.+))\\.kt$")
+                model(pattern = KT_WITHOUT_UNDERSCORE_PREFIX)
             }
 
             testClass<AbstractJsES6AnalysisApiTypeScriptExportTest>(annotations = listOf(es6())) {
-                model(pattern = "^([^_](.+))\\.kt$")
+                model(pattern = KT_WITHOUT_UNDERSCORE_PREFIX)
             }
 
             testClass<AbstractJsAnalysisApiTypeScriptWholeFileExportTest> {
-                model(pattern = "^([^_](.+))\\.kt$")
+                model(pattern = KT_WITHOUT_UNDERSCORE_PREFIX)
             }
 
             testClass<AbstractJsES6AnalysisApiTypeScriptWholeFileExportTest>(annotations = listOf(es6())) {
-                model(pattern = "^([^_](.+))\\.kt$")
+                model(pattern = KT_WITHOUT_UNDERSCORE_PREFIX)
             }
         }
 
@@ -243,17 +245,17 @@ fun main(args: Array<String>) {
             testClass<AbstractPsiJsDiagnosticWithBackendTest>(suiteTestClassName = "PsiJsKlibDiagnosticsTestGenerated") {
                 model(
                     relativeRootPath = "klibSerializationTests",
-                    pattern = "^([^_](.+))\\.kt$",
+                    pattern = KT_WITHOUT_UNDERSCORE_PREFIX,
                     excludedPattern = excludedFirTestdataPattern,
                 )
                 model(
                     relativeRootPath = "testsWithJsStdLib",
-                    pattern = "^([^_](.+))\\.kt$",
+                    pattern = KT_WITHOUT_UNDERSCORE_PREFIX,
                     excludedPattern = CUSTOM_TEST_DATA_EXTENSION_PATTERN,
                 )
                 model(
                     relativeRootPath = "testsWithJsStdLibAndBackendCompilation",
-                    pattern = "^([^_](.+))\\.kt$",
+                    pattern = KT_WITHOUT_UNDERSCORE_PREFIX,
                     excludedPattern = excludedFirTestdataPattern,
                 )
             }
@@ -261,27 +263,27 @@ fun main(args: Array<String>) {
             testClass<AbstractLightTreeJsDiagnosticWithBackendTest>(suiteTestClassName = "LightTreeJsKlibDiagnosticsTestGenerated") {
                 model(
                     relativeRootPath = "klibSerializationTests",
-                    pattern = "^([^_](.+))\\.kt$",
+                    pattern = KT_WITHOUT_UNDERSCORE_PREFIX,
                     excludedPattern = excludedFirTestdataPattern,
                 )
                 model(
                     relativeRootPath = "testsWithJsStdLib",
-                    pattern = "^([^_](.+))\\.kt$",
+                    pattern = KT_WITHOUT_UNDERSCORE_PREFIX,
                     excludedPattern = CUSTOM_TEST_DATA_EXTENSION_PATTERN,
                 )
                 model(
                     relativeRootPath = "testsWithJsStdLibAndBackendCompilation",
-                    pattern = "^([^_](.+))\\.kt$",
+                    pattern = KT_WITHOUT_UNDERSCORE_PREFIX,
                     excludedPattern = excludedFirTestdataPattern,
                 )
                 model(
                     relativeRootPath = "testsWithAnyBackend",
-                    pattern = "^([^_](.+))\\.kt$",
+                    pattern = KT_WITHOUT_UNDERSCORE_PREFIX,
                     excludedPattern = CUSTOM_TEST_DATA_EXTENSION_PATTERN,
                 )
                 model(
                     relativeRootPath = "irInliner",
-                    pattern = "^([^_](.+))\\.kt$",
+                    pattern = KT_WITHOUT_UNDERSCORE_PREFIX,
                     excludedPattern = excludedFirTestdataPattern,
                 )
             }
