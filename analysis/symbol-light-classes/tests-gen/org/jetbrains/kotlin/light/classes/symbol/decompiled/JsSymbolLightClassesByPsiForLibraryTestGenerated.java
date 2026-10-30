@@ -227,6 +227,12 @@ public class JsSymbolLightClassesByPsiForLibraryTestGenerated extends AbstractJs
   }
 
   @Test
+  @TestMetadata("genericValueClassInSignature.kt")
+  public void testGenericValueClassInSignature() {
+    run("genericValueClassInSignature.kt");
+  }
+
+  @Test
   @TestMetadata("generics.kt")
   public void testGenerics() {
     run("generics.kt");
@@ -287,6 +293,12 @@ public class JsSymbolLightClassesByPsiForLibraryTestGenerated extends AbstractJs
   }
 
   @Test
+  @TestMetadata("jvmFieldBridgeForInterface.kt")
+  public void testJvmFieldBridgeForInterface() {
+    run("jvmFieldBridgeForInterface.kt");
+  }
+
+  @Test
   @TestMetadata("jvmName.kt")
   public void testJvmName() {
     run("jvmName.kt");
@@ -308,6 +320,12 @@ public class JsSymbolLightClassesByPsiForLibraryTestGenerated extends AbstractJs
   @TestMetadata("jvmRecord.kt")
   public void testJvmRecord() {
     run("jvmRecord.kt");
+  }
+
+  @Test
+  @TestMetadata("jvmRecordCompanionBlock.kt")
+  public void testJvmRecordCompanionBlock() {
+    run("jvmRecordCompanionBlock.kt");
   }
 
   @Test
@@ -582,6 +600,12 @@ public class JsSymbolLightClassesByPsiForLibraryTestGenerated extends AbstractJs
     }
 
     @Test
+    @TestMetadata("boundedTypeParameters.kt")
+    public void testBoundedTypeParameters() {
+      run("boundedTypeParameters.kt");
+    }
+
+    @Test
     @TestMetadata("customAnnotation.kt")
     public void testCustomAnnotation() {
       run("customAnnotation.kt");
@@ -621,6 +645,12 @@ public class JsSymbolLightClassesByPsiForLibraryTestGenerated extends AbstractJs
     @TestMetadata("indirectInheritanceStubs.kt")
     public void testIndirectInheritanceStubs() {
       run("indirectInheritanceStubs.kt");
+    }
+
+    @Test
+    @TestMetadata("mapOverridesWithTypeParameters.kt")
+    public void testMapOverridesWithTypeParameters() {
+      run("mapOverridesWithTypeParameters.kt");
     }
 
     @Test
@@ -826,6 +856,12 @@ public class JsSymbolLightClassesByPsiForLibraryTestGenerated extends AbstractJs
       @TestMetadata("mutableListOfInt.kt")
       public void testMutableListOfInt() {
         run("mutableListOfInt.kt");
+      }
+
+      @Test
+      @TestMetadata("mutableListOfNullableInt.kt")
+      public void testMutableListOfNullableInt() {
+        run("mutableListOfNullableInt.kt");
       }
 
       @Test
@@ -1083,9 +1119,21 @@ public class JsSymbolLightClassesByPsiForLibraryTestGenerated extends AbstractJs
       }
 
       @Test
+      @TestMetadata("listAbstractClassJdk21.kt")
+      public void testListAbstractClassJdk21() {
+        run("listAbstractClassJdk21.kt");
+      }
+
+      @Test
       @TestMetadata("listAbstractClassOfInt.kt")
       public void testListAbstractClassOfInt() {
         run("listAbstractClassOfInt.kt");
+      }
+
+      @Test
+      @TestMetadata("listAbstractClassOfNullableInt.kt")
+      public void testListAbstractClassOfNullableInt() {
+        run("listAbstractClassOfNullableInt.kt");
       }
 
       @Test
@@ -1227,6 +1275,12 @@ public class JsSymbolLightClassesByPsiForLibraryTestGenerated extends AbstractJs
       }
 
       @Test
+      @TestMetadata("mapInterfaceOfNullableInt.kt")
+      public void testMapInterfaceOfNullableInt() {
+        run("mapInterfaceOfNullableInt.kt");
+      }
+
+      @Test
       @TestMetadata("mapInterfaceOfString.kt")
       public void testMapInterfaceOfString() {
         run("mapInterfaceOfString.kt");
@@ -1286,6 +1340,12 @@ public class JsSymbolLightClassesByPsiForLibraryTestGenerated extends AbstractJs
       @TestMetadata("implicitJvmExposeBoxed.kt")
       public void testImplicitJvmExposeBoxed() {
         run("implicitJvmExposeBoxed.kt");
+      }
+
+      @Test
+      @TestMetadata("implicitJvmExposeBoxedFinalClass.kt")
+      public void testImplicitJvmExposeBoxedFinalClass() {
+        run("implicitJvmExposeBoxedFinalClass.kt");
       }
 
       @Test
@@ -1397,6 +1457,12 @@ public class JsSymbolLightClassesByPsiForLibraryTestGenerated extends AbstractJs
     @TestMetadata("companionExtensionTypeAliasReceiver.kt")
     public void testCompanionExtensionTypeAliasReceiver() {
       run("companionExtensionTypeAliasReceiver.kt");
+    }
+
+    @Test
+    @TestMetadata("companionMembersNamedLikeEnumSpecials.kt")
+    public void testCompanionMembersNamedLikeEnumSpecials() {
+      run("companionMembersNamedLikeEnumSpecials.kt");
     }
   }
 
@@ -1566,6 +1632,12 @@ public class JsSymbolLightClassesByPsiForLibraryTestGenerated extends AbstractJs
     }
 
     @Test
+    @TestMetadata("fullValueClassPrivateConstructor.kt")
+    public void testFullValueClassPrivateConstructor() {
+      run("fullValueClassPrivateConstructor.kt");
+    }
+
+    @Test
     @TestMetadata("jvmExposeBoxedAnnotation.kt")
     public void testJvmExposeBoxedAnnotation() {
       run("jvmExposeBoxedAnnotation.kt");
@@ -1587,6 +1659,12 @@ public class JsSymbolLightClassesByPsiForLibraryTestGenerated extends AbstractJs
     @TestMetadata("jvmInlineWithFullValueClassesEnabled.kt")
     public void testJvmInlineWithFullValueClassesEnabled() {
       run("jvmInlineWithFullValueClassesEnabled.kt");
+    }
+
+    @Test
+    @TestMetadata("willBecomeValue.kt")
+    public void testWillBecomeValue() {
+      run("willBecomeValue.kt");
     }
   }
 
@@ -1646,6 +1724,12 @@ public class JsSymbolLightClassesByPsiForLibraryTestGenerated extends AbstractJs
     }
 
     @Test
+    @TestMetadata("defaultArguments.kt")
+    public void testDefaultArguments() {
+      run("defaultArguments.kt");
+    }
+
+    @Test
     @TestMetadata("exposedWithoutValueClass.kt")
     public void testExposedWithoutValueClass() {
       run("exposedWithoutValueClass.kt");
@@ -1697,6 +1781,12 @@ public class JsSymbolLightClassesByPsiForLibraryTestGenerated extends AbstractJs
     @TestMetadata("globalVariableContextAndReceiver.kt")
     public void testGlobalVariableContextAndReceiver() {
       run("globalVariableContextAndReceiver.kt");
+    }
+
+    @Test
+    @TestMetadata("globalVariableReceiverAccessorAnnotated.kt")
+    public void testGlobalVariableReceiverAccessorAnnotated() {
+      run("globalVariableReceiverAccessorAnnotated.kt");
     }
 
     @Test
@@ -1790,6 +1880,12 @@ public class JsSymbolLightClassesByPsiForLibraryTestGenerated extends AbstractJs
     }
 
     @Test
+    @TestMetadata("noArgValueClassOverUInt.kt")
+    public void testNoArgValueClassOverUInt() {
+      run("noArgValueClassOverUInt.kt");
+    }
+
+    @Test
     @TestMetadata("propagatedWithJvmName.kt")
     public void testPropagatedWithJvmName() {
       run("propagatedWithJvmName.kt");
@@ -1849,6 +1945,12 @@ public class JsSymbolLightClassesByPsiForLibraryTestGenerated extends AbstractJs
       run("uintReceiver.kt");
     }
 
+    @Test
+    @TestMetadata("valueClassSecondaryConstructor.kt")
+    public void testValueClassSecondaryConstructor() {
+      run("valueClassSecondaryConstructor.kt");
+    }
+
     @Nested
     @TestMetadata("analysis/symbol-light-classes/testData/lightClassByPsi/jvmExposeBoxed/directive")
     @TestDataPath("$PROJECT_ROOT")
@@ -1866,6 +1968,12 @@ public class JsSymbolLightClassesByPsiForLibraryTestGenerated extends AbstractJs
       @TestMetadata("bigArity.kt")
       public void testBigArity() {
         run("bigArity.kt");
+      }
+
+      @Test
+      @TestMetadata("bigArityFunctionType.kt")
+      public void testBigArityFunctionType() {
+        run("bigArityFunctionType.kt");
       }
 
       @Test
@@ -2091,6 +2199,12 @@ public class JsSymbolLightClassesByPsiForLibraryTestGenerated extends AbstractJs
       }
 
       @Test
+      @TestMetadata("suspendLambdaInValueClass.kt")
+      public void testSuspendLambdaInValueClass() {
+        run("suspendLambdaInValueClass.kt");
+      }
+
+      @Test
       @TestMetadata("synthetic.kt")
       public void testSynthetic() {
         run("synthetic.kt");
@@ -2121,9 +2235,27 @@ public class JsSymbolLightClassesByPsiForLibraryTestGenerated extends AbstractJs
       }
 
       @Test
+      @TestMetadata("valueClassList.kt")
+      public void testValueClassList() {
+        run("valueClassList.kt");
+      }
+
+      @Test
+      @TestMetadata("valueClassListDelegation.kt")
+      public void testValueClassListDelegation() {
+        run("valueClassListDelegation.kt");
+      }
+
+      @Test
       @TestMetadata("valueClassMembers.kt")
       public void testValueClassMembers() {
         run("valueClassMembers.kt");
+      }
+
+      @Test
+      @TestMetadata("valueClassSecondaryConstructor.kt")
+      public void testValueClassSecondaryConstructor() {
+        run("valueClassSecondaryConstructor.kt");
       }
 
       @Test
