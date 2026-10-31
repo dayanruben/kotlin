@@ -20,14 +20,17 @@ import org.jetbrains.kotlin.fir.caches.createCache
 import org.jetbrains.kotlin.fir.caches.firCachesFactory
 import org.jetbrains.kotlin.fir.caches.getValue
 import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
+import org.jetbrains.kotlin.fir.declarations.FirClass
 import org.jetbrains.kotlin.fir.declarations.FirClassLikeDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirFile
+import org.jetbrains.kotlin.fir.declarations.utils.isLocal
 import org.jetbrains.kotlin.fir.extensions.*
 import org.jetbrains.kotlin.fir.extensions.predicate.*
 import org.jetbrains.kotlin.fir.psi
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.types.FirResolvedTypeRef
+import org.jetbrains.kotlin.fir.types.abbreviatedType
 import org.jetbrains.kotlin.fir.types.classId
 import org.jetbrains.kotlin.fir.visitors.FirDefaultVisitorVoid
 import org.jetbrains.kotlin.fir.visitors.FirVisitor
@@ -131,9 +134,8 @@ internal class LLFirIdePredicateBasedProvider(
             return predicate.a.accept(this, data) || predicate.b.accept(this, data)
         }
 
-        @OptIn(FirExtensionApiInternals::class)
         override fun visitMatchingType(predicate: AbstractPredicate.MatchingType<P>, data: FirDeclaration): Boolean {
-            return PredicateTargets.matches(predicate.targets, data) && predicate.predicate.accept(this, data)
+            return predicate.type.matches(data) && predicate.predicate.accept(this, data)
         }
 
         override fun visitAnnotatedWith(predicate: AbstractPredicate.AnnotatedWith<P>, data: FirDeclaration): Boolean {
@@ -180,9 +182,16 @@ internal class LLFirIdePredicateBasedProvider(
     private fun annotationsOnDeclaration(declaration: FirDeclaration): Set<AnnotationFqn> {
         if (declaration.annotations.isEmpty()) return emptySet()
 
+        // The compiler matches `annotated` predicates on non-local declarations against the plugin annotations collected
+        // at the COMPILER_REQUIRED_ANNOTATIONS phase, where type aliases are not expanded, so an annotation used through
+        // a type alias doesn't match there (KT-69777). Local classes are matched against their resolved annotations instead,
+        // which see through type aliases (see `FirPredicateBasedProviderImpl.matchWith`)
+        val includeAliasedAnnotations = declaration is FirClass && declaration.isLocal
+
         val firResolvedAnnotations = declaration.annotations
             .asSequence()
             .mapNotNull { it.annotationTypeRef as? FirResolvedTypeRef }
+            .filter { includeAliasedAnnotations || it.coneType.abbreviatedType == null }
             .mapNotNull { it.coneType.classId }
             .map { it.asSingleFqName() }
             .toSet()
@@ -238,13 +247,15 @@ private object SourceFilterBuilder : PredicateVisitor<LookupPredicate, SourceFil
         return { declaration -> a(declaration) || b(declaration) }
     }
 
+    @OptIn(FirExtensionApiInternals::class)
     override fun visitMatchingType(predicate: AbstractPredicate.MatchingType<LookupPredicate>, data: Nothing?): SourceFilter? {
         val childFilter = predicate.predicate.accept(this, data)
-        if (predicate.targets.isEmpty()) {
+        val type = predicate.type
+        if (type !is KotlinTargetDeclarationType) {
             return childFilter
         }
         return { declaration ->
-            mayMatchTargets(predicate.targets, declaration) && (childFilter == null || childFilter(declaration))
+            mayMatchTargets(type.targets, declaration) && (childFilter == null || childFilter(declaration))
         }
     }
 

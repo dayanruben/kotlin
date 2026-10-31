@@ -279,6 +279,13 @@ class Kotlin2JsIrGradlePluginIT : KGPBaseTest() {
                     projectPath.resolve("build/js/packages/kotlin-js-multiplatform-app-project/kotlin/kotlin-js-multiplatform-app-project.d.ts"),
                     "function best(): number",
                 )
+
+                assertOutputContains("Long: 9007199254740993")
+                // The es5 output must not contain BigInt literals, even if the compiler itself produces the latest JS version
+                assertFileDoesNotContain(
+                    projectPath.resolve("build/js/packages/kotlin-js-multiplatform-app-project/kotlin/kotlin-js-multiplatform-app-project.js"),
+                    "9007199254740993n",
+                )
             }
 
             build("jsNodeProductionRun") {
@@ -297,6 +304,12 @@ class Kotlin2JsIrGradlePluginIT : KGPBaseTest() {
                     projectPath.resolve("build/js/packages/kotlin-js-multiplatform-app-project/.swcrc"),
                     "\"module\"",
                 )
+
+                assertOutputContains("Long: 9007199254740993")
+                assertFileDoesNotContain(
+                    projectPath.resolve("build/js/packages/kotlin-js-multiplatform-app-project/kotlin/kotlin-js-multiplatform-app-project.js"),
+                    "9007199254740993n",
+                )
             }
 
             gradleProperties.modify {
@@ -306,13 +319,17 @@ class Kotlin2JsIrGradlePluginIT : KGPBaseTest() {
                 )
             }
 
+            buildScriptInjection {
+                kotlinMultiplatform.js {
+                    compilerOptions.target.set("es2015")
+                }
+            }
+
             build("jsNodeDevelopmentRun") {
                 assertOutputContains("Hello, World!")
-                assertTasksUpToDate(":jsNodeDevelopmentGenerateSwcConfig",)
-                assertTasksExecuted(":jsNodeDevelopmentTranspileWithSwc")
                 assertFileContains(
                     projectPath.resolve(
-                        "build/js/packages/kotlin-js-multiplatform-app-project/kotlin/kotlin-js-multiplatform-app-project.d.ts"
+                        "build/js/packages/kotlin-js-multiplatform-app-project/kotlin/kotlin-js-multiplatform-app-project.d.mts"
                     ),
                     "function best(): number",
                 )
@@ -320,11 +337,9 @@ class Kotlin2JsIrGradlePluginIT : KGPBaseTest() {
 
             build("jsNodeProductionRun") {
                 assertOutputContains("Hello, World!")
-                assertTasksUpToDate(":jsNodeProductionGenerateSwcConfig")
-                assertTasksExecuted(":jsNodeProductionTranspileWithSwc")
                 assertFileContains(
                     projectPath.resolve(
-                        "build/js/packages/kotlin-js-multiplatform-app-project/kotlin/kotlin-js-multiplatform-app-project.d.ts"
+                        "build/js/packages/kotlin-js-multiplatform-app-project/kotlin/kotlin-js-multiplatform-app-project.d.mts"
                     ),
                     "function best(): number",
                 )
@@ -485,6 +500,7 @@ class Kotlin2JsIrGradlePluginIT : KGPBaseTest() {
             }
         }
     }
+
 
     @DisplayName("delegated transpilation is turned off by default for library")
     @GradleTest
