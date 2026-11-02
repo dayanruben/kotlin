@@ -6,13 +6,13 @@
 package org.jetbrains.kotlin.gradle.native
 
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.gradle.BrokenOnMacosTest
-import org.jetbrains.kotlin.gradle.BrokenOnMacosTestFailureExpectation
 import org.jetbrains.kotlin.gradle.testbase.*
+import org.jetbrains.kotlin.testFederation.MustRunOnChangesInGradle
 import org.junit.jupiter.api.DisplayName
 
 @DisplayName("Tests for K/N with enabled configuration cache")
 @NativeGradlePluginTests
+@MustRunOnChangesInGradle
 class NativeWithConfigurationCacheIT : KGPBaseTest() {
 
     @DisplayName(
@@ -20,7 +20,6 @@ class NativeWithConfigurationCacheIT : KGPBaseTest() {
                 "(downloading konan does not affect cache inputs)"
     )
     @GradleTest
-    @BrokenOnMacosTest(failureExpectation = BrokenOnMacosTestFailureExpectation.ALWAYS)
     fun testConfigurationCacheReusedSecondTime(gradleVersion: GradleVersion) {
         nativeProject(
             "native-with-configuration-cache",
