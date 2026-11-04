@@ -136,7 +136,7 @@ val compatibilityTestsVersions = listOf(
     BuildToolsVersion(KotlinToolingVersion(2, 4, 0, null)),
     BuildToolsVersion(KotlinToolingVersion(2, 4, 10, null)),
     BuildToolsVersion(KotlinToolingVersion(2, 4, 21, null)),
-    BuildToolsVersion(KotlinToolingVersion(2, 5, 0, "Beta1")),
+    BuildToolsVersion(KotlinToolingVersion(2, 5, 0, "Beta2")),
 )
 
 val compatibilityTestsExcludedVersions = listOf(
@@ -213,6 +213,7 @@ val businessLogicTestSuits = setOf(
     "testClasspathMetadata",
     "testBuildSession",
     "testLint",
+    "testIcEvents",
 )
 
 val buildToolsImplConfigurationsCache = mutableMapOf<String, Configuration>()
