@@ -3,7 +3,6 @@ import TestCompilePaths.KOTLIN_NATIVE_IMAGE_DIST_PATH
 import TestCompilePaths.KOTLIN_NATIVE_IMAGE_PLUGINS_CLASSPATH
 import TestCompilePaths.KOTLIN_NATIVE_IMAGE_PLUGINS_RUNTIME
 import TestCompilePaths.KOTLIN_NATIVE_IMAGE_RESOURCES_PATH
-import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.crypto.checksum.Checksum
 import org.gradle.internal.os.OperatingSystem
 import java.util.regex.Pattern.quote
@@ -63,6 +62,7 @@ dependencies {
     testImplementation(libs.junit.jupiter.params)
     testFixturesApi(testFixtures(project(":compiler:test-infrastructure")))
     testFixturesApi(testFixtures(project(":compiler:tests-common-new")))
+    testFixturesApi(testFixtures(project(":compiler:jvm.tests")))
     testFixturesApi(testFixtures(project(":generators:test-generator")))
 
     testRuntimeOnly(libs.junit.jupiter.engine)
@@ -74,11 +74,23 @@ sourceSets {
     "testFixtures" { projectDefault() }
 }
 
+val useG1Gc = kotlinBuildProperties
+    .booleanProperty("kotlin.build.native-image.use-g1", false)
+    .get()
+val pgoProfile = kotlinBuildProperties
+    .stringProperty("kotlin.build.native-image.pgo-profile")
+    .orNull
+val pgoInstrument = kotlinBuildProperties
+    .booleanProperty("kotlin.build.native-image.pgo-instrument", false)
+    .get()
 val dynamicPluginsEnabled = kotlinBuildProperties
     .booleanProperty("kotlin.build.native-image.dynamic-plugins", false)
     .get()
 
-val graalLauncher = getNativeImageToolchainLauncherFor(JdkMajorVersion.JDK_25_0)
+val graalLauncher = getNativeImageToolchainLauncherFor(
+    JdkMajorVersion.JDK_25_0,
+    requireOracleJdk = useG1Gc || (pgoProfile != null) || pgoInstrument || dynamicPluginsEnabled,
+)
 
 projectTests {
     testData(project(":compiler").isolated, "testData/codegen")
@@ -116,6 +128,7 @@ projectTests {
             include("**/NativeImageDynamicPluginBoxTestGenerated.class")
             include("**/NativeImageDynamicLegacyPluginBoxTestGenerated.class")
             include("**/NativeImageScriptingTestGenerated.class")
+            withScriptingCommon()
         }
         useNativeImageDist()
         usePlugins()
@@ -170,22 +183,33 @@ val kotlincNativeImageTask = tasks.register<Exec>("kotlincNativeImage") {
         "--add-opens", "java.desktop/javax.swing=ALL-UNNAMED",
     )
 
-    val dynamicPluginsNativeArgs = if (dynamicPluginsEnabled) listOf(
-        "-H:+RuntimeClassLoading",
-        *providers.fileContents(preservedPackagesFile)
-            .asText.get()
-            .trim()
-            .lineSequence()
-            .filterNot { it.isBlank() || it.startsWith("#") }
-            .map { "-H:Preserve=package=$it" }
-            .toList().toTypedArray(),
-    ) else emptyList()
+    val nativeArgs = buildList {
+        addAll(basicNativeArgs)
+        if (useG1Gc) add("--gc=G1")
+        if (pgoProfile != null) add("--pgo=$pgoProfile")
+        if (pgoInstrument) add("--pgo-instrument")
+        if (dynamicPluginsEnabled) {
+            add("-H:+RuntimeClassLoading")
+            addAll(
+                providers.fileContents(preservedPackagesFile)
+                    .asText.get()
+                    .trim()
+                    .lineSequence()
+                    .filterNot { it.isBlank() || it.startsWith("#") }
+                    .map { "-H:Preserve=package=$it" }
+            )
+        }
+    }
 
-    val nativeArgs = basicNativeArgs + dynamicPluginsNativeArgs
-
-    inputs.files(nativeImageClasspath, resources, launcher.map { it.metadata.installationPath.asFile })
+    inputs.files(nativeImageClasspath, resources)
         .withNormalizer(ClasspathNormalizer::class)
         .withPropertyName("nativeImageClasspath")
+    inputs.file(launcher.map { it.metadata.installationPath.file("release") })
+        .withNormalizer(ClasspathNormalizer::class)
+        .withPropertyName("graalVmRelease")
+    inputs.files(preservedPackagesFile, pgoProfile)
+        .withNormalizer(ClasspathNormalizer::class)
+        .withPropertyName("nativeImageConfiguration")
 
     inputs.property("nativeArgs", nativeArgs)
     inputs.property("os", currentOs.name)

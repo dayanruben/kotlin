@@ -223,6 +223,7 @@ include(
     ":compiler:tests-common",
     ":compiler:tests-integration",
     ":compiler:jklib.tests",
+    ":compiler:jvm.tests",
     ":js:js.ast",
     ":js:js.sourcemap",
     ":js:js.parser",
@@ -541,7 +542,6 @@ include(
     ":compiler:fir:diagnostic-renderers",
     ":compiler:fir:entrypoint",
     ":compiler:fir:analysis-tests",
-    ":compiler:fir:analysis-tests:legacy-fir-tests"
 )
 
 include(

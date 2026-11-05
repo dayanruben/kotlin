@@ -9,28 +9,19 @@ package org.jetbrains.kotlin.buildtools.internal.serializability
 import kotlinx.serialization.*
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocation
+import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocationWithRange
+import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation
 import java.nio.file.Path
 import kotlin.io.path.Path
-import kotlin.io.path.pathString
-import kotlin.reflect.KMutableProperty1
 
-internal fun <T, K : Any> K.getPropertyByName(
-    propertyAccessors: Map<String, KMutableProperty1<*, out Any?>>,
-    name: String,
-): T {
-    @Suppress("UNCHECKED_CAST")
-    return (propertyAccessors[name] ?: error("Property with name $name not found in $this")).getter.call(this) as T
-}
+@Suppress("UNCHECKED_CAST", "NOTHING_TO_INLINE")
+internal inline fun <T> Any?.cast(): T = this as T
 
-internal fun <T, K : Any> K.setPropertyByName(
-    propertyAccessors: Map<String, KMutableProperty1<*, out Any?>>,
-    name: String,
-    value: T,
-) {
-    (propertyAccessors[name] ?: error("Property with name $name not found in $this")).setter.call(this, value)
-}
+internal fun Any.throwPropertyNotFound(key: String): Nothing = error("Property with name $key not found in $this")
 
 internal object PathAsStringSerializer : KSerializer<Path> {
     override val descriptor = PrimitiveSerialDescriptor("Path", PrimitiveKind.STRING)
@@ -38,4 +29,96 @@ internal object PathAsStringSerializer : KSerializer<Path> {
     override fun serialize(encoder: Encoder, value: Path) = encoder.encodeString(value.toFile().path)
 
     override fun deserialize(decoder: Decoder): Path = Path(decoder.decodeString())
+}
+
+internal object CompilerMessageSourceLocationSerializer : KSerializer<CompilerMessageSourceLocation> {
+    override val descriptor: SerialDescriptor = CompilerMessageSourceLocationSurrogate.serializer().descriptor
+
+    override fun serialize(
+        encoder: Encoder,
+        value: CompilerMessageSourceLocation,
+    ) {
+        val surrogate = when (value) {
+            is CompilerMessageLocation -> CompilerMessageSourceLocationSurrogate.CompilerMessageLocationSurrogate(
+                path = value.path,
+                line = value.line,
+                column = value.column,
+                lineContent = value.lineContent
+            )
+            is CompilerMessageLocationWithRange -> CompilerMessageSourceLocationSurrogate.CompilerMessageLocationWithRangeSurrogate(
+                path = value.path,
+                line = value.line,
+                column = value.column,
+                lineEnd = value.lineEnd,
+                columnEnd = value.columnEnd,
+                lineContent = value.lineContent
+            )
+            else -> error("Unexpected compiler message source location type: $value")
+        }
+        encoder.encodeSerializableValue(CompilerMessageSourceLocationSurrogate.serializer(), surrogate)
+    }
+
+    override fun deserialize(decoder: Decoder): CompilerMessageSourceLocation {
+        return when (val surrogate = decoder.decodeSerializableValue(CompilerMessageSourceLocationSurrogate.serializer())) {
+            is CompilerMessageSourceLocationSurrogate.CompilerMessageLocationSurrogate -> CompilerMessageLocation.create(
+                path = surrogate.path,
+                line = surrogate.line,
+                column = surrogate.column,
+                lineContent = surrogate.lineContent
+            )!!
+            is CompilerMessageSourceLocationSurrogate.CompilerMessageLocationWithRangeSurrogate -> CompilerMessageLocationWithRange.create(
+                path = surrogate.path,
+                lineStart = surrogate.line,
+                columnStart = surrogate.column,
+                lineEnd = surrogate.lineEnd,
+                columnEnd = surrogate.columnEnd,
+                lineContent = surrogate.lineContent
+            )!!
+        }
+    }
+}
+
+@Serializable
+internal sealed interface CompilerMessageSourceLocationSurrogate {
+
+    val path: String
+    val line: Int
+    val column: Int
+    val lineEnd: Int get() = -1
+    val columnEnd: Int get() = -1
+    val lineContent: String?
+
+    @Serializable
+    data class CompilerMessageLocationSurrogate(
+        override val path: String,
+        override val line: Int,
+        override val column: Int,
+        override val lineContent: String?,
+    ) : CompilerMessageSourceLocationSurrogate {
+        constructor(from: CompilerMessageLocation) : this(
+            from.path,
+            from.line,
+            from.column,
+            from.lineContent
+        )
+    }
+
+    @Serializable
+    data class CompilerMessageLocationWithRangeSurrogate(
+        override val path: String,
+        override val line: Int,
+        override val column: Int,
+        override val lineEnd: Int,
+        override val columnEnd: Int,
+        override val lineContent: String?,
+    ) : CompilerMessageSourceLocationSurrogate {
+        constructor(from: CompilerMessageLocationWithRange) : this(
+            from.path,
+            from.line,
+            from.column,
+            from.lineEnd,
+            from.columnEnd,
+            from.lineContent
+        )
+    }
 }

@@ -332,11 +332,7 @@ tasks {
     }
 
     testLifecycleTask("jvmCodegenTest", QualityGate.Master) {
-        dependsOn(":compiler:fir:fir2ir:aggregateTests")
-    }
-
-    testLifecycleTask("testsForBootstrapBuildTest", QualityGate.Master) {
-        dependsOn(":compiler:tests-common-new:test")
+        dependsOn(":compiler:jvm.tests:aggregateTests")
     }
 
     val jvmCompilerIntegrationTest = testLifecycleTask("jvmCompilerIntegrationTest", QualityGate.Master) {
@@ -526,11 +522,10 @@ tasks {
         dependsOn(":compiler:fir:raw-fir:light-tree2fir:test")
         dependsOn(":compiler:fir:raw-fir:mp-parsing2fir:test")
         dependsOn(":compiler:fir:analysis-tests:test")
-        dependsOn(":compiler:fir:analysis-tests:legacy-fir-tests:test")
     }
 
     testLifecycleTask("nightlyFirCompilerTest", QualityGate.Nightly) {
-        dependsOn(":compiler:fir:fir2ir:nightlyTests")
+        dependsOn(":compiler:jvm.tests:nightlyTests")
         dependsOn(":compiler:fastJarFSLongTests")
     }
 

@@ -43,6 +43,7 @@ import org.jetbrains.kotlin.buildtools.internal.jvm.toOptions
 import org.jetbrains.kotlin.buildtools.internal.trackers.getMetricsReporter
 import org.jetbrains.kotlin.cli.common.CLICompiler
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
+import org.jetbrains.kotlin.cli.common.messages.MessageCollectorWithDiagnosticId
 import org.jetbrains.kotlin.cli.jvm.K2JVMCompiler
 import org.jetbrains.kotlin.cli.jvm.compiler.setupIdeaStandaloneExecution
 import org.jetbrains.kotlin.config.LanguageVersion
@@ -52,29 +53,36 @@ import org.jetbrains.kotlin.incremental.*
 import org.jetbrains.kotlin.incremental.storage.FileLocations
 import java.nio.file.Path
 
-internal class JvmCompilationOperationImpl private constructor(
-    override val options: Options = Options(JvmCompilationOperation::class),
-    override val sources: List<Path>,
-    override val destinationDirectory: Path,
-    compilerArguments: JvmCompilerArgumentsImpl = JvmCompilerArgumentsImpl(),
-    private val compilerVersion: String,
-) : BaseCompilationOperationImpl<JvmCompilerArgumentsImpl, K2JVMCompilerArguments>(compilerArguments),
+internal class JvmCompilationOperationImpl : BaseCompilationOperationImpl<JvmCompilerArgumentsImpl, K2JVMCompilerArguments>,
     JvmCompilationOperation,
     JvmCompilationOperation.Builder,
     DeepCopyable<JvmCompilationOperationImpl> {
+
+    override val options: Options
+    override val sources: List<Path>
+    override val destinationDirectory: Path
+    override val compilerArguments: JvmCompilerArgumentsImpl
+    private val compilerVersion: String
+
+    private constructor(other: JvmCompilationOperationImpl) : super(other) {
+        options = other.options.deepCopy()
+        sources = other.sources.toList()
+        destinationDirectory = other.destinationDirectory
+        compilerArguments = other.compilerArguments.deepCopy()
+        compilerVersion = other.compilerVersion
+    }
 
     constructor(
         sources: List<Path>,
         destinationDirectory: Path,
         compilerArguments: JvmCompilerArgumentsImpl = JvmCompilerArgumentsImpl(),
         compilerVersion: String,
-    ) : this(
-        options = Options(JvmCompilationOperation::class),
-        sources = sources,
-        destinationDirectory = destinationDirectory,
-        compilerArguments = compilerArguments,
-        compilerVersion = compilerVersion,
-    ) {
+    ) : super() {
+        this.options = Options(JvmCompilationOperation::class)
+        this.sources = sources
+        this.destinationDirectory = destinationDirectory
+        this.compilerArguments = compilerArguments
+        this.compilerVersion = compilerVersion
         initializeOptions(this::class, options)
     }
 
@@ -83,13 +91,7 @@ internal class JvmCompilationOperationImpl private constructor(
     override fun toBuilder(): JvmCompilationOperation.Builder = deepCopy()
 
     override fun deepCopy(): JvmCompilationOperationImpl {
-        return JvmCompilationOperationImpl(
-            options.deepCopy(),
-            sources,
-            destinationDirectory,
-            compilerArguments.deepCopy(),
-            compilerVersion,
-        )
+        return JvmCompilationOperationImpl(this)
     }
 
     @UseFromImplModuleRestricted
@@ -198,13 +200,16 @@ internal class JvmCompilationOperationImpl private constructor(
         }
     }
 
-    override fun createCompilerServicesFacade(loggerAdapter: KotlinLoggerMessageCollectorAdapter): CompilerServicesFacadeBase {
+    override fun createCompilerServicesFacade(
+        logger: KotlinLogger,
+        messageCollector: MessageCollectorWithDiagnosticId,
+    ): CompilerServicesFacadeBase {
         val icConfiguration = get(INCREMENTAL_COMPILATION)
         if (icConfiguration is JvmClientManagedIncrementalCompilationConfiguration) {
-            return icConfiguration.createCompilerServicesFacadeBase(loggerAdapter, cancellationHandle)
+            return icConfiguration.createCompilerServicesFacadeBase(logger, messageCollector, cancellationHandle)
         }
 
-        return super.createCompilerServicesFacade(loggerAdapter)
+        return super.createCompilerServicesFacade(logger, messageCollector)
     }
 
     private fun getSnapshotBasedIncrementalCompilationOptions(
@@ -237,7 +242,7 @@ internal class JvmCompilationOperationImpl private constructor(
             kotlinScriptExtensions = get(KOTLINSCRIPT_EXTENSIONS),
             icFeatures = aggregatedIcConfigurationOptions.extractIncrementalCompilationFeatures(),
             useJvmFirRunner = aggregatedIcConfigurationOptions[USE_FIR_RUNNER],
-            generateCompilerRefIndex = get(GENERATE_COMPILER_REF_INDEX),
+            generateCompilerRefIndex = generateCompilerRefIndex,
             configurationInputs = makeConfigurationInputs(
                 aggregatedIcConfigurationOptions,
                 getEffectivePreciseJavaTrackingState(
@@ -257,11 +262,12 @@ internal class JvmCompilationOperationImpl private constructor(
     }
 
     override fun compileInProcess(
-        loggerAdapter: KotlinLoggerMessageCollectorAdapter,
+        logger: KotlinLogger,
+        messageCollector: MessageCollectorWithDiagnosticId,
         executionContext: ExecutionContext,
     ): CompilationResult {
         setupIdeaStandaloneExecution()
-        return super.compileInProcess(loggerAdapter, executionContext)
+        return super.compileInProcess(logger, messageCollector, executionContext)
     }
 
     override fun createCompiler(): CLICompiler<K2JVMCompilerArguments> {
@@ -274,7 +280,8 @@ internal class JvmCompilationOperationImpl private constructor(
 
     override fun compileIncrementallyInProcess(
         arguments: K2JVMCompilerArguments,
-        loggerAdapter: KotlinLoggerMessageCollectorAdapter,
+        logger: KotlinLogger,
+        messageCollector: MessageCollectorWithDiagnosticId,
         executionContext: ExecutionContext,
     ): CompilationResult {
         val snapshotBasedIcOptionsAccessor = getIcOptionsAccessorOrNull() ?: error("Missing INCREMENTAL_COMPILATION option.")
@@ -291,12 +298,12 @@ internal class JvmCompilationOperationImpl private constructor(
         val metricsReporter = getMetricsReporter()
         metricsReporter.startMeasureGc()
         val icReporter = BuildToolsApiBuildICReporter(
-            kotlinLogger = loggerAdapter.kotlinLogger,
+            kotlinLogger = logger,
             rootProjectDir = projectDir,
             buildMetricsReporter = metricsReporter,
         )
-        val icEventCollector = this[IC_EVENT_COLLECTOR]
-        val eventReporter = if (icEventCollector != null) EventICReporter() else null
+        val icEventCollectorFinal = icEventCollector
+        val eventReporter = if (icEventCollectorFinal != null) EventICReporter() else null
         val buildReporter = BuildReporter(
             icReporter = if (eventReporter != null) {
                 CompositeICReporter(listOf(icReporter, eventReporter))
@@ -330,7 +337,7 @@ internal class JvmCompilationOperationImpl private constructor(
             )
         }
 
-        logCompilerArguments(loggerAdapter, arguments, get(COMPILER_ARGUMENTS_LOG_LEVEL))
+        logCompilerArguments(logger, arguments, compilerArgumentsLogLevel)
 
         val fileLocations = if (projectDir != null && buildDir != null) {
             FileLocations(projectDir, buildDir)
@@ -341,7 +348,7 @@ internal class JvmCompilationOperationImpl private constructor(
             incrementalCompiler.compile(
                 kotlinSources,
                 arguments,
-                loggerAdapter,
+                messageCollector,
                 snapshotBasedIcOptionsAccessor.sourcesChanges.asChangedFiles,
                 fileLocations,
                 configurationInputs,
@@ -349,10 +356,10 @@ internal class JvmCompilationOperationImpl private constructor(
         } finally {
             runCatching {
                 eventReporter?.let { reporter ->
-                    icEventCollector?.collectEvents(reporter.events.toIcEvents())
+                    icEventCollectorFinal?.collectEvents(reporter.events.toIcEvents())
                 }
             }.onFailure { collectionError ->
-                loggerAdapter.kotlinLogger.warn(
+                logger.warn(
                     "Failed to collect incremental compilation events:\n${collectionError.stackTraceToString()}"
                 )
             }
@@ -446,7 +453,7 @@ internal class JvmCompilationOperationImpl private constructor(
             kotlinSourceFilesExtensions = kotlinFilenameExtensions,
             icFeatures = icFeatures,
             compilationCanceledStatus = cancellationHandle,
-            generateCompilerRefIndex = get(GENERATE_COMPILER_REF_INDEX),
+            generateCompilerRefIndex = generateCompilerRefIndex,
             lookupTrackerDelegate = getLookupTrackerAdapter(),
             pluginsLoader = executionContext.classloadersCache?.asPluginsLoader()
         )
@@ -467,7 +474,7 @@ internal class JvmCompilationOperationImpl private constructor(
             kotlinSourceFilesExtensions = kotlinFilenameExtensions,
             icFeatures = icFeatures,
             compilationCanceledStatus = cancellationHandle,
-            generateCompilerRefIndex = get(GENERATE_COMPILER_REF_INDEX),
+            generateCompilerRefIndex = generateCompilerRefIndex,
             lookupTrackerDelegate = getLookupTrackerAdapter(),
         )
 

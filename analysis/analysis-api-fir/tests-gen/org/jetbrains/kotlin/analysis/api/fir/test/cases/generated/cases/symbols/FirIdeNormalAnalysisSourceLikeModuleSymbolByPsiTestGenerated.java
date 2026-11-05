@@ -165,6 +165,12 @@ public class FirIdeNormalAnalysisSourceLikeModuleSymbolByPsiTestGenerated extend
   }
 
   @Test
+  @TestMetadata("danglingTypeConstraint.kt")
+  public void testDanglingTypeConstraint() {
+    run("danglingTypeConstraint.kt");
+  }
+
+  @Test
   @TestMetadata("delegateField.kt")
   public void testDelegateField() {
     run("delegateField.kt");
@@ -654,6 +660,12 @@ public class FirIdeNormalAnalysisSourceLikeModuleSymbolByPsiTestGenerated extend
   @TestMetadata("valueClassCompanionBlockMembers.kt")
   public void testValueClassCompanionBlockMembers() {
     run("valueClassCompanionBlockMembers.kt");
+  }
+
+  @Test
+  @TestMetadata("valueClassCompanionExtensions.kt")
+  public void testValueClassCompanionExtensions() {
+    run("valueClassCompanionExtensions.kt");
   }
 
   @Test

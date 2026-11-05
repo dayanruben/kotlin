@@ -13,7 +13,10 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
 import java.io.File
+import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.bufferedWriter
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.pathString
@@ -47,10 +50,12 @@ class LocalClaudeAgent private constructor(
 
         private suspend fun createCommand(authMethod: AuthMethod): List<String> = buildList {
             val prompt = """
-                The input contains a code rule and a git diff of files subject to the rule.
+                The input contains a code rule and the path to a file with a git diff of files subject to the rule.
                 Your task is to check whether this diff meets this rule, and report any violations.
                 Don't report problems that are pre-existing (i.e. not introduced with this diff).
                 If a change violates a rule but explains in the comment why the violation should be allowed, don't report it.
+                Read and search the diff file in the way that suits this rule best: read it fully
+                if the rule requires the whole diff, or search it for the specific things the rule is about.
                 You can also read any files in the repository. It is available at the current working directory
                 and already has the patch applied.
             """.trimIndent()
@@ -169,48 +174,36 @@ class LocalClaudeAgent private constructor(
             is GitDiff.Origin.GitHub -> diffOrigin.rawDiffUrl
         }
 
-        val input = buildString {
-            appendLine("# Rule: ${rule.name}")
-            appendLine()
-            appendLine(rule.text)
-            appendLine(
-                """
-                    
-                    # Diff:
-                    
-                    The full diff is available from $diffDescription.
-                    
-                    Here is the part featuring the files that are subject to the rule:
-                    
-                    ```diff
-                """.trimIndent()
-            )
-            changedFiles.forEach { it.patchLines.forEach(::appendLine) }
-            appendLine("```")
-        }
-
         var executionResult: ExecutionResult? = null
         var output: ClaudeOutput? = null
 
         return runCatching {
-            val temporaryConfigDir = createTempDirectory(prefix = "claude-config")
+            val runDir = createTempDirectory(prefix = "auto-code-review-")
             try {
+                val diffFile = runDir.resolve("diff.diff")
+                writeDiffFile(diffFile, changedFiles)
+                val input = buildInput(rule, diffDescription, diffFile)
+
+                // In the `dontAsk` permission mode, the agent is allowed to read only
+                // the working directory and the added ones, so without this argument
+                // it cannot read the diff.
+                val addDirArguments = listOf("--add-dir", runDir.pathString)
                 executionResult = runProcess(
                     directory = project.root,
                     input = input,
                     addEnvironment = mapOf(
                         // Don't read ~/.claude.json.
                         // See https://code.claude.com/docs/en/agent-sdk/claude-code-features#what-settingsources-does-not-control.
-                        "CLAUDE_CONFIG_DIR" to temporaryConfigDir.pathString,
+                        "CLAUDE_CONFIG_DIR" to runDir.resolve("config").pathString,
 
                         // Don't write prompt history to disk.
                         "CLAUDE_CODE_SKIP_PROMPT_HISTORY" to "1",
                     ),
-                    command = command
+                    command = command + addDirArguments,
                 )
             } finally {
                 @OptIn(ExperimentalPathApi::class)
-                temporaryConfigDir.deleteRecursively()
+                runDir.deleteRecursively()
             }
             val claudeStdout = when (authMethod) {
                 AuthMethod.LocalConfiguration -> executionResult.stdout
@@ -230,16 +223,50 @@ class LocalClaudeAgent private constructor(
 
             check(output.structuredOutput != null) { "Claude produced no structured_output" }
 
-            AgentResult.Success(rule, output.structuredOutput, output.buildMeta())
+            AgentResult.Success(output.structuredOutput, output.buildMeta())
         }.getOrElse {
             AgentResult.Failure(
-                rule = rule,
                 meta = output?.buildMeta(),
                 exception = it,
                 executionResult = executionResult,
                 output = output?.result
             )
         }
+    }
+
+    /**
+     * Writes the diff of the files to [diffFile].
+     *
+     * The patch lines are separated with '\n' — the line separator of the git diff output they
+     * come from — and not with the system line separator.
+     */
+    private suspend fun writeDiffFile(diffFile: Path, changedFiles: List<GitDiff.ChangedFile>) {
+        withContext(Dispatchers.IO) {
+            diffFile.bufferedWriter().use { writer ->
+                changedFiles.flatMap { it.patchLines }.forEach(writer::appendLine)
+            }
+        }
+    }
+
+    private fun buildInput(
+        rule: CodeRule,
+        diffDescription: String,
+        diffFile: Path,
+    ): String = buildString {
+        appendLine("# Rule: ${rule.name}")
+        appendLine()
+        appendLine(rule.text)
+        appendLine(
+            """
+                
+                # Diff:
+                
+                The full diff is available from $diffDescription. It may contain other changes.
+                
+                Check the rule only against the diff in this file: ${diffFile.absolutePathString()}
+                It features files that are subject to the rule.
+            """.trimIndent()
+        )
     }
 
     @Serializable
@@ -252,7 +279,7 @@ class LocalClaudeAgent private constructor(
         @SerialName("total_cost_usd")
         val totalCostUSD: Double,
         @SerialName("structured_output")
-        val structuredOutput: RuleReviewResult? = null,
+        val structuredOutput: ReviewComments? = null,
     ) {
         fun buildMeta(): ReviewMeta = ReviewMeta(this.totalCostUSD)
     }
