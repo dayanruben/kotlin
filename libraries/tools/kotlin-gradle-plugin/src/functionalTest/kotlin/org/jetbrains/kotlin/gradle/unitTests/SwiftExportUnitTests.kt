@@ -363,6 +363,32 @@ class SwiftExportUnitTests {
     }
 
     @Test
+    fun `test swift export SPM package builds use separate derived data as local state`() {
+        val project = swiftExportProject(archs = "arm64 x86_64", multiplatform = {
+            // fixme: KT-89587 Clean up tests after iosX64 target deprecation
+            listOf(iosSimulatorArm64(), iosX64())
+        })
+
+        project.evaluate()
+
+        val buildSPMTasks = listOf("iosSimulatorArm64", "iosX64").map { targetName ->
+            targetName to project.tasks.getByName("${targetName}DebugBuildSPMPackage") as BuildSPMSwiftExportPackage
+        }
+
+        buildSPMTasks.forEach { (targetName, task) ->
+            val derivedData = task.packageDerivedData.get().asFile
+            assertEquals(project.layout.buildDirectory.dir("SPMDerivedData/$targetName/Debug").get().asFile, derivedData)
+            assertFalse(
+                derivedData in task.outputs.files.files,
+                "DerivedData of ${task.name} must not be declared as a task output"
+            )
+        }
+
+        val derivedDataDirs = buildSPMTasks.map { (_, task) -> task.packageDerivedData.get().asFile }
+        assertEquals(derivedDataDirs.size, derivedDataDirs.distinct().size, "DerivedData directories must not be shared")
+    }
+
+    @Test
     fun `test swift export multiple modules tasks graph`() {
         val projects = multiModuleSwiftExportProject(subprojects = listOf("subproject", "anotherproject", "miniproject"))
         projects.forEach { it.evaluate() }
@@ -795,6 +821,59 @@ class SwiftExportUnitTests {
         val name = swiftExportTask.mainModuleInput.moduleName.get()
         assertEquals(validName, name)
 
+        project.assertNoDiagnostics(KotlinToolingDiagnostics.SwiftExportInvalidModuleName)
+    }
+
+    @Test
+    fun `test swift export project name with dots`() {
+        val project = swiftExportProject(
+            projectBuilder = {
+                withName("kotlinx.cli")
+            }
+        )
+        project.evaluate()
+
+        val swiftExportTask = project.tasks.withType(SwiftExportTask::class.java).single()
+        assertEquals("KotlinxCli", swiftExportTask.mainModuleInput.moduleName.get())
+
+        project.assertNoDiagnostics(KotlinToolingDiagnostics.SwiftExportInvalidModuleName)
+    }
+
+    @Test
+    fun `test exporting subproject with dots in name`() {
+        val project = buildProject(
+            projectBuilder = {
+                withName("shared")
+            },
+            configureProject = {
+                configureRepositoriesForTests()
+            }
+        )
+        val projectDependency = project.subProject("lib.core") {
+            iosSimulatorArm64()
+        }
+        project.setupForSwiftExport(
+            multiplatform = {
+                iosSimulatorArm64()
+                sourceSets.commonMain.dependencies {
+                    implementation(projectDependency)
+                }
+            },
+            swiftExport = {
+                export(projectDependency)
+            }
+        )
+
+        project.evaluate()
+        projectDependency.evaluate()
+
+        val swiftExportTask = project.tasks.withType(SwiftExportTask::class.java).single()
+        val actualModules = swiftExportTask.resolveSwiftExportedModules { project.reportDiagnostic(it) }
+
+        assertEquals(
+            setOf(SwiftExportModuleForAssertion("LibCore", "lib.core", true)),
+            actualModules.toModulesForAssertion(),
+        )
         project.assertNoDiagnostics(KotlinToolingDiagnostics.SwiftExportInvalidModuleName)
     }
 

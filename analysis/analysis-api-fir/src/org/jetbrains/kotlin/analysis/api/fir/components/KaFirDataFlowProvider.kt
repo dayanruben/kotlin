@@ -7,8 +7,6 @@ package org.jetbrains.kotlin.analysis.api.fir.components
 
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentsOfType
-import com.intellij.util.SmartList
-import org.jetbrains.kotlin.KtFakeSourceElementKind
 import org.jetbrains.kotlin.KtFakeSourceElementKind.DesugaredAugmentedAssign
 import org.jetbrains.kotlin.KtFakeSourceElementKind.DesugaredIncrementOrDecrement
 import org.jetbrains.kotlin.analysis.api.dataflow.KaDataFlowExitPointSnapshot
@@ -18,11 +16,11 @@ import org.jetbrains.kotlin.analysis.api.dataflow.KaImplicitReceiverSmartCast
 import org.jetbrains.kotlin.analysis.api.dataflow.KaImplicitReceiverSmartCastKind
 import org.jetbrains.kotlin.analysis.api.dataflow.KaSmartCastInfo
 import org.jetbrains.kotlin.analysis.api.fir.KaFirSession
+import org.jetbrains.kotlin.analysis.api.fir.dataflow.KaFirImplicitReceiverSmartCast
+import org.jetbrains.kotlin.analysis.api.fir.dataflow.KaFirSmartCastInfo
 import org.jetbrains.kotlin.analysis.api.fir.utils.unwrap
 import org.jetbrains.kotlin.analysis.api.impl.base.util.withKaModuleEntry
 import org.jetbrains.kotlin.analysis.api.internals.KaInternalsDataFlowProvider
-import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
-import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFir
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFirOfType
@@ -35,8 +33,8 @@ import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.impl.FirUnitExpression
 import org.jetbrains.kotlin.fir.psi
-import org.jetbrains.kotlin.fir.references.FirReference
-import org.jetbrains.kotlin.fir.resolve.dfa.cfg.*
+import org.jetbrains.kotlin.fir.resolve.dfa.cfg.CFGNodeWithSubgraphs
+import org.jetbrains.kotlin.fir.resolve.dfa.cfg.ControlFlowGraph
 import org.jetbrains.kotlin.fir.resolve.dfa.controlFlowGraph
 import org.jetbrains.kotlin.fir.symbols.impl.FirVariableSymbol
 import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
@@ -50,8 +48,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
-import java.util.*
-import kotlin.jvm.optionals.getOrNull
 import kotlin.math.sign
 
 internal class KaFirDataFlowProvider(
@@ -179,7 +175,7 @@ internal class KaFirDataFlowProvider(
         val firDefaultStatement = firStatements.last()
         val defaultExpressionInfo = computeDefaultExpression(defaultStatement, firDefaultStatement, firValuedReturnExpressions)
 
-        val graphIndex = ControlFlowGraphIndex {
+        val graphIndex = ExitPointSnapshotGraphIndex {
             getControlFlowGraph(anchor = statements.first(), firStatements = firStatements)
         }
 
@@ -210,7 +206,7 @@ internal class KaFirDataFlowProvider(
         val firParent = computeCommonParent(statements)
 
         val firStatements = statements.map { it.unwrap().getOrBuildFirOfType<FirElement>(resolutionFacade) }
-        val pathSearcher = FirElementPathSearcher(firStatements)
+        val pathSearcher = ExitPointSnapshotPathSearcher(firStatements)
         firParent.accept(pathSearcher)
 
         return firStatements.map { unwrapLeaf(pathSearcher[it] ?: it) }
@@ -330,7 +326,7 @@ internal class KaFirDataFlowProvider(
         return analysisSession.firSession.typeContext.commonSuperTypeOrNull(coneTypes)?.toKtType()
     }
 
-    private fun ControlFlowGraphIndex.computeHasEscapingJumps(firDefaultStatement: FirElement, collector: FirElementCollector): Boolean {
+    private fun ExitPointSnapshotGraphIndex.computeHasEscapingJumps(firDefaultStatement: FirElement, collector: FirElementCollector): Boolean {
         val firTargets = buildSet {
             add(firDefaultStatement)
             addAll(collector.firReturnExpressions)
@@ -341,7 +337,7 @@ internal class KaFirDataFlowProvider(
         return hasMultipleExitPoints(firTargets)
     }
 
-    private fun ControlFlowGraphIndex.computeHasMultipleJumpTargets(collector: FirElementCollector): Boolean {
+    private fun ExitPointSnapshotGraphIndex.computeHasMultipleJumpTargets(collector: FirElementCollector): Boolean {
         val firTargets = buildSet<FirElement> {
             addAll(collector.firReturnExpressions)
             addAll(collector.firBreakExpressions)
@@ -387,130 +383,6 @@ internal class KaFirDataFlowProvider(
         }
 
         return null
-    }
-
-    private fun ControlFlowGraphIndex.hasMultipleExitPoints(firTargets: Set<FirElement>): Boolean {
-        if (firTargets.size < 2) {
-            return false
-        }
-
-        val exitPoints = firTargets
-            .mapNotNull { findLast(it) }
-            .flatMap { node ->
-                node.followingNodes
-                    .filter { it !is StubNode }
-                    .map { it.unwrap() }
-                    .distinct()
-                    .sortedBy { it.id }
-            }.distinct()
-
-        return exitPoints.size > 1
-    }
-
-    private fun CFGNode<*>.unwrap(): CFGNode<*> {
-        var current = this
-
-        while (current.isExitNode()) {
-            val following = current.followingNodes
-            if (following.size == 1) {
-                current = following.first()
-            } else {
-                break
-            }
-        }
-
-        return current
-    }
-
-    private fun CFGNode<*>.isExitNode(): Boolean {
-        return when (this) {
-            is ExitNodeMarker, is ExitValueParameterNode, is WhenSubjectExpressionExitNode, is AnonymousObjectExpressionExitNode,
-            is SmartCastExpressionExitNode, is PostponedLambdaExitNode, is DelegateExpressionExitNode, is WhenBranchResultExitNode,
-            is ElvisExitNode, is ExitSafeCallNode, is LocalClassExitNode, is ElvisLhsExitNode,
-                -> {
-                true
-            }
-            else -> {
-                false
-            }
-        }
-    }
-
-    /**
-     * Returns `true` if the control graph contains at least one of the [firCandidates].
-     */
-    private fun ControlFlowGraph.contains(firCandidates: Set<FirElement>): Boolean {
-        for (node in nodes) {
-            if (node.fir in firCandidates) {
-                return true
-            }
-            if (node is CFGNodeWithSubgraphs<*> && node.subGraphs.any { it.contains(firCandidates) }) {
-                return true
-            }
-        }
-
-        return false
-    }
-
-    private class FirElementPathSearcher(statements: Collection<FirElement>) : FirDefaultVisitorVoid() {
-        private companion object {
-            val FORBIDDEN_FAKE_SOURCE_KINDS: Set<KtFakeSourceElementKind> = setOf(
-                KtFakeSourceElementKind.WhenCondition,
-                KtFakeSourceElementKind.SingleExpressionBlock
-            )
-        }
-
-        private val statements = statements.toHashSet()
-
-        private val mapping = HashMap<FirElement, Optional<FirElement>>()
-        private var unmappedCount = statements.size
-
-        private val stack = ArrayDeque<FirElement>()
-
-        operator fun get(fir: FirElement): FirElement? {
-            return mapping[fir]?.getOrNull()
-        }
-
-        override fun visitElement(element: FirElement) {
-            withElement(element) {
-                if (element in statements) {
-                    // The leaf is in mapping, but its value is still 'null'
-                    mapping.computeIfAbsent(element) { _ ->
-                        unmappedCount -= 1
-                        // Here we intentionally use the 'Optional' wrapper to make 'computeIfAbsent' work smoothly
-                        Optional.ofNullable(computeTarget(element))
-                    }
-                }
-
-                if (unmappedCount > 0) {
-                    element.acceptChildren(this)
-                }
-            }
-        }
-
-        private fun computeTarget(element: FirElement): FirElement? {
-            val psi = element.psi
-            return stack.firstOrNull { it.psi == psi && isAppropriateTarget(it) }
-        }
-
-        private fun isAppropriateTarget(element: FirElement): Boolean {
-            if (element !is FirStatement && element !is FirReference) {
-                return false
-            }
-
-            val source = element.source
-            val isImplicitWhenSubjectVariable = element is FirProperty && element.isImplicitWhenSubjectVariable
-            return source?.kind !in FORBIDDEN_FAKE_SOURCE_KINDS && !isImplicitWhenSubjectVariable
-        }
-
-        private inline fun withElement(element: FirElement, block: () -> Unit) {
-            stack.addLast(element)
-            try {
-                block()
-            } finally {
-                stack.removeLast()
-            }
-        }
     }
 
     private inner class FirElementCollector : FirDefaultVisitorVoid() {
@@ -609,85 +481,18 @@ internal class KaFirDataFlowProvider(
     }
 }
 
-private class ControlFlowGraphIndex(graphProvider: () -> ControlFlowGraph) {
-    private val mapping: Map<FirElement, List<CFGNode<*>>> by lazy {
-        val result = HashMap<FirElement, MutableList<CFGNode<*>>>()
-
-        fun addGraph(graph: ControlFlowGraph) {
-            for (node in graph.nodes) {
-                result.getOrPut(node.fir) { SmartList() }.add(node)
-
-                if (node is CFGNodeWithSubgraphs<*>) {
-                    node.subGraphs.forEach(::addGraph)
-                }
-            }
+/**
+ * Returns `true` if the control graph contains at least one of the [firCandidates].
+ */
+private fun ControlFlowGraph.contains(firCandidates: Set<FirElement>): Boolean {
+    for (node in nodes) {
+        if (node.fir in firCandidates) {
+            return true
         }
-
-        addGraph(graphProvider())
-
-        return@lazy result
-    }
-
-    /**
-     * Find the last node in a graph (or its subgraphs) that point to the given [fir] element.
-     */
-    fun findLast(fir: FirElement): CFGNode<*>? {
-        val directNodes = mapping[fir]
-        if (directNodes != null) {
-            return directNodes.last()
+        if (node is CFGNodeWithSubgraphs<*> && node.subGraphs.any { it.contains(firCandidates) }) {
+            return true
         }
-
-        if (fir is FirBlock) {
-            return fir.statements
-                .asReversed()
-                .firstNotNullOfOrNull(::findLast)
-        }
-
-        return null
-    }
-}
-
-internal class KaFirSmartCastInfo(
-    private val backingOriginalType: KaType,
-    private val backingSmartCastType: KaType,
-    private val backingIsStable: Boolean,
-) : org.jetbrains.kotlin.analysis.api.components.KaSmartCastInfo {
-    override val token: KaLifetimeToken get() = backingSmartCastType.token
-
-    override val isStable: Boolean get() = withValidityAssertion { backingIsStable }
-
-    override val originalType: KaType get() = withValidityAssertion { backingOriginalType }
-
-    override val smartCastType: KaType get() = withValidityAssertion { backingSmartCastType }
-
-    override fun equals(other: Any?): Boolean {
-        return this === other ||
-                other is KaFirSmartCastInfo &&
-                other.backingSmartCastType == backingSmartCastType &&
-                other.backingIsStable == backingIsStable
     }
 
-    override fun hashCode(): Int = Objects.hash(backingSmartCastType, backingIsStable)
-}
-
-internal class KaFirImplicitReceiverSmartCast(
-    private val backingType: KaType,
-    private val backingKind: KaImplicitReceiverSmartCastKind,
-) : KaImplicitReceiverSmartCast {
-    override val token: KaLifetimeToken get() = backingType.token
-
-    override val type: KaType get() = withValidityAssertion { backingType }
-
-    override val kind: KaImplicitReceiverSmartCastKind get() = withValidityAssertion { backingKind }
-
-    override fun equals(other: Any?): Boolean {
-        return this === other ||
-                other is KaFirImplicitReceiverSmartCast &&
-                other.backingType == backingType &&
-                other.backingKind == backingKind
-    }
-
-    override fun hashCode(): Int {
-        return Objects.hash(backingType, backingKind)
-    }
+    return false
 }

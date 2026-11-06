@@ -343,7 +343,7 @@ tasks {
     }
 
     // === Used by Native Image builds (in a separate TC project) ===
-    testLifecycleTask("nativeImageCompilerTest", QualityGate.None) {
+    testLifecycleTask("nativeImageCompilerTest", QualityGate.Nightly) {
         dependsOn(":kotlin-compiler-native-image:nativeImageBoxTest")
         dependsOn(":kotlin-compiler-native-image:nativeImageSmokeTest")
     }
@@ -650,6 +650,7 @@ tasks {
         dependsOn(":kotlin-util-klib-abi:test")
         dependsOn(":kotlinx-metadata-klib:test")
         dependsOn(":compiler:ir.validation:test")
+        dependsOn(":compiler:ir.serialization.common:test")
         dependsOn(":generators:test")
         dependsOn(":kotlin-gradle-plugin-dsl-codegen:test")
     }

@@ -786,6 +786,7 @@ public abstract interface annotation class org/jetbrains/kotlin/buildtools/api/a
 
 public abstract interface class org/jetbrains/kotlin/buildtools/api/arguments/JsCompilerArguments : org/jetbrains/kotlin/buildtools/api/arguments/CommonJsAndWasmArguments {
 	public static final field Companion Lorg/jetbrains/kotlin/buildtools/api/arguments/JsCompilerArguments$Companion;
+	public static final field X_ENABLE_IMPLEMENTING_INTERFACES_FROM_TYPESCRIPT Lorg/jetbrains/kotlin/buildtools/api/arguments/JsCompilerArguments$JsCompilerArgument;
 	public static final field X_EXPORT_KDOC Lorg/jetbrains/kotlin/buildtools/api/arguments/JsCompilerArguments$JsCompilerArgument;
 	public static final field X_SUSPEND_LAMBDA_EXPORTING Lorg/jetbrains/kotlin/buildtools/api/arguments/JsCompilerArguments$JsCompilerArgument;
 	public static final field X_TYPED_ARRAYS Lorg/jetbrains/kotlin/buildtools/api/arguments/JsCompilerArguments$JsCompilerArgument;
@@ -810,7 +811,6 @@ public final class org/jetbrains/kotlin/buildtools/api/arguments/JsCompilerArgum
 public abstract interface class org/jetbrains/kotlin/buildtools/api/arguments/JsCompilerKlibArguments : org/jetbrains/kotlin/buildtools/api/arguments/CommonJsAndWasmCompilerKlibArguments, org/jetbrains/kotlin/buildtools/api/arguments/JsCompilerArguments {
 	public static final field Companion Lorg/jetbrains/kotlin/buildtools/api/arguments/JsCompilerKlibArguments$Companion;
 	public static final field X_ENABLE_EXTENSION_FUNCTIONS_IN_EXTERNALS Lorg/jetbrains/kotlin/buildtools/api/arguments/JsCompilerKlibArguments$JsCompilerKlibArgument;
-	public static final field X_ENABLE_IMPLEMENTING_INTERFACES_FROM_TYPESCRIPT Lorg/jetbrains/kotlin/buildtools/api/arguments/JsCompilerKlibArguments$JsCompilerKlibArgument;
 	public static final field X_ENABLE_SUSPEND_FUNCTION_EXPORTING Lorg/jetbrains/kotlin/buildtools/api/arguments/JsCompilerKlibArguments$JsCompilerKlibArgument;
 	public abstract fun get (Lorg/jetbrains/kotlin/buildtools/api/arguments/JsCompilerKlibArguments$JsCompilerKlibArgument;)Ljava/lang/Object;
 }
@@ -1653,11 +1653,11 @@ public abstract interface class org/jetbrains/kotlin/buildtools/api/js/operation
 	public static final field Companion Lorg/jetbrains/kotlin/buildtools/api/js/operations/JsDtsGenerationOperation$Companion;
 	public static final field DATA_CLASS_COPY_RESPECTS_CONSTRUCTOR_VISIBILITY Lorg/jetbrains/kotlin/buildtools/api/js/operations/JsDtsGenerationOperation$Option;
 	public static final field EXPORT_SUSPEND_LAMBDAS Lorg/jetbrains/kotlin/buildtools/api/js/operations/JsDtsGenerationOperation$Option;
-	public static final field EXPORT_UNTYPED_AS_UNKNOWN Lorg/jetbrains/kotlin/buildtools/api/js/operations/JsDtsGenerationOperation$Option;
 	public static final field GRANULARITY Lorg/jetbrains/kotlin/buildtools/api/js/operations/JsDtsGenerationOperation$Option;
 	public static final field IMPLEMENT_INTERFACES Lorg/jetbrains/kotlin/buildtools/api/js/operations/JsDtsGenerationOperation$Option;
 	public static final field MODULE_KIND Lorg/jetbrains/kotlin/buildtools/api/js/operations/JsDtsGenerationOperation$Option;
 	public static final field TS_COMPILATION_STRATEGY Lorg/jetbrains/kotlin/buildtools/api/js/operations/JsDtsGenerationOperation$Option;
+	public static final field USE_UNKNOWN_INSTEAD_ANY Lorg/jetbrains/kotlin/buildtools/api/js/operations/JsDtsGenerationOperation$Option;
 	public abstract fun get (Lorg/jetbrains/kotlin/buildtools/api/js/operations/JsDtsGenerationOperation$Option;)Ljava/lang/Object;
 	public abstract fun getKlibs ()Ljava/util/List;
 	public abstract fun getOutputDirectory ()Ljava/nio/file/Path;

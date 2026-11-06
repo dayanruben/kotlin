@@ -48,6 +48,31 @@ class LocalClaudeAgent private constructor(
             ignoreUnknownKeys = true
         }
 
+        /**
+         * The value for `--model` when calling `claude`.
+         *
+         * The current mid-tier model. Per Anthropic's model documentation, Sonnet is
+         * "the best combination of speed and intelligence" — the stronger tiers are
+         * positioned for demanding or long-running work, and the cheaper tier for
+         * high-volume, latency-sensitive tasks. See
+         * https://platform.claude.com/docs/en/models/overview
+         */
+        private const val MODEL = "claude-sonnet-5-5"
+
+        /**
+         * The value for `--effort` in when calling `claude`.
+         *
+         * `medium` is the effort level recommended for this model for well-specified
+         * agentic coding and multistep tool use, and a per-rule review invocation is
+         * exactly that: one rule, one diff, a fixed output schema. `high` is recommended
+         * only for harder or longer tasks, which these invocations are not. See
+         * https://platform.claude.com/docs/en/build-with-claude/effort#recommended-effort-levels-for-claude-sonnet-5-5
+         *
+         * Coincidentally, `medium` is the default effort level in Claude Code for this model at the moment of writing.
+         * But it may change with CLI updates or account/organization configuration. Pin the level to keep it deterministic.
+         */
+        private const val EFFORT = "medium"
+
         private suspend fun createCommand(authMethod: AuthMethod): List<String> = buildList {
             val prompt = """
                 The input contains a code rule and the path to a file with a git diff of files subject to the rule.
@@ -75,8 +100,6 @@ class LocalClaudeAgent private constructor(
 
             val jsonSchemaString = Json.encodeToString(jsonSchema)
 
-            val model = "claude-sonnet-4-6"
-
             when (authMethod) {
                 AuthMethod.LocalConfiguration -> {
                     add("claude")
@@ -103,7 +126,9 @@ class LocalClaudeAgent private constructor(
             add(jsonSchemaString)
 
             add("--model")
-            add(model)
+            add(MODEL)
+            add("--effort")
+            add(EFFORT)
 
             // `dontAsk` means "allow only pre-approved tools, **don't ask** for more".
             add("--permission-mode")
@@ -147,6 +172,8 @@ class LocalClaudeAgent private constructor(
         private const val ANTHROPIC_API_KEY = "ANTHROPIC_API_KEY"
         private const val ANTHROPIC_AUTH_TOKEN = "ANTHROPIC_AUTH_TOKEN"
     }
+
+    override val info = AgentInfo("Claude Code", MODEL, EFFORT)
 
     @Serializable
     private class AuthSettings(
