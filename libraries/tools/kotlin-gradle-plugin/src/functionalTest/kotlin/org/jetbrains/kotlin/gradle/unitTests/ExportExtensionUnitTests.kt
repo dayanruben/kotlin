@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.dsl.multiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.diagnostics.KotlinToolingDiagnostics
+import org.jetbrains.kotlin.gradle.plugin.diagnostics.KotlinToolingDiagnosticsSeverity.FATAL
 import org.jetbrains.kotlin.gradle.plugin.diagnostics.ToolingDiagnostic
 import org.jetbrains.kotlin.gradle.plugin.diagnostics.ToolingDiagnosticFactory
 import org.jetbrains.kotlin.gradle.plugin.diagnostics.reportDiagnostic
@@ -799,7 +800,9 @@ class ExportExtensionSwiftExportTests {
         project.evaluate()
 
         project.realizeSwiftModules()
-        project.assertContainsDiagnostic(KotlinToolingDiagnostics.SwiftExportInvalidModuleName)
+        project.assertContainsDiagnostic(
+            KotlinToolingDiagnostics.SwiftExportInvalidModuleName("Shared-S", project.path)
+        )
     }
 
     @Test
@@ -1492,7 +1495,7 @@ class ExportExtensionSwiftExportTests {
     }
 
     @Test
-    fun `an override with an invalid module name is reported`() {
+    fun `an override with an invalid module name fails`() {
         val project = swiftExportProject(
             multiplatform = {
                 iosSimulatorArm64()
@@ -1511,8 +1514,13 @@ class ExportExtensionSwiftExportTests {
 
         project.evaluate()
 
-        project.realizeSwiftModules()
-        project.assertContainsDiagnostic(KotlinToolingDiagnostics.SwiftExportInvalidModuleName)
+        project.assertRealizingSwiftModulesFailsWith(
+            KotlinToolingDiagnostics.SwiftExportInvalidModuleName(
+                moduleName = "not-a-valid-swift-module",
+                module = "org.jetbrains.kotlinx:kotlinx-io-bytestring-iossimulatorarm64:0.7.0",
+                severity = FATAL,
+            )
+        )
     }
 
     @Test
@@ -1535,6 +1543,24 @@ class ExportExtensionSwiftExportTests {
 
         project.realizeSwiftModules()
         project.assertContainsDiagnostic(KotlinToolingDiagnostics.SwiftExportModuleResolutionError)
+    }
+
+    // KT-90135
+    @Test
+    fun `an unmatched override does not fail the task`() {
+        val project = swiftExportProject(
+            swiftExport = {
+                xcodeIntegration {
+                    configure("unknown:qa:1.0", SwiftExportVisibility.HIDDEN)
+                }
+            }
+        )
+
+        project.evaluate()
+
+        // configure() only selects dependencies, so a selector that matches nothing changes no module.
+        // Uses the task's own reporter, as a real build does, which would throw on a FATAL diagnostic.
+        project.tasks.withType(SwiftExportTask::class.java).single().resolveSwiftExportedModules()
     }
 
     @Test

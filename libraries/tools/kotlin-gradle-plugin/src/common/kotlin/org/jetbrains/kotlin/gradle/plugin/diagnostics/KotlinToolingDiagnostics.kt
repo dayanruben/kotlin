@@ -1733,30 +1733,22 @@ internal object KotlinToolingDiagnostics {
 
         operator fun invoke(
             pluginId: String,
-        ): ToolingDiagnostic {
-            val severity = if (GradleVersion.current() >= GradleVersion.version("8.7")) ERROR else WARNING
-            return when (pluginId) {
-                "application" -> buildDiagnosticForApplicationPlugin(severity)
-                "java-library" -> buildDiagnosticForJavaPlugin(
-                    severity = severity,
-                    pluginId = pluginId,
-                    pluginString = "'$pluginId' (also applies 'java' plugin)",
-                )
-                else -> buildDiagnosticForJavaPlugin(
-                    severity = severity,
-                    pluginId = pluginId,
-                    pluginString = "'$pluginId'",
-                )
-            }
+        ): ToolingDiagnostic = when (pluginId) {
+            "application" -> buildDiagnosticForApplicationPlugin()
+            "java-library" -> buildDiagnosticForJavaPlugin(
+                pluginId = pluginId,
+                pluginString = "'$pluginId' (also applies 'java' plugin)",
+            )
+            else -> buildDiagnosticForJavaPlugin(
+                pluginId = pluginId,
+                pluginString = "'$pluginId'",
+            )
         }
 
         private fun buildDiagnosticForJavaPlugin(
-            severity: KotlinToolingDiagnosticsSeverity,
             pluginId: String,
             pluginString: String,
-        ) = build(
-            severity = severity
-        ) {
+        ) = build {
             title(diagnosticTitle(pluginId))
                 .description(diagnosticDescription(pluginString))
                 .solution {
@@ -1764,9 +1756,7 @@ internal object KotlinToolingDiagnostics {
                 }
         }
 
-        private fun buildDiagnosticForApplicationPlugin(
-            severity: KotlinToolingDiagnosticsSeverity,
-        ) = build(severity = severity) {
+        private fun buildDiagnosticForApplicationPlugin() = build {
             title(diagnosticTitle("application"))
                 .description(diagnosticDescription("'application' (also applies 'java' plugin)"))
                 .solution {
@@ -1855,20 +1845,6 @@ internal object KotlinToolingDiagnostics {
         }
     }
 
-    object KotlinTopLevelDependenciesUsedInIncompatibleGradleVersion :
-        ToolingDiagnosticFactory(ERROR, DiagnosticGroup.Kgp.Misconfiguration) {
-        operator fun invoke(
-            currentGradleVersion: GradleVersion,
-            minimumSupportedGradleVersion: GradleVersion,
-        ) = build {
-            title("Kotlin Top Level Dependencies Used With Incompatible Gradle Version")
-                .description("Kotlin top-level dependencies is not available in $currentGradleVersion. Minimum supported version is $minimumSupportedGradleVersion.")
-                .solution("Please upgrade your Gradle version or keep using source set dependencies block (https://kotl.in/source-set-dependencies)")
-                .documentationLink(URI("https://kotl.in/kmp-top-level-dependencies"))
-        }
-    }
-
-
     internal object KotlinScriptingMisconfiguration : ToolingDiagnosticFactory(
         predefinedSeverity = WARNING,
         predefinedGroup = DiagnosticGroup.Kgp.Misconfiguration
@@ -1888,13 +1864,26 @@ internal object KotlinToolingDiagnostics {
     }
 
     object SwiftExportInvalidModuleName : ToolingDiagnosticFactory(ERROR, DiagnosticGroup.Kgp.Misconfiguration) {
-        operator fun invoke(moduleName: String) = build {
+        /**
+         * @param module the project path or coordinates of the module the name is for
+         * @param dsl where to provide a name instead of the one generated from [module], `null` if the name was provided
+         * @param severity FATAL when reported while the Swift Export task runs, where an ERROR is only logged
+         */
+        operator fun invoke(
+            moduleName: String,
+            module: String,
+            dsl: String? = null,
+            severity: KotlinToolingDiagnosticsSeverity = ERROR,
+        ) = build(severity = severity) {
             title("Invalid Swift Module Name")
                 .description {
-                    "The Swift module name '$moduleName' is invalid"
+                    if (dsl == null) "The provided Swift module name '$moduleName' for module '$module' is invalid."
+                    else "The Swift module name '$moduleName' generated for module '$module' is invalid."
                 }
                 .solution {
-                    "The module name should be a valid Swift identifier, see https://kotl.in/swift-identifiers"
+                    val requirement = "The module name should be a valid Swift identifier, see https://kotl.in/swift-identifiers."
+                    if (dsl == null) "$requirement Please change the module name to a valid one."
+                    else "$requirement Please rename the module, or provide a valid module name using the $dsl DSL."
                 }
         }
     }
@@ -1903,8 +1892,14 @@ internal object KotlinToolingDiagnostics {
         /**
          * @param modules the modules that were requested but not found, rendered for the user
          * @param dsl the DSL snippet the request came from, so the message points at the right place
+         * @param severity FATAL for a missing `export()` module. The diagnostic is reported while the Swift Export task
+         * runs, after `checkKotlinGradlePluginConfigurationErrors`, so an ERROR is only logged and the build goes on.
          */
-        operator fun invoke(modules: List<String>, dsl: String = "swiftExport { export() }") = build {
+        operator fun invoke(
+            modules: List<String>,
+            dsl: String = "swiftExport { export() }",
+            severity: KotlinToolingDiagnosticsSeverity = ERROR,
+        ) = build(severity = severity) {
             title("Swift Module Resolution Error")
                 .description {
                     "The following modules specified in $dsl were not found in the resolved components: ${

@@ -14,7 +14,6 @@ dependencies {
     api(project(":compiler:ir.serialization.common"))
 
     implementation(project(":compiler:ir.backend.common"))
-    implementation(project(":compiler:frontend"))
     implementation(project(":compiler:frontend.common-psi"))
     implementation(project(":compiler:psi:psi-api"))
     implementation(project(":compiler:serialization"))
@@ -27,6 +26,7 @@ dependencies {
     implementation(project(":core:compiler.common.js"))
     implementation(project(":js:js.parser"))
     implementation(project(":kotlin-util-klib-metadata"))
+    implementation(project(":core:error.handling"))
 
     compileOnly(intellijCore())
 

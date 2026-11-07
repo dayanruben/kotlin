@@ -52,7 +52,6 @@ dependencies {
     testFixturesApi(testFixtures(project(":kotlin-util-klib")))
     testFixturesApi(testFixtures(project(":compiler:ir.backend.common")))
 
-    testCompileOnly(project(":compiler:frontend"))
     testCompileOnly(project(":compiler:cli"))
     testCompileOnly(project(":compiler:cli-js"))
     testCompileOnly(project(":compiler:util"))
@@ -63,12 +62,13 @@ dependencies {
     testFixturesApi(project(":js:typescript-export-standalone"))
     testFixturesApi(project(":compiler:incremental-compilation-impl"))
     testFixturesImplementation(project(":kotlin-util-klib-metadata"))
+    testFixturesImplementation(project(":compiler:psi:psi-frontend-utils"))
+    testFixturesImplementation(project(":compiler:psi:parser"))
     testFixturesImplementation(project(":wasm:wasm.frontend"))
     testFixturesApi(testFixtures(project(":kotlin-build-common")))
     testFixturesApi(testFixtures(project(":generators:test-generator")))
 
     testFixturesApi(intellijCore())
-    testFixturesApi(project(":compiler:frontend"))
     testFixturesApi(project(":compiler:cli"))
     testFixturesApi(project(":compiler:util"))
 
