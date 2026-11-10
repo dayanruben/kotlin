@@ -24,6 +24,7 @@ import org.gradle.testkit.runner.BuildResult
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.dsl.KaptExtensionConfig
 import org.jetbrains.kotlin.gradle.dsl.KaptStubGenerationScheme
+import org.jetbrains.kotlin.gradle.plugin.diagnostics.KotlinToolingDiagnostics
 import org.jetbrains.kotlin.gradle.tasks.USING_JVM_INCREMENTAL_COMPILATION_MESSAGE
 import org.jetbrains.kotlin.gradle.testbase.*
 import org.jetbrains.kotlin.gradle.util.addBeforeSubstring
@@ -690,7 +691,6 @@ open class KaptIT : KaptBaseIT() {
         project(
             "simple".withPrefix,
             gradleVersion,
-            buildOptions = defaultBuildOptions.copy(logLevel = LogLevel.DEBUG)
         ) {
             val arg = "-Xsuppress-version-warnings"
             buildGradle.modify {
@@ -770,6 +770,66 @@ open class KaptIT : KaptBaseIT() {
 
             buildAndFail("build") {
                 assertOutputContains("Could not find method kapt() for arguments")
+            }
+        }
+    }
+
+    @DisplayName("KT-89502: memory leaks in annotation processors are detected")
+    @GradleTest
+    fun testDetectMemoryLeaks(gradleVersion: GradleVersion) {
+        project(
+            "localAnnotationProcessor".withPrefix,
+            gradleVersion,
+            dependencyManagement = DependencyManagement.DefaultDependencyManagement(setOf("https://jitpack.io")),
+        ) {
+            subProject("annotation-processor").javaSourcesDir().resolve("TestAnnotationProcessor.kt").modify { text ->
+                text
+                    .replace(
+                        "const val KAPT_KOTLIN_GENERATED_OPTION_NAME = \"kapt.kotlin.generated\"",
+                        "const val KAPT_KOTLIN_GENERATED_OPTION_NAME = \"kapt.kotlin.generated\"\n        @JvmStatic var leaked: Any? = null"
+                    )
+                    .replace("val annotatedElements = ", "leaked = this\n        val annotatedElements = ")
+            }
+            subProject("example").buildGradle.append(
+                //language=Gradle
+                """
+                kapt {
+                    detectMemoryLeaks = "paranoid"
+                }
+                """.trimIndent()
+            )
+
+            val cacheWarning = KotlinToolingDiagnostics.KaptMemoryLeakDetectionWithClassLoadersCache
+            build(":example:kaptKotlin") {
+                assertOutputContains("Memory leak detected!")
+                assertOutputContains("Location: 'org.kotlin.annotationProcessor.TestAnnotationProcessor', static field 'leaked'")
+                // The warning is about the 'standard' mode only.
+                assertNoDiagnostic(cacheWarning)
+            }
+
+            subProject("example").buildGradle.modify { it.replace("detectMemoryLeaks = \"paranoid\"", "detectMemoryLeaks = \"standard\"") }
+            build(":example:kaptKotlin", "--rerun-tasks") {
+                if ((buildOptions.kaptOptions?.classLoadersCacheSize ?: 0) > 0) {
+                    assertHasDiagnostic(cacheWarning)
+                } else {
+                    assertNoDiagnostic(cacheWarning)
+                }
+            }
+        }
+    }
+
+    @DisplayName("Classloaders cache is reported as disabled when processors are discovered from the compile classpath")
+    @GradleTest
+    fun testClassLoadersCacheWithCompileClasspathDiscovery(gradleVersion: GradleVersion) {
+        project(
+            "simple".withPrefix,
+            gradleVersion,
+            buildOptions = defaultBuildOptions.copy(
+                kaptOptions = kaptOptions().copy(includeCompileClasspath = true, classLoadersCacheSize = 10)
+            )
+        ) {
+            build("build") {
+                assertHasDiagnostic(KotlinToolingDiagnostics.KaptClassLoadersCacheWithCompileClasspathDiscovery)
             }
         }
     }
@@ -1131,7 +1191,6 @@ open class KaptIT : KaptBaseIT() {
         project(
             "mpp-kapt-presence".withPrefix,
             gradleVersion,
-            buildOptions = defaultBuildOptions.copy(logLevel = LogLevel.DEBUG)
         ) {
             build(":dac:compileKotlinJvm") {
                 assertTasksExecuted(
@@ -1407,7 +1466,6 @@ open class KaptIT : KaptBaseIT() {
         project(
             "simple".withPrefix,
             gradleVersion,
-            buildOptions = defaultBuildOptions.copy(logLevel = LogLevel.DEBUG)
         ) {
 
             buildGradle.modify {
@@ -1429,7 +1487,7 @@ open class KaptIT : KaptBaseIT() {
 
                 assertCompilerArgument(
                     ":kaptGenerateStubsKotlin",
-                    "plugin:org.jetbrains.kotlin.noarg:annotation=my.custom.Annotation"
+                    "plugin:org.jetbrains.kotlin.noarg:annotation=my.custom.Annotation",
                 )
             }
         }
