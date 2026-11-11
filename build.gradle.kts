@@ -366,8 +366,7 @@ tasks {
         dependsOn(":js:js.tests:jsES6InlineAnonymousFunctionsTest")
     }
 
-    // TODO(KT-90821): Promote to QualityGate.Nightly
-    testLifecycleTask("jsES6ConstLetTest", QualityGate.Undefined) {
+    testLifecycleTask("jsES6ConstLetTest", QualityGate.Nightly) {
         dependsOn(":js:js.tests:jsES6ConstLetTest")
     }
 
@@ -691,6 +690,10 @@ tasks {
         dependsOn(":repo:auto-code-review:test")
         dependsOn(":repo:codebase-tests:test")
         dependsOn(":repo:test-runtime:test")
+    }
+
+    testLifecycleTask("codebaseTestsNightly", QualityGate.Undefined) {
+        dependsOn(":repo:codebase-tests:nightlyTests")
     }
 
     testLifecycleTask("artifactsTest", QualityGate.Master) {

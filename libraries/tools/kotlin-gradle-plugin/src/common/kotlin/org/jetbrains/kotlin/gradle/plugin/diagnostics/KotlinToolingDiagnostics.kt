@@ -1888,6 +1888,30 @@ internal object KotlinToolingDiagnostics {
         }
     }
 
+    object SwiftExportReservedModuleName : ToolingDiagnosticFactory(ERROR, DiagnosticGroup.Kgp.Misconfiguration) {
+        /**
+         * @param reservedModuleName the reserved Swift module name
+         * @param module the project path or coordinates of the module the name is for
+         * @param integrationDsl the DSL block of the integration that exports the module, such as `xcodeIntegration`;
+         * `null` when no single integration is in play, such as during configuration
+         * @param severity FATAL when reported while the Swift Export task runs, where an ERROR is only logged
+         */
+        operator fun invoke(
+            reservedModuleName: String,
+            module: String,
+            integrationDsl: String? = null,
+            severity: KotlinToolingDiagnosticsSeverity = ERROR,
+        ) = build(severity = severity) {
+            title("Reserved Swift Module Name")
+                .description("The Swift module name '$reservedModuleName' for module '$module' is reserved by Swift Export.")
+                .solution {
+                    "Set a different module name with 'export { swift { moduleName = \"...\" } }' for the module being exported" +
+                            if (integrationDsl == null) "."
+                            else ", or with 'export { swift { $integrationDsl { configure(dependency) { moduleName = \"...\" } } } }' for a dependency."
+                }
+        }
+    }
+
     object SwiftExportModuleResolutionError : ToolingDiagnosticFactory(ERROR, DiagnosticGroup.Kgp.Misconfiguration) {
         /**
          * @param modules the modules that were requested but not found, rendered for the user
@@ -2532,6 +2556,24 @@ internal object KotlinToolingDiagnostics {
         }
     }
 
+    internal object KotlinCompilerArgumentsRejected : ToolingDiagnosticFactory(WARNING, DiagnosticGroup.Compiler.Warning) {
+        operator fun invoke(rejection: String?, compilerVersion: String, pluginVersion: String) = build {
+            title { "Kotlin compiler rejected compiler arguments" }
+                .description {
+                    val versions = "This build uses Kotlin compiler $compilerVersion with Kotlin Gradle Plugin $pluginVersion."
+                    if (rejection != null) {
+                        "$rejection\n$versions"
+                    } else {
+                        "Kotlin compiler failed without reporting a source error, so a compiler argument is likely unsupported. " +
+                                "See the errors above.\n$versions"
+                    }
+                }
+                .solution {
+                    "Remove the unsupported compiler argument, or align 'kotlin.compilerVersion' with the Kotlin Gradle Plugin version."
+                }
+        }
+    }
+
     internal object DuplicateJsBrowserTestFrameworkConfiguration : ToolingDiagnosticFactory(
         predefinedSeverity = ERROR,
         predefinedGroup = DiagnosticGroup.Kgp.Misconfiguration,
@@ -2769,14 +2811,17 @@ internal object KotlinToolingDiagnostics {
         }
     }
 
-    internal object SharedNpmProjectInvalidPackageJson : ToolingDiagnosticFactory(
-        WARNING,
+    internal object SharedNpmProjectInvalidNpmDependencyReport : ToolingDiagnosticFactory(
+        FATAL,
         DiagnosticGroup.Kgp.Misconfiguration,
     ) {
-        operator fun invoke(file: File) = build {
-            title { "Skipping '$file': not a valid package.json" }
-                .description { "The file could not be parsed or has no 'name', so it is left out of the shared npm project." }
-                .solution { "Check the projects declared on the 'kotlinNpmSharedDependencies' / 'kotlinWasmNpmSharedDependencies' configurations." }
+        operator fun invoke(files: List<File>) = build {
+            title { "Invalid npm dependency reports" }
+                .description {
+                    "These files could not be parsed or have a compilation without a name, so their npm dependencies would be missing from the shared npm project:\n" +
+                            files.joinToString("\n") { "  - $it" }
+                }
+                .solution { "Rebuild the projects that produced them, declared on the 'kotlinNpmSharedDependencies' / 'kotlinWasmNpmSharedDependencies' configurations." }
         }
     }
 
