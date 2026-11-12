@@ -346,6 +346,7 @@ tasks {
     testLifecycleTask("nativeImageCompilerTest", QualityGate.Nightly) {
         dependsOn(":kotlin-compiler-native-image:nativeImageBoxTest")
         dependsOn(":kotlin-compiler-native-image:nativeImageSmokeTest")
+        dependsOn(":kotlin-compiler-native-image:nativeImageDaemonBoxTest")
     }
 
     testLifecycleTask("jsCompilerTest", QualityGate.Master) {
@@ -906,11 +907,6 @@ if (kotlinBuildProperties.isCacheRedirectorEnabled.get()) {
 
 afterEvaluate {
     checkExpectedGradlePropertyValues()
-}
-
-// workaround for KT-68482
-tasks.withType<org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinNpmInstallTask>().configureEach {
-    notCompatibleWithConfigurationCache("KotlinNpmInstallTask is not compatible with Configuration Cache")
 }
 
 plugins.withType<YarnPlugin> {

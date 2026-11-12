@@ -15,7 +15,7 @@ fun main(args: Array<String>) {
             testClass<AbstractFirLightTreeBlackBoxCodegenTestForLombok> {
                 model("box")
             }
-            testClass<AbstractFirPsiDiagnosticTestForLombok> {
+            testClass<AbstractFirLightTreeDiagnosticTestForLombok> {
                 model("diagnostics", pattern = TestGeneratorUtil.KT_WITHOUT_DOTS_IN_NAME)
             }
             testClass<AbstractLLLombokDiagnosticsTest> {

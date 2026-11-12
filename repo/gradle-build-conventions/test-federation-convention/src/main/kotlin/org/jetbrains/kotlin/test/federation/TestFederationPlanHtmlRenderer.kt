@@ -5,77 +5,152 @@
 
 package org.jetbrains.kotlin.testFederation
 
+import kotlinx.html.*
+import kotlinx.html.stream.createHTML
+import org.jetbrains.kotlin.testFederation.TestSubset.AllTests
+import org.jetbrains.kotlin.testFederation.TestSubset.SmokeTests
+
 internal class TestFederationPlanHtmlRenderer(
     private val plan: TestFederationPlan
 ) {
+    companion object {
+        private const val STYLE_CSS_FILE = ".test-federation.style.css"
+        private const val THEME_SWITCHER_JS_FILE = ".test-federation.theme-switcher.js"
+        private const val CHIP_FOLDING_JS_FILE = ".test-federation.chip-folding.js"
+        private const val FILTERING_SVG_FILE = ".test-federation.filtering-hierarchy.svg"
+    }
+
     fun renderHtml(): String =
-        // language=HTML
-        """
-        <!DOCTYPE html>
-        <html lang='en'>
-            <head>
-                <meta charset="utf-8">
-                <title>Test Federation</title>
-                ${style()}
-                ${supportDarkThemeScript()}
-            </head>
-            <body>
-                <table>
-                    <tr><th>Domain</th><th>Test subsets</th><th>Reason</th></tr>
-                    ${tableRows()}
-                </table>
-                <p>Legend:</p>
-                <table>
-                    <tr><th>Symbol</th><th>Meaning</th></tr>
-                    <tr><td><strong>Domain*</strong></td><td>The domain is changed</td></tr>
-                    <tr><td>$ALL_TESTS_EMOJI</td><td>AllTests</td></tr>
-                    <tr><td>$SMOKE_TESTS_EMOJI</td><td>SmokeTests</td></tr>
-                    <tr><td>$CONTRACT_TESTS_EMOJI (Domain)</td><td>ContractTestsForDomain</td></tr>
-                </table>
-            </body>
-        </html>
-        """.trimIndent()
+        createHTML(prettyPrint = true).html {
+            lang = "en"
+            head {
+                meta(charset = "utf-8")
+                title("Test Federation")
+                link(rel = "stylesheet", href = STYLE_CSS_FILE)
+                script(src = THEME_SWITCHER_JS_FILE) {}
+                script(src = CHIP_FOLDING_JS_FILE) {}
+            }
+            body {
+                renderThemeSwitcher()
+                renderPlan()
+                renderSubsetsExplanation()
+                renderPrefixesExplanation()
+            }
+        }
 
-    private fun style() =
-        // language=HTML
-        """
-        <style>
-            :root { --fg: #222; --bg: #fff; --border: #ccc; --header-bg: #f0f0f0; color-scheme: light; }
-            :root.dark { --fg: #ddd; --bg: #1e1f22; --border: #4a4d52; --header-bg: #2b2d30; color-scheme: dark; }
-            @media (prefers-color-scheme: dark) { :root:not(.light) { --fg: #ddd; --bg: #1e1f22; --border: #4a4d52; --header-bg: #2b2d30; color-scheme: dark; } }
-            body { font-family: sans-serif; margin: 16px; color: var(--fg); background: var(--bg); }
-            table { border-collapse: collapse; }
-            th, td { border: 1px solid var(--border); padding: 4px 12px; text-align: left; }
-            th { background: var(--header-bg); font-weight: normal; }
-        </style>
-        """.trimIndent()
+    private fun BODY.renderThemeSwitcher() {
+        div("theme-switcher") {
+            button(classes = "theme-option") {
+                attributes["theme"] = "auto"
+                +"Sync with OS"
+            }
+            button(classes = "theme-option") {
+                attributes["theme"] = "light"
+                +"Light"
+            }
+            button(classes = "theme-option") {
+                attributes["theme"] = "dark"
+                +"Dark"
+            }
+        }
+    }
 
-    private fun supportDarkThemeScript() =
-        // language=HTML
-        """
-        <script>
-            (function () {
-              try {
-                const parentDocument = window.parent.document;
-                const background = window.parent.getComputedStyle(parentDocument.body).backgroundColor;
-                const channels = background.match(/\d+(\.\d+)?/g);
-                if (!channels || channels.length < 3 || (channels.length > 3 && Number(channels[3]) === 0)) return;
-                const luminance = 0.299 * channels[0] + 0.587 * channels[1] + 0.114 * channels[2];
-                document.documentElement.classList.add(luminance < 128 ? 'dark' : 'light');
-              } catch (e) {}
-            })();
-        </script>
-        """.trimIndent()
+    private fun BODY.renderPlan() {
+        h2 { +"Execution plan" }
+        p { +"(hover test subset to see the reason behind it)" }
+        table {
+            tr {
+                th { +"Domain" }
+                th { +"Test subsets" }
+            }
+            plan.entries.forEach { entry ->
+                tr {
+                    td { renderDomain(entry) }
+                    td { renderTestSubsets(entry) }
+                }
+            }
+        }
+    }
 
-    private fun tableRows() = buildString {
-        plan.entries.forEach { row ->
-            val domainName = row.domain.name.escapeHtml()
-            val domain = if (row.isChanged) "<strong>$domainName</strong>*" else domainName
-            val subsets = row.testSubsets.joinToString(" + ") { it.toEmoji().escapeHtml() }
-            appendLine("<tr><td>$domain</td><td>$subsets</td><td>${row.reason.escapeHtml()}</td></tr>")
+    private fun TD.renderDomain(entry: TestFederationPlan.PlanEntry) {
+        val domainName = entry.domain.name
+        when {
+            entry.isChanged -> {
+                strong { +domainName }
+                +" (changed)"
+            }
+            else -> +domainName
+        }
+    }
+
+    private fun TD.renderTestSubsets(entry: TestFederationPlan.PlanEntry) {
+        entry.testSubsets.forEachIndexed { index, subset ->
+            if (index > 0) +" + "
+            renderTestSubset(entry, subset)
+        }
+    }
+
+    private fun TD.renderTestSubset(entry: TestFederationPlan.PlanEntry, subset: TestSubset) {
+        when (subset) {
+            AllTests -> {
+                span(classes = "chip chip-all-tests") {
+                    dataAnnotation = entry.reasonPerSubset.getValue(subset)
+                    +ALL_TESTS_EMOJI
+                    span("chip-fold") { +" all tests" }
+                }
+            }
+            SmokeTests -> {
+                span(classes = "chip chip-smoke-tests") {
+                    dataAnnotation = entry.reasonPerSubset.getValue(subset)
+                    +SMOKE_TESTS_EMOJI
+                    span("chip-fold") { +" smoke tests" }
+                }
+            }
+            else -> {
+                val domain = Domain.entries.first { contractTestsSubsetOf(it) == subset }
+                span(classes = "chip chip-contract-tests") {
+                    dataAnnotation = entry.reasonPerSubset.getValue(subset)
+                    +CONTRACT_TESTS_EMOJI
+                    span("chip-fold") { +" contracts for" }
+                    +" ${domain.name}"
+                }
+            }
+        }
+    }
+
+    private fun BODY.renderSubsetsExplanation() {
+        details {
+            summary { h2 { +"What are the test subsets?" } }
+            p { +"Test subset is a concept introduced by Test Federation. It's basically a subset of tests selected by a given test task." }
+            p { +"You may think of it as of the 3rd level of the filtering hierarchy:" }
+            img(alt = "How Test Federation filters tests", src = "$FILTERING_SVG_FILE#light", classes = "diagram-light")
+            img(alt = "How Test Federation filters tests", src = "$FILTERING_SVG_FILE#dark", classes = "diagram-dark")
+        }
+    }
+
+    private fun BODY.renderPrefixesExplanation() {
+        details {
+            summary { h2 { +"What does it mean if a build name has emoji prefix?" } }
+            p { +"Each emoji represents one test subset. If the emoji is in the prefix, it means the build can run this subset." }
+            p { +"If there are no subset emojis, it means the build can run any combination of test subsets, so it's fully dynamic." }
+            p { +"If there is exactly one subset emoji, it means the build always runs the same tests." }
+            p { +"(one exception to the above rule is the ✍️ emoji which can run contracts against dynamically selected domains)" }
+            p { +"Examples:" }
+            table {
+                tr {
+                    th { +"Build name" }
+                    th { +"Meaning" }
+                }
+                tr { td { +"🛡 Some build" }; td { +"always runs all tests (static)" } }
+                tr { td { +"🔥️ Some build" }; td { +"always runs smoke tests (static)" } }
+                tr { td { +"✍️️ Some build" }; td { +"always runs contract tests (dynamic)" } }
+                tr { td { +"🔥✍️️ Some build" }; td { +"can run any combination of smokes and contracts (dynamic)" } }
+                tr { td { +"Some build" }; td { +"can run any combination of tests (dynamic)" } }
+            }
         }
     }
 }
 
-private fun String.escapeHtml(): String =
-    replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;")
+private var CoreAttributeGroupFacade.dataAnnotation : String
+    get() = attributes["data-annotation"].orEmpty()
+    set(newValue) { attributes["data-annotation"] = newValue }

@@ -47,7 +47,7 @@ class Fir2IrFakeOverrideStrategy(
     override val isGenericClashFromSameSupertypeAllowed: Boolean,
     override val isOverrideOfPublishedApiFromOtherModuleDisallowed: Boolean,
     private val delegatedMemberGenerationStrategy: Fir2IrDelegatedMembersGenerationStrategy,
-    private val leafModuleDescriptor: ModuleDescriptor,
+    private val leafModule: IrModuleFragment,
 ) : FakeOverrideBuilderStrategy.BindToPrivateSymbols() {
     private val fieldOnlyProperties: MutableList<IrPropertyWithLateBinding> = mutableListOf()
 
@@ -69,20 +69,22 @@ class Fir2IrFakeOverrideStrategy(
     }
 
     override fun shouldSeeInternals(
-        thisModule: ModuleDescriptor,
-        memberModule: ModuleDescriptor,
+        thisModule: IrModuleFragment,
+        memberModule: IrModuleFragment,
     ): Boolean {
-        require(thisModule is FirModuleDescriptor && memberModule is FirModuleDescriptor)
-        if (thisModule.shouldSeeInternalsOf(memberModule)) return true
+        val thisModuleDesc = thisModule.descriptor as FirModuleDescriptor
+        val memberModuleDesc = memberModule.descriptor as FirModuleDescriptor
+        if (thisModuleDesc.shouldSeeInternalsOf(memberModuleDesc)) return true
+
         /*
          * There could be a case when one declaration is located in common sources and another is located in
          * platform dependencies. For the frontend these two module data don't see each other, but from the
          * backend point of view all sources belong to the same module. So in this situation we also should
          * consider if the other declaration is visible from the leaf source module.
          */
-
-        if (thisModule.session.kind == FirSession.Kind.Source && thisModule != leafModuleDescriptor) {
-            return leafModuleDescriptor.shouldSeeInternalsOf(memberModule)
+        val leafModuleDescriptor = leafModule.descriptor as FirModuleDescriptor
+        if (thisModuleDesc.session.kind == FirSession.Kind.Source && thisModuleDesc != leafModuleDescriptor) {
+            return leafModuleDescriptor.shouldSeeInternalsOf(memberModuleDesc)
         }
 
         /*
@@ -91,8 +93,8 @@ class Fir2IrFakeOverrideStrategy(
          * effectively unreachable, as fake overrides for library classes are built in the `Fir2IrLazyClass.declarations`
          * which doesn't invoke this code. But it was decided to keep it for symmetry.
          */
-        if (memberModule.session.kind == FirSession.Kind.Source && memberModule != leafModuleDescriptor) {
-            return thisModule.shouldSeeInternalsOf(leafModuleDescriptor)
+        if (memberModuleDesc.session.kind == FirSession.Kind.Source && memberModuleDesc != leafModuleDescriptor) {
+            return thisModuleDesc.shouldSeeInternalsOf(leafModuleDescriptor)
         }
         return false
     }

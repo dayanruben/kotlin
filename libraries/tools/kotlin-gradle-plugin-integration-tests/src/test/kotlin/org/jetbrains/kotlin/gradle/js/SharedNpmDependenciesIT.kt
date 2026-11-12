@@ -3,15 +3,17 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-@file:OptIn(ExperimentalKotlinGradlePluginApi::class)
+@file:OptIn(ExperimentalKotlinGradlePluginApi::class, DelicateKotlinGradlePluginApi::class)
 
 package org.jetbrains.kotlin.gradle.js
 
 import org.gradle.api.attributes.Attribute
 import org.gradle.kotlin.dsl.kotlin
 import org.gradle.util.GradleVersion
+import org.jetbrains.kotlin.gradle.DelicateKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+import org.jetbrains.kotlin.gradle.plugin.diagnostics.KotlinToolingDiagnostics
 import org.jetbrains.kotlin.gradle.targets.js.NpmVersions
 import org.jetbrains.kotlin.gradle.targets.js.npm.PackageJson
 import org.jetbrains.kotlin.gradle.targets.js.npm.fromSrcPackageJson
@@ -19,6 +21,7 @@ import org.jetbrains.kotlin.gradle.targets.web.npm.KotlinSharedNpmProjectPlugin
 import org.jetbrains.kotlin.gradle.targets.web.npm.shared.NpmDependencyReport
 import org.jetbrains.kotlin.gradle.targets.web.npm.shared.readNpmDependencyReport
 import org.jetbrains.kotlin.gradle.targets.web.npm.shared.readPackageJsonDependencies
+import org.jetbrains.kotlin.gradle.targets.web.npm.shared.writeTo
 import org.jetbrains.kotlin.gradle.testbase.*
 import org.jetbrains.kotlin.gradle.uklibs.PublisherConfiguration
 import org.jetbrains.kotlin.gradle.uklibs.addPublishedProjectToRepositories
@@ -26,8 +29,9 @@ import org.jetbrains.kotlin.gradle.uklibs.applyMultiplatform
 import org.jetbrains.kotlin.gradle.uklibs.publish
 import org.jetbrains.kotlin.testFederation.MustRunOnChangesInGradle
 import org.junit.jupiter.api.DisplayName
-import java.io.File
 import java.nio.file.Path
+import kotlin.io.path.createDirectories
+import kotlin.io.path.writeText
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import kotlin.test.assertEquals
@@ -60,9 +64,9 @@ class SharedNpmDependenciesIT : KGPBaseTest() {
             }
             buildScriptInjection {
                 project.plugins.apply(KotlinSharedNpmProjectPlugin::class.java)
-                project.dependencies.add("kotlinNpmSharedDependencies", project.dependencies.project(mapOf("path" to ":lib-a")))
-                project.dependencies.add("kotlinNpmSharedDependencies", project.dependencies.project(mapOf("path" to ":lib-b")))
-                project.dependencies.add("kotlinNpmSharedDependencies", project.dependencies.project(mapOf("path" to ":lib-web")))
+                project.dependencies.add("kotlinJsNpmSharedDependencies", project.dependencies.project(mapOf("path" to ":lib-a")))
+                project.dependencies.add("kotlinJsNpmSharedDependencies", project.dependencies.project(mapOf("path" to ":lib-b")))
+                project.dependencies.add("kotlinJsNpmSharedDependencies", project.dependencies.project(mapOf("path" to ":lib-web")))
                 project.dependencies.add("kotlinWasmNpmSharedDependencies", project.dependencies.project(mapOf("path" to ":lib-b")))
             }
 
@@ -116,7 +120,7 @@ class SharedNpmDependenciesIT : KGPBaseTest() {
             val libBWasmDependencies = mapOf("cowsay" to "9.9.9")
             val libWebDependencies = libBJsDependencies
 
-            build("kotlinSetupSharedNpmProject", "kotlinWasmSetupSharedNpmProject") {
+            build("kotlinJsSetupSharedNpmProject", "kotlinWasmSetupSharedNpmProject") {
                 assertTasksExecuted(
                     ":lib-a:jsNpmDependenciesReport",
                     ":lib-a:jsTestNpmDependenciesReport",
@@ -194,7 +198,7 @@ class SharedNpmDependenciesIT : KGPBaseTest() {
                 )
             }
 
-            build("kotlinSetupSharedNpmProject", "kotlinWasmSetupSharedNpmProject") {
+            build("kotlinJsSetupSharedNpmProject", "kotlinWasmSetupSharedNpmProject") {
                 assertConfigurationCacheReused()
                 assertTasksUpToDate(
                     ":lib-a:jsNpmDependenciesReport",
@@ -205,7 +209,7 @@ class SharedNpmDependenciesIT : KGPBaseTest() {
                     ":lib-b:wasmJsTestNpmDependenciesReport",
                     ":lib-web:jsNpmDependenciesReport",
                     ":lib-web:jsTestNpmDependenciesReport",
-                    ":kotlinSetupSharedNpmProject",
+                    ":kotlinJsSetupSharedNpmProject",
                     ":kotlinWasmSetupSharedNpmProject",
                 )
             }
@@ -221,8 +225,8 @@ class SharedNpmDependenciesIT : KGPBaseTest() {
             }
             buildScriptInjection {
                 project.plugins.apply(KotlinSharedNpmProjectPlugin::class.java)
-                project.dependencies.add("kotlinNpmSharedDependencies", project.dependencies.project(mapOf("path" to ":lib-a")))
-                project.dependencies.add("kotlinNpmSharedDependencies", project.dependencies.project(mapOf("path" to ":lib-b")))
+                project.dependencies.add("kotlinJsNpmSharedDependencies", project.dependencies.project(mapOf("path" to ":lib-a")))
+                project.dependencies.add("kotlinJsNpmSharedDependencies", project.dependencies.project(mapOf("path" to ":lib-b")))
             }
 
             includeOtherProjectAsSubmodule("emptyKts", newSubmoduleName = "lib-a") {
@@ -281,8 +285,8 @@ class SharedNpmDependenciesIT : KGPBaseTest() {
             }
             buildScriptInjection {
                 project.plugins.apply(KotlinSharedNpmProjectPlugin::class.java)
-                project.dependencies.add("kotlinNpmSharedDependencies", project.dependencies.project(mapOf("path" to ":core")))
-                project.dependencies.add("kotlinNpmSharedDependencies", project.dependencies.project(mapOf("path" to ":test-utils")))
+                project.dependencies.add("kotlinJsNpmSharedDependencies", project.dependencies.project(mapOf("path" to ":core")))
+                project.dependencies.add("kotlinJsNpmSharedDependencies", project.dependencies.project(mapOf("path" to ":test-utils")))
             }
 
             includeOtherProjectAsSubmodule("emptyKts", newSubmoduleName = "core") {
@@ -317,7 +321,7 @@ class SharedNpmDependenciesIT : KGPBaseTest() {
             val testUtilsDependencies = mapOf("left-pad" to "1.3.0") + coreDependencies
 
             // core:jsTest needs test-utils main, which needs core main: a separate task, so no cycle.
-            build("kotlinSetupSharedNpmProject") {
+            build("kotlinJsSetupSharedNpmProject") {
                 assertTasksExecuted(
                     ":core:jsNpmDependenciesReport",
                     ":core:jsTestNpmDependenciesReport",
@@ -420,6 +424,99 @@ class SharedNpmDependenciesIT : KGPBaseTest() {
         }
     }
 
+    @DisplayName("npm dependencies of klibs and package.json files without a report reach only the report of their platform")
+    @GradleTest
+    @OptIn(ExperimentalWasmDsl::class)
+    fun testNpmDependenciesOfKlibsWithoutReportPerPlatform(gradleVersion: GradleVersion) {
+        val published = project("empty", gradleVersion) {
+            settingsBuildScriptInjection {
+                settings.rootProject.name = "publishedKlib"
+            }
+            addKgpToBuildScriptCompilationClasspath()
+            buildScriptInjection {
+                project.applyMultiplatform {
+                    js { nodejs() }
+                    wasmJs { nodejs() }
+                    wasmWasi { wasmtime() }
+                    sourceSets.getByName("jsMain").dependencies {
+                        implementation(npm("published-js-dep", "3.0.1"))
+                    }
+                    sourceSets.getByName("wasmJsMain").dependencies {
+                        implementation(npm("published-wasm-js-dep", "3.0.2"))
+                    }
+                    sourceSets.getByName("wasmWasiMain").dependencies {
+                        implementation(npm("published-wasm-wasi-dep", "3.0.3"))
+                    }
+                }
+            }
+        }.publish(publisherConfiguration = PublisherConfiguration(group = "producer", version = "1.0.0"))
+
+        project("emptyKts", gradleVersion) {
+            plugins {
+                kotlin("multiplatform").apply(false)
+            }
+            addPublishedProjectToRepositories(published)
+
+            includeOtherProjectAsSubmodule("emptyKts", newSubmoduleName = "lib") {
+                buildScriptInjection {
+                    project.plugins.apply("org.jetbrains.kotlin.multiplatform")
+                    kotlinMultiplatform.apply {
+                        js { nodejs() }
+                        wasmJs { nodejs() }
+                        wasmWasi { wasmtime() }
+                        sourceSets.getByName("commonMain").dependencies {
+                            implementation(published.rootCoordinate)
+                            implementation(project.files("common/package.json"))
+                        }
+                        sourceSets.getByName("jsMain").dependencies {
+                            implementation(project.files("js/package.json"))
+                        }
+                        sourceSets.getByName("wasmJsMain").dependencies {
+                            implementation(project.files("wasmJs/package.json"))
+                        }
+                        sourceSets.getByName("wasmWasiMain").dependencies {
+                            implementation(project.files("wasmWasi/package.json"))
+                        }
+                    }
+                }
+            }
+
+            fun writePackageJson(directory: String, dependency: String, version: String) {
+                val packageJson = projectPath.resolve("lib/$directory/package.json")
+                packageJson.parent.createDirectories()
+                packageJson.writeText("""{"name": "$directory", "dependencies": {"$dependency": "$version"}}""")
+            }
+            writePackageJson("common", "common-file-dep", "1.0.0")
+            writePackageJson("js", "js-file-dep", "2.0.0")
+            writePackageJson("wasmJs", "wasm-js-file-dep", "2.0.1")
+            writePackageJson("wasmWasi", "wasm-wasi-file-dep", "2.0.2")
+
+            fun readReport(platform: String): NpmDependencyReport =
+                readNpmDependencyReport(
+                    projectPath.resolve("lib/build/kotlin-npm/$platform/npm-dep-reports/emptyKts-lib/npm-dep-report.json").toFile()
+                )
+
+            build(":lib:jsNpmDependenciesReport", ":lib:wasmJsNpmDependenciesReport") {
+                assertEquals(
+                    mapOf(
+                        "common-file-dep" to "1.0.0",
+                        "js-file-dep" to "2.0.0",
+                        "published-js-dep" to "3.0.1",
+                    ),
+                    readReport("js").dependencies.toSortedMap(),
+                )
+                assertEquals(
+                    mapOf(
+                        "common-file-dep" to "1.0.0",
+                        "published-wasm-js-dep" to "3.0.2",
+                        "wasm-js-file-dep" to "2.0.1",
+                    ),
+                    readReport("wasm").dependencies.toSortedMap(),
+                )
+            }
+        }
+    }
+
     @DisplayName("Shared npm projects support several JS targets in one project")
     @GradleTest
     fun testSharedNpmProjectWithSeveralJsTargets(gradleVersion: GradleVersion) {
@@ -429,8 +526,8 @@ class SharedNpmDependenciesIT : KGPBaseTest() {
             }
             buildScriptInjection {
                 project.plugins.apply(KotlinSharedNpmProjectPlugin::class.java)
-                project.dependencies.add("kotlinNpmSharedDependencies", project.dependencies.project(mapOf("path" to ":lib-a")))
-                project.dependencies.add("kotlinNpmSharedDependencies", project.dependencies.project(mapOf("path" to ":lib-b")))
+                project.dependencies.add("kotlinJsNpmSharedDependencies", project.dependencies.project(mapOf("path" to ":lib-a")))
+                project.dependencies.add("kotlinJsNpmSharedDependencies", project.dependencies.project(mapOf("path" to ":lib-b")))
             }
 
             includeOtherProjectAsSubmodule("emptyKts", newSubmoduleName = "lib-a") {
@@ -479,7 +576,7 @@ class SharedNpmDependenciesIT : KGPBaseTest() {
             val firstDependencies = mapOf("is-even" to "1.0.0")
             val secondDependencies = mapOf("is-odd" to "3.0.1")
 
-            build("kotlinSetupSharedNpmProject") {
+            build("kotlinJsSetupSharedNpmProject") {
                 assertTasksExecuted(
                     ":lib-a:firstNpmDependenciesReport",
                     ":lib-a:secondNpmDependenciesReport",
@@ -510,6 +607,61 @@ class SharedNpmDependenciesIT : KGPBaseTest() {
                     js.resolve("packages/emptyKts-lib-b-second/package.json"),
                     name = "emptyKts-lib-b-second",
                     dependencies = secondDependencies,
+                )
+            }
+        }
+    }
+
+    @DisplayName("An unparsable npm dependency report fails the shared npm project setup")
+    @GradleTest
+    fun testUnparsableNpmDependencyReportFailsSetup(gradleVersion: GradleVersion) {
+        assertInvalidNpmDependencyReportFailsSetup(gradleVersion) { report ->
+            report.parent.createDirectories()
+            report.writeText("{ not json")
+        }
+    }
+
+    @DisplayName("An npm dependency report without a compilation name fails the shared npm project setup")
+    @GradleTest
+    fun testNpmDependencyReportWithoutCompilationNameFailsSetup(gradleVersion: GradleVersion) {
+        assertInvalidNpmDependencyReportFailsSetup(gradleVersion) { report ->
+            NpmDependencyReport(target = "js", compilation = "").writeTo(report)
+        }
+    }
+
+    /**
+     * Replaces the npm dependency report of `:lib` with [writeInvalidReport],
+     * and excludes its report task so the setup task reads the invalid report.
+     */
+    private fun assertInvalidNpmDependencyReportFailsSetup(
+        gradleVersion: GradleVersion,
+        writeInvalidReport: (report: Path) -> Unit,
+    ) {
+        project("emptyKts", gradleVersion) {
+            plugins {
+                kotlin("multiplatform").apply(false)
+            }
+            buildScriptInjection {
+                project.plugins.apply(KotlinSharedNpmProjectPlugin::class.java)
+                project.dependencies.add("kotlinJsNpmSharedDependencies", project.dependencies.project(mapOf("path" to ":lib")))
+            }
+
+            includeOtherProjectAsSubmodule("emptyKts", newSubmoduleName = "lib") {
+                buildScriptInjection {
+                    project.plugins.apply("org.jetbrains.kotlin.multiplatform")
+                    kotlinMultiplatform.apply {
+                        js { nodejs() }
+                    }
+                }
+            }
+
+            val report = projectPath.resolve("lib/build/kotlin-npm/js/npm-dep-reports/emptyKts-lib/npm-dep-report.json")
+            writeInvalidReport(report)
+
+            buildAndFail("kotlinJsSetupSharedNpmProject", "-x", ":lib:jsNpmDependenciesReport") {
+                assertHasDiagnostic(
+                    KotlinToolingDiagnostics.SharedNpmProjectInvalidNpmDependencyReport,
+                    withSubstring = report.toString(),
                 )
             }
         }

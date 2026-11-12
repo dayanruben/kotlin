@@ -17,7 +17,9 @@ import com.intellij.platform.syntax.element.SyntaxTokenTypes
 import com.intellij.platform.syntax.lexer.TokenList
 import com.intellij.platform.syntax.lexer.performLexing
 import com.intellij.platform.syntax.parseLazyNode
+import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory
+import com.intellij.platform.syntax.parser.prepareProduction
 import com.intellij.platform.syntax.tree.KmpSyntaxNode
 import com.intellij.platform.syntax.tree.SyntaxNode
 import com.intellij.platform.syntax.tree.children
@@ -34,6 +36,7 @@ import org.jetbrains.kotlin.kmp.lexer.KtTokens
 import org.jetbrains.kotlin.kmp.parser.KotlinParser
 import org.jetbrains.kotlin.kmp.parser.KtNodeTypes
 import org.jetbrains.kotlin.kmp.utils.SyntaxElementTypesWithIds
+import org.jetbrains.kotlin.tooling.core.withClosure
 
 /**
  * Builds [KmpSyntaxNode] trees with lazily parseable blocks and lambdas.
@@ -74,12 +77,38 @@ class LazyTestParser(disposable: Disposable) : AbstractTestParser<SyntaxNode>(Pa
     override fun parse(fileName: String, text: String): TestParseNode<out SyntaxNode> =
         parseToSyntaxNode(fileName, text).toTestParseNode()
 
-    private fun parseToSyntaxNode(fileName: String, text: CharSequence): KmpSyntaxNode {
+    /**
+     * Returns types of lazy parseable nodes that remain collapsed after the initial parsing of the [text].
+     * Nested lazy parseable nodes aren't included because they're parsed only on expanding of their collapsed parents.
+     */
+    fun getCollapsedLazyParseableNodeTypes(fileName: String, text: String): List<String> {
+        val collapsedNodeTypes = mutableListOf<String>()
+        parseToSyntaxNode(fileName, text) { builder ->
+            // `prepareProduction` caches its result, so it doesn't affect the further building of the tree
+            val productions = prepareProduction(builder).productionMarkers
+            for (productionIndex in 0 until productions.size) {
+                val production = productions.getMarker(productionIndex)
+                if (productions.isDoneMarker(productionIndex) && production.isCollapsed() && production.getNodeType().isLazyParseable()) {
+                    collapsedNodeTypes.add(production.getNodeType().toString())
+                }
+            }
+        }
+        return collapsedNodeTypes
+    }
+
+    private fun parseToSyntaxNode(
+        fileName: String,
+        text: CharSequence,
+        onParsed: (SyntaxTreeBuilder) -> Unit = {},
+    ): KmpSyntaxNode {
         val parser = KotlinParser(isScript(fileName), isLazy = true)
         return parse(
             text = text,
             lexerFactory = ::KotlinLexer,
-            parser = parser::parse,
+            parser = { builder ->
+                parser.parse(builder)
+                onParsed(builder)
+            },
             whitespaces = KtTokens.WHITESPACES,
             comments = KtTokens.COMMENTS,
             documentLanguage = kotlinLanguage,
@@ -158,17 +187,28 @@ private fun TestSyntaxElement<SyntaxNode>.substitute(
 private fun TestSyntaxElement<SyntaxNode>.shift(delta: Int): TestParseNode<SyntaxNode> =
     TestParseNode(name, start + delta, end + delta, syntaxElement, children.map { it.shift(delta) })
 
+/**
+ * The tree is traversed iteratively because a recursive traversal overflows the stack on deeply nested code (KTI-3876).
+ */
 fun SyntaxNode.toTestParseNode(shift: Int = 0): TestParseNode<SyntaxNode> {
-    return TestParseNode(
-        type.toString(),
-        startOffset + shift,
-        endOffset + shift,
-        this,
+    val nodes = withClosure { node ->
         // LightTree and PSI builders ignore empty leaf tokens by default (for instance, `DANGLING_NEWLINE`)
-        children().filter { it.startOffset != it.endOffset || it.isMarker() }
-            .map { it.toTestParseNode(shift) }
-            .toList(),
-    )
+        node.children().filter { it.startOffset != it.endOffset || it.isMarker() }.asIterable()
+    }
+
+    // The BFS order of `nodes` guarantees that parents are visited before their children and siblings are visited in order
+    val childrenByNode = HashMap<SyntaxNode, MutableList<TestParseNode<SyntaxNode>>>(nodes.size)
+    lateinit var root: TestParseNode<SyntaxNode>
+    for (node in nodes) {
+        val children = mutableListOf<TestParseNode<SyntaxNode>>().also { childrenByNode[node] = it }
+        val testParseNode = TestParseNode(node.type.toString(), node.startOffset + shift, node.endOffset + shift, node, children)
+        if (node == this) {
+            root = testParseNode
+        } else {
+            childrenByNode.getValue(node.parent()!!).add(testParseNode)
+        }
+    }
+    return root
 }
 
 private fun SyntaxNode.isMarker(): Boolean =

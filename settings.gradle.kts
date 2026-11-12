@@ -550,10 +550,6 @@ include(
 )
 
 include(
-    ":kotlin-scripting-ide-common"
-)
-
-include(
     ":compiler:test-coverage",
     ":compiler:test-infrastructure",
     ":compiler:test-infrastructure:grouping-test-engine",
@@ -629,7 +625,6 @@ include(
     ":prepare:ide-plugin-dependencies:kotlin-compiler-tests-for-ide",
     ":prepare:ide-plugin-dependencies:low-level-api-fir-for-ide",
     ":prepare:ide-plugin-dependencies:analysis-api-for-ide",
-    ":prepare:ide-plugin-dependencies:analysis-api-impl-base-for-ide",
     ":prepare:ide-plugin-dependencies:analysis-api-k2-for-ide",
     ":prepare:ide-plugin-dependencies:analysis-api-platform-interface-for-ide",
     ":prepare:ide-plugin-dependencies:symbol-light-classes-for-ide",
@@ -1037,7 +1032,6 @@ if (buildProperties.isInIdeaSync.get()) {
         file("$rootDir/plugins/compose/compiler-hosted/runtime-tests")
 }
 
-project(":kotlin-scripting-ide-common").projectDir = File("$rootDir/plugins/scripting/scripting-ide-common")
 project(":kotlin-scripting-compiler").projectDir = File("$rootDir/plugins/scripting/scripting-compiler")
 project(":kotlin-scripting-compiler-impl").projectDir = File("$rootDir/plugins/scripting/scripting-compiler-impl")
 

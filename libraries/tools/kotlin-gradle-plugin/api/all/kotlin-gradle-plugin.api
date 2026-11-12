@@ -368,22 +368,6 @@ public final class org/jetbrains/kotlin/gradle/logging/GradleErrorMessageCollect
 	public fun report (Lorg/jetbrains/kotlin/cli/common/messages/CompilerMessageSeverity;Ljava/lang/String;Lorg/jetbrains/kotlin/cli/common/messages/CompilerMessageSourceLocation;)V
 }
 
-public abstract interface class org/jetbrains/kotlin/gradle/npm/KotlinNpmDependency {
-	public abstract fun getName ()Ljava/lang/String;
-	public abstract fun getScope ()Lorg/jetbrains/kotlin/gradle/npm/KotlinNpmDependency$Scope;
-	public abstract fun getVersion ()Ljava/lang/String;
-}
-
-public final class org/jetbrains/kotlin/gradle/npm/KotlinNpmDependency$Scope : java/lang/Enum {
-	public static final field DEV Lorg/jetbrains/kotlin/gradle/npm/KotlinNpmDependency$Scope;
-	public static final field NORMAL Lorg/jetbrains/kotlin/gradle/npm/KotlinNpmDependency$Scope;
-	public static final field OPTIONAL Lorg/jetbrains/kotlin/gradle/npm/KotlinNpmDependency$Scope;
-	public static final field PEER Lorg/jetbrains/kotlin/gradle/npm/KotlinNpmDependency$Scope;
-	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lorg/jetbrains/kotlin/gradle/npm/KotlinNpmDependency$Scope;
-	public static fun values ()[Lorg/jetbrains/kotlin/gradle/npm/KotlinNpmDependency$Scope;
-}
-
 public abstract class org/jetbrains/kotlin/gradle/plugin/AbstractKotlinAndroidPluginWrapper : org/jetbrains/kotlin/gradle/plugin/KotlinBasePluginWrapper {
 	public fun <init> ()V
 	public fun getProjectExtensionClass ()Lkotlin/reflect/KClass;
@@ -4073,6 +4057,7 @@ public final class org/jetbrains/kotlin/gradle/targets/js/npm/RequiresNpmDepende
 }
 
 public abstract interface class org/jetbrains/kotlin/gradle/targets/js/npm/RequiresNpmDependenciesTask : org/gradle/api/Task, org/jetbrains/kotlin/gradle/targets/js/npm/RequiresNpmDependencies {
+	public abstract fun getFileBasedDependencyDirectories ()Lorg/gradle/api/file/ConfigurableFileCollection;
 	public abstract fun getFileBasedNpmDependencyLocations ()Lorg/gradle/api/provider/ListProperty;
 	public abstract fun getNpmDependenciesLockFiles ()Lorg/gradle/api/file/ConfigurableFileCollection;
 	public abstract fun getPath ()Ljava/lang/String;
@@ -5791,6 +5776,10 @@ public final class org/jetbrains/kotlin/gradle/targets/wasm/yarn/WasmYarnRootExt
 	public final fun getYARN ()Ljava/lang/String;
 }
 
+public final class org/jetbrains/kotlin/gradle/targets/web/WebIsolatedProjectsSupportKt {
+	public static final fun webIsolatedProjectsSupportOffRequiredMessage (Ljava/lang/String;)Ljava/lang/String;
+}
+
 public abstract class org/jetbrains/kotlin/gradle/targets/web/nodejs/BaseNodeJsEnvSpec : org/jetbrains/kotlin/gradle/targets/js/EnvSpec {
 	public fun <init> ()V
 	public fun getExecutable ()Lorg/gradle/api/provider/Provider;
@@ -5833,10 +5822,23 @@ public class org/jetbrains/kotlin/gradle/targets/web/nodejs/NpmToolingEnv {
 public abstract interface class org/jetbrains/kotlin/gradle/targets/web/npm/CommonNpmResolverPlugin : org/gradle/api/Plugin {
 }
 
-public final class org/jetbrains/kotlin/gradle/targets/web/npm/KotlinSharedNpmProjectPlugin : org/gradle/api/Plugin {
-	public fun <init> ()V
+public abstract class org/jetbrains/kotlin/gradle/targets/web/npm/KotlinSharedNpmProjectPlugin : org/gradle/api/Plugin {
 	public synthetic fun apply (Ljava/lang/Object;)V
 	public fun apply (Lorg/gradle/api/Project;)V
+}
+
+public abstract class org/jetbrains/kotlin/gradle/targets/web/npm/shared/KotlinNpmDependencyReportTask : org/gradle/api/DefaultTask {
+	protected final fun generate ()V
+	public abstract fun getOutputFile ()Lorg/gradle/api/file/RegularFileProperty;
+	public abstract fun getTarget ()Lorg/gradle/api/provider/Property;
+}
+
+public abstract class org/jetbrains/kotlin/gradle/targets/web/npm/shared/KotlinSetupSharedNpmProjectTask : org/gradle/api/DefaultTask, org/jetbrains/kotlin/gradle/plugin/diagnostics/UsesKotlinToolingDiagnostics {
+	protected final fun assemble ()V
+	public abstract fun getOutputDirectory ()Lorg/gradle/api/file/DirectoryProperty;
+	public abstract fun getReportFiles ()Lorg/gradle/api/file/ConfigurableFileCollection;
+	public abstract fun getRootPackageName ()Lorg/gradle/api/provider/Property;
+	public abstract fun getRootPackageVersion ()Lorg/gradle/api/provider/Property;
 }
 
 public abstract class org/jetbrains/kotlin/gradle/targets/web/yarn/BaseYarnRootEnvSpec : org/jetbrains/kotlin/gradle/targets/js/EnvSpec {

@@ -56,7 +56,7 @@ class ProjectIsolationIT : KGPBaseTest() {
     fun testProjectIsolationAndroid(
         gradleVersion: GradleVersion,
         agpVersion: String,
-        jdkVersion: JdkVersions.ProvidedJdk
+        jdkVersion: JdkVersions.ProvidedJdk,
     ) {
         project(
             projectName = "AndroidIncrementalMultiModule",
@@ -73,7 +73,7 @@ class ProjectIsolationIT : KGPBaseTest() {
     @TestMetadata("kapt/javacIsLoadedOnce")
     @GradleTest
     fun testProjectIsolationKapt(
-        gradleVersion: GradleVersion
+        gradleVersion: GradleVersion,
     ) {
         project("kapt/javacIsLoadedOnce", gradleVersion) {
             build("assemble")
@@ -88,7 +88,7 @@ class ProjectIsolationIT : KGPBaseTest() {
     fun testProjectIsolationAndroidWithKapt(
         gradleVersion: GradleVersion,
         agpVersion: String,
-        jdkVersion: JdkVersions.ProvidedJdk
+        jdkVersion: JdkVersions.ProvidedJdk,
     ) {
         project(
             projectName = "kapt/android-databinding",
@@ -122,8 +122,9 @@ class ProjectIsolationIT : KGPBaseTest() {
                 kotlin("multiplatform").apply(false)
             }
             buildScriptInjection {
+                @OptIn(DelicateKotlinGradlePluginApi::class)
                 project.plugins.apply(KotlinSharedNpmProjectPlugin::class.java)
-                for (configuration in listOf("kotlinNpmSharedDependencies", "kotlinWasmNpmSharedDependencies")) {
+                for (configuration in listOf("kotlinJsNpmSharedDependencies", "kotlinWasmNpmSharedDependencies")) {
                     project.dependencies.add(configuration, project.dependencies.project(mapOf("path" to ":lib-a")))
                     project.dependencies.add(configuration, project.dependencies.project(mapOf("path" to ":lib-b")))
                 }
@@ -155,7 +156,7 @@ class ProjectIsolationIT : KGPBaseTest() {
                 }
             }
 
-            build("kotlinSetupSharedNpmProject", "kotlinWasmSetupSharedNpmProject") {
+            build("kotlinJsSetupSharedNpmProject", "kotlinWasmSetupSharedNpmProject") {
                 assertTasksExecuted(
                     ":lib-a:jsNpmDependenciesReport",
                     ":lib-a:jsTestNpmDependenciesReport",
@@ -172,7 +173,7 @@ class ProjectIsolationIT : KGPBaseTest() {
                 }
             }
 
-            build("kotlinSetupSharedNpmProject", "kotlinWasmSetupSharedNpmProject") {
+            build("kotlinJsSetupSharedNpmProject", "kotlinWasmSetupSharedNpmProject") {
                 assertConfigurationCacheReused()
             }
         }

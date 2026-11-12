@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.functions.functionInterfacePackageFragmentProvider
 import org.jetbrains.kotlin.config.LanguageVersionSettings
-import org.jetbrains.kotlin.contracts.ContractDeserializerImpl
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.deserialization.AdditionalClassPartsProvider
 import org.jetbrains.kotlin.descriptors.impl.CompositePackageFragmentProvider
@@ -22,15 +21,17 @@ import org.jetbrains.kotlin.library.components.metadata
 import org.jetbrains.kotlin.library.isAnyPlatformStdlib
 import org.jetbrains.kotlin.library.metadata.*
 import org.jetbrains.kotlin.library.uniqueName
+import org.jetbrains.kotlin.metadata.ProtoBuf
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.parentOrNull
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
 import org.jetbrains.kotlin.resolve.CommonCompilerDeserializationConfiguration
-import org.jetbrains.kotlin.resolve.ImplicitIntegerCoercion
 import org.jetbrains.kotlin.resolve.sam.SamConversionResolverImpl
 import org.jetbrains.kotlin.serialization.deserialization.*
 import org.jetbrains.kotlin.storage.StorageManager
+import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.SimpleType
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
 
 @K1Deprecation
@@ -52,11 +53,7 @@ class K1KlibMetadataModuleDescriptorFactoryImpl {
                 moduleName,
                 storageManager,
                 builtInsToUse,
-                capabilities = mapOf(
-                        KlibModuleOrigin.CAPABILITY to moduleOrigin,
-                        @OptIn(K1Deprecation::class)
-                        ImplicitIntegerCoercion.MODULE_CAPABILITY to moduleOrigin.isCInteropLibrary()
-                ),
+                capabilities = mapOf(KlibModuleOrigin.CAPABILITY to moduleOrigin),
                 platform = NativePlatforms.unspecifiedNativePlatform
         )
 
@@ -156,7 +153,7 @@ class K1KlibMetadataModuleDescriptorFactoryImpl {
                 flexibleTypeDeserializer,
                 emptyList(),
                 notFoundClasses,
-                ContractDeserializerImpl(configuration, storageManager),
+                ContractDeserializer.DEFAULT,
                 additionalClassPartsProvider = AdditionalClassPartsProvider.None,
                 extensionRegistryLite = KlibMetadataSerializerProtocol.extensionRegistry,
                 samConversionResolver = SamConversionResolverImpl(storageManager, samWithReceiverResolvers = emptyList()),
@@ -199,6 +196,7 @@ class K1KlibMetadataModuleDescriptorFactoryImpl {
 }
 
 
+@OptIn(K1Deprecation::class)
 private fun createDeserializedPackageFragments(
         library: KotlinLibrary,
         moduleDescriptor: ModuleDescriptor,
@@ -238,4 +236,14 @@ private fun createDeserializedPackageFragments(
                 )
         }
     }
+}
+
+@OptIn(K1Deprecation::class)
+private object NullFlexibleTypeDeserializer : FlexibleTypeDeserializer {
+    override fun create(
+            proto: ProtoBuf.Type,
+            flexibleId: String,
+            lowerBound: SimpleType,
+            upperBound: SimpleType
+    ): KotlinType = error("Illegal use of flexible type deserializer.")
 }
