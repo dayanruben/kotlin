@@ -112,14 +112,7 @@ object CompilerModules {
         ":compiler",
         ":core:descriptors.runtime",
         ":core:descriptors.jvm",
-        ":compiler:resolution",
-        ":compiler:serialization",
-        ":compiler:frontend",
-        ":compiler:frontend.java",
-        ":compiler:container",
         ":core:deserialization",
-        ":compiler:frontend:cfg",
-        ":compiler:ir.psi2ir",
         ":native:frontend.native",
         ":wasm:wasm.frontend",
     )
@@ -196,14 +189,25 @@ object CompilerModules {
         ":compiler:ir.validation",
     )
 
-    val analysisApiSurfaceDependencies = listOf(
+    val analysisApiSyntaxSurfaceDependencies = listOf(
         ":core:error.handling",
         ":core:names",
         ":core:language.model",
+    )
+
+    val analysisApiSurfaceDependencies = analysisApiSyntaxSurfaceDependencies + listOf(
         ":core:language.targets",
         ":core:language.targets.jvm",
         ":core:language.version-settings",
+    )
+
+    val analysisApiSyntaxSurfaceModules = arrayOf(
         ":compiler:psi:psi-api",
+    )
+
+    val analysisApiSyntaxImplementationModules = arrayOf(
+        ":compiler:psi:psi-impl",
+        ":compiler:psi:parser",
     )
 
     val cliCompilerModules = arrayOf(
@@ -269,8 +273,10 @@ object CompilerModules {
     val analysisApiArtifacts = listOf(
         ":prepare:analysis-api:kotlin-analysis-api",
         ":prepare:analysis-api:kotlin-analysis-api-surface",
+        ":prepare:analysis-api:kotlin-analysis-api-syntax-surface",
         ":prepare:analysis-api:kotlin-analysis-api-platform-interface",
         ":prepare:analysis-api:kotlin-analysis-api-implementation",
+        ":prepare:analysis-api:kotlin-analysis-api-syntax-implementation",
         ":prepare:analysis-api:kotlin-analysis-api-fir-diagnostics",
         ":prepare:analysis-api:kotlin-analysis-api-standalone-surface",
         ":prepare:analysis-api:kotlin-analysis-api-standalone-implementation",
@@ -400,7 +406,6 @@ object CompilerModules {
     ":core:deserialization.common",
     ":core:deserialization.common.jvm",
     ":compiler:frontend.common.jvm",
-    ":compiler:frontend.java",
     ":core:metadata",
     ":core:metadata.jvm",
     ":kotlin-preloader",

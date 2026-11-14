@@ -148,7 +148,8 @@ val gradlePluginProjects = listOf(
     ":kotlin-parcelize-compiler",
     ":kotlin-lombok",
     ":kotlin-assignment",
-    ":kotlin-dataframe"
+    ":kotlin-dataframe",
+    ":gradle:kotlin-gradle-ecosystem-plugin"
 )
 
 // The root project applies common configuration explicitly here, after its `extra` is populated.
@@ -326,7 +327,6 @@ tasks {
 
     testLifecycleTask("jvmCompilerTest", QualityGate.Master) {
         dependsOn(":compiler:tests-common-new:test")
-        dependsOn(":compiler:container:test")
         dependsOn(":compiler:tests-java8:test")
         dependsOn(":compiler:tests-spec:test")
     }
@@ -598,6 +598,7 @@ tasks {
         dependsOn(":compiler:multiplatform-parsing:jvmTest")
         dependsOn(":compiler:fir:modularized-tests:test")
         dependsOn(":compiler:util:test")
+        dependsOn(":core:error.handling:check")
         dependsOn(":core:names:check")
         dependsOn(":core:language.model:check")
         dependsOn(":core:language.targets:check")
@@ -657,6 +658,7 @@ tasks {
 
     testLifecycleTask("buildToolsApiTest", QualityGate.Master) {
         dependsOn(":compiler:build-tools:kotlin-build-tools-api:check")
+        dependsOn(":compiler:build-tools:kotlin-build-tools-api-jps:check")
         dependsOn(":compiler:build-tools:kotlin-build-tools-api-tests:check")
         dependsOn(":compiler:build-tools:kotlin-build-tools-api-forward-tests:check")
         dependsOn(":compiler:build-tools:kotlin-build-tools-impl:check")

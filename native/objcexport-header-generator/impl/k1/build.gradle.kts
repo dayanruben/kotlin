@@ -27,7 +27,6 @@ dependencies {
     testRuntimeOnly(libs.junit.jupiter.engine)
     testRuntimeOnly(libs.junit.platform.launcher)
 
-    implementation(project(":compiler:frontend"))
     api(project(":compiler:frontend.common"))
     api(project(":compiler:psi:psi-api"))
     api(project(":core:compiler.common"))
@@ -40,7 +39,6 @@ dependencies {
     implementation(project(":compiler:ir.serialization.common"))
     implementation(project(":compiler:psi:psi-frontend-utils"))
     implementation(project(":compiler:psi:psi-impl"))
-    implementation(project(":compiler:resolution"))
     implementation(project(":core:util.runtime"))
     implementation(project(":kotlin-tooling-core"))
     implementation(project(":kotlin-util-klib"))

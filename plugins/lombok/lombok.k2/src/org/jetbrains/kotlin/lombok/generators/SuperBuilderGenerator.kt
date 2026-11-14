@@ -46,7 +46,8 @@ class SuperBuilderGenerator(session: FirSession) : AbstractBuilderGenerator<Supe
         private val SELF = Name.identifier("self")
     }
 
-    private val processedBuilderKeys: FirCache<BuilderKey, Boolean, Nothing?> = session.firCachesFactory.createCache { true }
+    private val processedSymbolsForClassesWithBuilders: FirCache<FirClassSymbol<*>, Boolean, Nothing?> =
+        session.firCachesFactory.createCache { true }
 
     override val builderModality: Modality = Modality.ABSTRACT
 
@@ -156,14 +157,12 @@ class SuperBuilderGenerator(session: FirSession) : AbstractBuilderGenerator<Supe
 
             if (!superTypeSymbol.isClass) return@firstNotNullOfOrNull null
 
-            val builderNames = getBuilderNames(superTypeSymbol, filterExistingNames = true)
+            val builderNames = getBuilderNames(superTypeSymbol)
 
             // `@SingleBuilder` is only applicable to classes. It means it can be <= 1 builder in a super type.
             val builderName = builderNames.firstOrNull() ?: return@firstNotNullOfOrNull null
 
-            val builderKey = BuilderKey(superTypeSymbol, builderName)
-
-            if (processedBuilderKeys.getValueIfComputed(builderKey) != null) {
+            if (processedSymbolsForClassesWithBuilders.getValueIfComputed(classSymbol) != null) {
                 return@firstNotNullOfOrNull buildErrorTypeRef {
                     diagnostic = ConeSimpleDiagnostic(
                         "Loop in supertypes involving ${superTypeSymbol.classId}",
@@ -172,18 +171,30 @@ class SuperBuilderGenerator(session: FirSession) : AbstractBuilderGenerator<Supe
                 }
             } else {
                 // Use the mutating `getValue` because the `FirCache` doesn't provide API for elements putting
-                require(processedBuilderKeys.getValue(builderKey))
+                require(processedSymbolsForClassesWithBuilders.getValue(classSymbol))
             }
 
-            val superBuilder = builderClassesCache.getValue(builderKey) ?: return@firstNotNullOfOrNull null
+            val builderKey = BuilderKey(superTypeSymbol, builderName)
+            val existingBuilder = superTypeSymbol.existingBuilder(builderName)
+            if (existingBuilder != null) {
+                existingBuilder.constructType(
+                    typeArguments = arrayOf(
+                        *superTypeRef.coneType.typeArguments,
+                        classTypeParameterSymbol.defaultType,
+                        builderTypeParameterSymbol.defaultType,
+                    )
+                ).toFirResolvedTypeRef()
+            } else {
+                val superBuilder = builderClassesCache.getValue(builderKey) ?: return@firstNotNullOfOrNull null
 
-            superBuilder.constructType(
-                typeArguments = arrayOf(
-                    *superTypeRef.coneType.typeArguments,
-                    classTypeParameterSymbol.defaultType,
-                    builderTypeParameterSymbol.defaultType,
-                )
-            ).toFirResolvedTypeRef()
+                superBuilder.constructType(
+                    typeArguments = arrayOf(
+                        *superTypeRef.coneType.typeArguments,
+                        classTypeParameterSymbol.defaultType,
+                        builderTypeParameterSymbol.defaultType,
+                    )
+                ).toFirResolvedTypeRef()
+            }
         }
 
         superTypeRefs += superTypeRef ?: session.builtinTypes.anyType

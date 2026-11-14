@@ -171,30 +171,23 @@ include(
     ":kotlin-runner",
     ":compiler:arguments.common",
     ":compiler:arguments",
-    ":compiler:container",
     ":compiler:resolution.common",
     ":compiler:resolution.common.js",
     ":compiler:resolution.common.jvm",
-    ":compiler:resolution",
     ":compiler:serialization.common",
-    ":compiler:serialization",
     ":compiler:psi:psi-api",
     ":compiler:psi:psi-impl",
     ":compiler:psi:psi-utils",
     ":compiler:psi:psi-frontend-utils",
     ":compiler:psi:parser",
     ":compiler:multiplatform-parsing",
-    ":compiler:frontend",
     ":compiler:frontend.common",
     ":compiler:frontend.common-psi",
     ":compiler:frontend.common-psi:feature-to-flag-map-generator",
-    ":compiler:frontend.java",
-    ":compiler:frontend:cfg",
     ":kotlin-compiler-runner-unshaded",
     ":kotlin-compiler-runner",
     ":compiler:ir.tree",
     ":compiler:ir.tree:tree-generator",
-    ":compiler:ir.psi2ir",
     ":compiler:ir.objcinterop",
     ":compiler:ir.backend.common",
     ":compiler:ir.backend.native",
@@ -408,6 +401,7 @@ include(
     ":gradle:kotlin-gradle-ecosystem-plugin",
     ":kotlin-gradle-plugin-tcs-android",
     ":kotlin-gradle-plugin-test-utils-embeddable",
+    ":kotlin-gradle-plugin-arch-test-utils",
     ":kotlin-gradle-plugin-integration-tests",
     ":kotlin-gradle-plugins-bom",
     ":kotlin-gradle-plugin-test-coverage",
@@ -639,14 +633,18 @@ include(
 include(
     ":prepare:analysis-api:kotlin-analysis-api",
     ":prepare:analysis-api:kotlin-analysis-api-surface",
+    ":prepare:analysis-api:kotlin-analysis-api-syntax-surface",
     ":prepare:analysis-api:kotlin-analysis-api-platform-interface",
     ":prepare:analysis-api:kotlin-analysis-api-implementation",
+    ":prepare:analysis-api:kotlin-analysis-api-syntax-implementation",
     ":prepare:analysis-api:kotlin-analysis-api-fir-diagnostics",
     ":prepare:analysis-api:kotlin-analysis-api-standalone-surface",
     ":prepare:analysis-api:kotlin-analysis-api-standalone-implementation",
     ":prepare:analysis-api:kotlin-analysis-api-intellij-api-surface-components",
     ":prepare:analysis-api:kotlin-analysis-api-intellij-implementation-components",
     ":prepare:analysis-api:kotlin-analysis-api-internal-test-framework",
+    ":prepare:analysis-api:kotlin-analysis-api-smoke-tests",
+    ":prepare:analysis-api:kotlin-analysis-api-syntax-smoke-tests",
 )
 
 include(
@@ -820,7 +818,6 @@ project(":kotlin-compiler-runner-unshaded").projectDir = File("$rootDir/compiler
 project(":kotlin-compiler-runner").projectDir = File("$rootDir/compiler/compiler-runner")
 project(":compiler:ir.tree").projectDir = File("$rootDir/compiler/ir/ir.tree")
 project(":compiler:ir.tree:tree-generator").projectDir = File("$rootDir/compiler/ir/ir.tree/tree-generator")
-project(":compiler:ir.psi2ir").projectDir = File("$rootDir/compiler/ir/ir.psi2ir")
 project(":compiler:ir.objcinterop").projectDir = File("$rootDir/compiler/ir/ir.objcinterop")
 project(":compiler:ir.backend.common").projectDir = File("$rootDir/compiler/ir/backend.common")
 project(":compiler:ir.backend.native").projectDir = File("$rootDir/compiler/ir/backend.native")
@@ -932,6 +929,8 @@ project(":gradle:kotlin-gradle-ecosystem-plugin").projectDir = File("$rootDir/li
 project(":kotlin-gradle-plugin-tcs-android").projectDir = File("$rootDir/libraries/tools/kotlin-gradle-plugin-tcs-android")
 project(":kotlin-gradle-plugin-test-utils-embeddable").projectDir =
     File("$rootDir/libraries/tools/kotlin-gradle-plugin-test-utils-embeddable")
+project(":kotlin-gradle-plugin-arch-test-utils").projectDir =
+    File("$rootDir/libraries/tools/kotlin-gradle-plugin-arch-test-utils")
 project(":kotlin-gradle-plugin-integration-tests").projectDir = File("$rootDir/libraries/tools/kotlin-gradle-plugin-integration-tests")
 project(":kotlin-gradle-plugins-bom").projectDir = File("$rootDir/libraries/tools/kotlin-gradle-plugins-bom")
 project(":kotlin-gradle-plugin-test-coverage").projectDir = File("$rootDir/libraries/tools/kotlin-gradle-plugin-test-coverage")

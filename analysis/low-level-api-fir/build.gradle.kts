@@ -44,6 +44,7 @@ dependencies {
     implementation(project(":analysis:analysis-api-platform-interface"))
     implementation(project(":analysis:analysis-api"))
     implementation(project(":analysis:analysis-internal-utils"))
+    implementation(project(":analysis:stubs"))
     implementation(project(":kotlin-scripting-compiler"))
     implementation(project(":kotlin-scripting-common"))
     implementation(project(":kotlin-assignment-compiler-plugin.k2"))
@@ -75,8 +76,6 @@ dependencies {
     // We use 'api' instead of 'implementation' because other modules might be using these jars indirectly
     testFixturesApi(project(":plugins:plugin-sandbox"))
     testFixturesApi(testFixtures(project(":plugins:plugin-sandbox")))
-
-    testFixturesImplementation(project(":compiler:frontend"))
 
     testImplementation(testFixtures(project(":compiler:psi:psi-api")))
     testImplementation(libs.lincheck)

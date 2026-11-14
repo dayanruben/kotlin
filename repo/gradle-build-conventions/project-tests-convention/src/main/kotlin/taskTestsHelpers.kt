@@ -157,15 +157,6 @@ fun Test.withScriptRuntime() {
     )
 }
 
-fun Test.withScriptingCommon() {
-    addClasspathProperty(
-        configurationElements(
-            "scriptingCommonJarForTests",
-            dependencies = { add(project.dependencies.project(":kotlin-scripting-common")) }
-        ), TestCompilePaths.KOTLIN_SCRIPTING_COMMON_PATH
-    )
-}
-
 fun Test.withTestJar() {
     addClasspathProperty(
         configurationElements(
@@ -215,7 +206,13 @@ fun Test.withJsRuntime() {
         addClasspathProperty(
             configurationElements(
                 "testJsRuntimeForTests",
-                dependencies = { add(project.dependencies.project(":kotlin-test", "jsRuntimeElements")) }
+                dependencies = { add(project.dependencies.project(":kotlin-test", "jsRuntimeElements")) },
+                attributes = {
+                    // 'jsRuntimeElements' also exposes the 'kotlinNpmRuntimeDependenciesJs' variant with the
+                    // npm dependency report of the compilation (offered next to the klib):
+                    // request the 'kotlin-runtime' usage to resolve the klib variant unambiguously
+                    attributes.attribute(Usage.USAGE_ATTRIBUTE, project.objects.named(Usage::class.java, KotlinUsages.KOTLIN_RUNTIME))
+                }
             ), TestCompilePaths.KOTLIN_JS_KOTLIN_TEST_KLIB_PATH
         )
     }
