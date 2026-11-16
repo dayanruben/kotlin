@@ -510,11 +510,13 @@ tasks {
     testLifecycleTask("klibIrTest", QualityGate.Master) {
         dependsOn(":tools:binary-compatibility-validator:check")
         dependsOn(":native:native.tests:klib-ir-inliner:check")
+        dependsOn(":native:native.tests:klib-ir-inliner:withPlatformLibs:check")
     }
 
     // TODO(KTI-3725): Promote to QualityGate.Master once the Windows Klib/IR TeamCity configuration uses it instead of `klibIrTest`
     testLifecycleTask("commonBackendTestOnWindows", QualityGate.Undefined) {
         dependsOn(":native:native.tests:klib-ir-inliner:commonBackendTestOnWindows")
+        dependsOn(":native:native.tests:klib-ir-inliner:withPlatformLibs:commonBackendTestOnWindows")
     }
 
     testLifecycleTask("compilerFrontendTest", QualityGate.Master) {
@@ -601,6 +603,10 @@ tasks {
         dependsOn(":core:error.handling:check")
         dependsOn(":core:names:check")
         dependsOn(":core:language.model:check")
+        // Not `check`: it also runs Wasm tests, whose npm install task is incompatible with the configuration cache
+        dependsOn(":core:language.syntax:jvmTest")
+        dependsOn(":core:language.syntax:checkKotlinAbi")
+        dependsOn(":core:language.syntax:checkForeignClassUsage")
         dependsOn(":core:language.targets:check")
         dependsOn(":core:language.targets.jvm:check")
         dependsOn(":core:language.version-settings:check")

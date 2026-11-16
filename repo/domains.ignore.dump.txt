@@ -56,7 +56,6 @@ ignored:
  - compiler/ir/serialization.jklib/README.md
  - compiler/ir/serialization.native/ReadMe.md
  - compiler/java-direct/ReadMe.md
- - compiler/preloader/instrumentation/ReadMe.md
  - compiler/test-coverage/ReadMe.md
  - compiler/test-infrastructure/ReadMe.md
  - compiler/testData/cli/js/lib/ReadMe.md
@@ -69,6 +68,7 @@ ignored:
  - compiler/testData/klib/syntheticAccessors/README.md
  - compiler/util-klib-abi/ReadMe.md
  - core/language.model/README.md
+ - core/language.syntax/README.md
  - core/language.targets.jvm/README.md
  - core/language.targets/README.md
  - core/language.version-settings/README.md

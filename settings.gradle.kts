@@ -255,6 +255,7 @@ include(
     ":core:error.handling",
     ":core:names",
     ":core:language.model",
+    ":core:language.syntax",
     ":core:language.targets",
     ":core:language.targets.jvm",
     ":core:language.version-settings",
@@ -761,6 +762,7 @@ include(
     ":native:native.tests:gc-fuzzing-tests:engine",
     ":native:native.tests:stress",
     ":native:native.tests:klib-ir-inliner",
+    ":native:native.tests:klib-ir-inliner:withPlatformLibs",
     ":native:native.tests:klib-compatibility",
     ":native:native.tests:litmus-tests"
 )
