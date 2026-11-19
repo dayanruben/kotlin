@@ -75,6 +75,10 @@ internal fun Project.registerSwiftPackageExportPipeline(exportExtension: ExportE
     if (!HostManager.hostIsMac && kotlinPropertiesProvider.ignoreDisabledNativeTargets != true) {
         reportDiagnostic(KotlinToolingDiagnostics.SwiftPackageExportUnsupportedHost(HostManager.platformName()))
     }
+    // Swift Package Manager only refuses an empty product name. A blank one is no better.
+    if (integration.productName.get().isBlank()) {
+        reportDiagnostic(KotlinToolingDiagnostics.SwiftPackageBlankProductName(path))
+    }
     // The setup action doesn't get here without Apple targets.
     val appleTargets = multiplatformExtension.supportedAppleTargets().toList()
 
@@ -87,27 +91,34 @@ internal fun Project.registerSwiftPackageExportPipeline(exportExtension: ExportE
         )
     }
 
+    val swiftApiModuleName = swiftApiModuleName(
+        exportExtension.swiftExportConfiguration.moduleName, SwiftExportConfigurationCompat.EXPORT_DSL_MODULE_NAME
+    )
+
     val swiftPMDependencies = directlyImportedSwiftPMDependencies()
     val transitiveSwiftPMDependencies = transitivelyImportedSwiftPMDependencies()
     NativeBuildType.entries.forEach { buildType ->
         val outputs = appleTargets.map { target ->
             target to registerSwiftExportRunAndBinary(
-                configurations.getValue(target), SwiftExportDSLConstants.TASK_GROUP, buildType, target, SwiftExportNames.SWIFT_PACKAGE
+                configurations.getValue(target), SwiftExportDSLConstants.TASK_GROUP, buildType, target, SwiftExportNames.SWIFT_PACKAGE,
+                swiftApiModuleName,
             )
         }
-        registerSwiftPackageExport(integration, buildType, outputs, swiftPMDependencies, transitiveSwiftPMDependencies)
+        registerSwiftPackageExport(
+            integration, buildType, swiftApiModuleName, outputs, swiftPMDependencies, transitiveSwiftPMDependencies
+        )
     }
 }
 
 private fun Project.registerSwiftPackageExport(
     integration: SwiftExportSwiftPackageIntegrationConfiguration,
     buildType: NativeBuildType,
+    swiftApiModuleName: Provider<String>,
     outputs: List<Pair<KotlinNativeTarget, SwiftExportBuildOutputs>>,
     swiftPMDependencies: Provider<Set<SwiftPMDependency>>,
     transitiveSwiftPMDependencies: Provider<Map<String, Set<SwiftPMDependency>>>,
 ) {
     val configuration = buildType.configuration
-    val swiftApiModuleName = outputs.first().second.swiftApiModuleName
     val kotlinBinaryTargetName = swiftApiModuleName.map { "${it}Kotlin" }
     val packageDirectory = layout.buildDirectory.dir("SwiftPackage/$configuration")
 
@@ -119,7 +130,7 @@ private fun Project.registerSwiftPackageExport(
 
         task.kotlinRuntime.set(swiftExportKotlinRuntime)
         task.swiftApiModuleName.set(swiftApiModuleName)
-        task.swiftLibraryName.set(swiftApiModuleName.map { it + "Library" })
+        task.swiftLibraryName.set(integration.productName)
         task.kotlinBinaryTargetName.set(kotlinBinaryTargetName)
         task.platforms.set(swiftPackagePlatforms(outputs.map { it.first.konanTarget.family }))
         task.swiftPMDependencies.set(swiftPMDependencies)

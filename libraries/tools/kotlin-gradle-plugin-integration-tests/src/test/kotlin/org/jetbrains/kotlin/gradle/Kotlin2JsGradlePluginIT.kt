@@ -82,24 +82,8 @@ class Kotlin2JsIrGradlePluginIT : KGPBaseTest() {
             buildScriptInjection {
                 kotlinMultiplatform.js {
                     compilerOptions {
-                        freeCompilerArgs.set(listOf("-XXLanguage:+ExportKDocDocumentationToKlib"))
-                    }
-                }
-            }
-            build("assemble") {
-                val dts = projectPath.resolve("build/js/packages/kotlin2JsIrDtsGeneration/kotlin/kotlin2JsIrDtsGeneration.d.ts")
-
-                assertTasksExecuted(":jsProductionExecutableGenerateTypeScriptDefinitions")
-
-                assertFileExists(dts)
-                assertFileContains(dts, "function bar(): string")
-                assertFileContains(dts, "A declaration generated from KLIB metadata.")
-                assertFileContains(dts, "export as namespace kotlin2JsIrDtsGeneration;")
-            }
-            buildScriptInjection {
-                kotlinMultiplatform.js {
-                    compilerOptions {
                         outputModuleName.set("MyCustomLib")
+                        freeCompilerArgs.set(listOf("-Xexport-kdoc"))
                     }
                 }
             }
@@ -115,6 +99,25 @@ class Kotlin2JsIrGradlePluginIT : KGPBaseTest() {
             }
             buildScriptInjection {
                 kotlinMultiplatform.js {
+                    compilerOptions {
+                        outputModuleName.set("MyCustomLib2")
+                        freeCompilerArgs.set(listOf("-XXLanguage:+ExportKDocDocumentationToKlib"))
+                    }
+                }
+            }
+            build("assemble") {
+                val dts = projectPath.resolve("build/js/packages/MyCustomLib2/kotlin/MyCustomLib2.d.ts")
+
+                assertTasksExecuted(":jsProductionExecutableGenerateTypeScriptDefinitions")
+
+                assertFileExists(dts)
+                assertFileNotExists(projectPath.resolve("build/js/packages/MyCustomLib2/kotlin/MyCustomLib.d.ts"))
+                assertFileContains(dts, "function bar(): string")
+                assertFileContains(dts, "A declaration generated from KLIB metadata.")
+                assertFileContains(dts, "export as namespace kotlin2JsIrDtsGeneration;")
+            }
+            buildScriptInjection {
+                kotlinMultiplatform.js {
                     compilerOptions.freeCompilerArgs.set(listOf("-Xexport-kdoc"))
                 }
                 project.tasks.withType(KotlinJsIrLink::class.java).configureEach {
@@ -122,11 +125,12 @@ class Kotlin2JsIrGradlePluginIT : KGPBaseTest() {
                 }
             }
             build("assemble") {
-                val dts = projectPath.resolve("build/js/packages/MyCustomLib/kotlin/CustomModuleName.d.ts")
+                val dts = projectPath.resolve("build/js/packages/MyCustomLib2/kotlin/CustomModuleName.d.ts")
 
                 assertTasksExecuted(":jsProductionExecutableGenerateTypeScriptDefinitions")
 
                 assertFileExists(dts)
+                assertFileNotExists(projectPath.resolve("build/js/packages/MyCustomLib2/kotlin/MyCustomLib2.d.ts"))
                 assertFileContains(dts, "function bar(): string")
                 assertFileContains(dts, "A declaration generated from KLIB metadata.")
                 assertFileContains(dts, "export as namespace kotlin2JsIrDtsGeneration;")
@@ -137,7 +141,7 @@ class Kotlin2JsIrGradlePluginIT : KGPBaseTest() {
                 }
             }
             build("assemble") {
-                val dts = projectPath.resolve("build/js/packages/MyCustomLib/kotlin/CustomModuleName.d.ts")
+                val dts = projectPath.resolve("build/js/packages/MyCustomLib2/kotlin/CustomModuleName.d.ts")
 
                 assertTasksExecuted(":jsProductionExecutableGenerateTypeScriptDefinitions")
 
@@ -145,6 +149,53 @@ class Kotlin2JsIrGradlePluginIT : KGPBaseTest() {
                 assertFileContains(dts, "function bar(): string")
                 assertFileContains(dts, "A declaration generated from KLIB metadata.")
                 assertFileContains(dts, "export as namespace MyLib;")
+            }
+        }
+    }
+
+    @TestMetadata("kotlin2JsIrDtsGeneration")
+    @MustRunOnChangesInJs
+    @DisplayName("Rich TS export resolves language features from -XXLanguage")
+    @GradleTest
+    fun richDtsResolvesLanguageFeaturesFromXXLanguage(gradleVersion: GradleVersion) {
+        project("kotlin2JsIrDtsGeneration", gradleVersion) {
+            gradleProperties.appendText("\nkotlin.js.generateRichTypeScriptDeclarations=true\n")
+            kotlinSourcesDir("jsMain").resolve("Test.kt").writeText(
+                """
+                |package foo
+                |
+                |@JsExport
+                |interface Greeter {
+                |    fun greet(): String
+                |}
+                """.trimMargin()
+            )
+
+            // These features have no sinceVersion, so -language-version cannot enable them by default.
+            val dts = projectPath.resolve(
+                "build/compileSync/js/main/productionExecutable/typescript-definitions/kotlin2JsIrDtsGeneration.d.ts"
+            )
+            build("jsProductionExecutableGenerateTypeScriptDefinitions") {
+                assertTasksExecuted(":jsProductionExecutableGenerateTypeScriptDefinitions")
+
+                assertFileContains(dts, "__doNotUseOrImplementIt")
+                assertFileDoesNotContain(dts, "readonly [foo.Greeter.Symbol]: true;")
+                assertFileDoesNotContain(dts, "const Symbol: unique symbol;")
+            }
+
+            buildScriptInjection {
+                kotlinMultiplatform.js {
+                    compilerOptions {
+                        freeCompilerArgs.add("-XXLanguage:+JsExportInterfacesInImplementableWay")
+                    }
+                }
+            }
+            build("jsProductionExecutableGenerateTypeScriptDefinitions") {
+                assertTasksExecuted(":jsProductionExecutableGenerateTypeScriptDefinitions")
+
+                assertFileDoesNotContain(dts, "__doNotUseOrImplementIt")
+                assertFileContains(dts, "readonly [foo.Greeter.Symbol]: true;")
+                assertFileContains(dts, "const Symbol: unique symbol;")
             }
         }
     }

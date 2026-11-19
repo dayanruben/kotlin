@@ -72,7 +72,7 @@ plugins {
     `jvm-toolchains`
     alias(libs.plugins.gradle.node) apply false
     id("gradle-plugins-documentation") apply false
-    id("com.autonomousapps.dependency-analysis")
+    id("build-health-convention")
     id("project-tests-convention") apply false
     id("test-federation-convention") apply false
     id("nodejs-configuration") apply false
@@ -514,8 +514,7 @@ tasks {
         dependsOn(":native:native.tests:klib-ir-inliner:withPlatformLibs:check")
     }
 
-    // TODO(KTI-3725): Promote to QualityGate.Master once the Windows Klib/IR TeamCity configuration uses it instead of `klibIrTest`
-    testLifecycleTask("commonBackendTestOnWindows", QualityGate.Undefined) {
+    testLifecycleTask("commonBackendTestOnWindows", QualityGate.Master) {
         dependsOn(":native:native.tests:klib-ir-inliner:commonBackendTestOnWindows")
         dependsOn(":native:native.tests:klib-ir-inliner:withPlatformLibs:commonBackendTestOnWindows")
     }
@@ -699,6 +698,7 @@ tasks {
     testLifecycleTask("codebaseTests", QualityGate.Master) {
         dependsOn(":repo:auto-code-review:test")
         dependsOn(":repo:codebase-tests:test")
+        dependsOn(":repo:codebase-tests:withBinariesTest")
         dependsOn(":repo:test-runtime:test")
     }
 

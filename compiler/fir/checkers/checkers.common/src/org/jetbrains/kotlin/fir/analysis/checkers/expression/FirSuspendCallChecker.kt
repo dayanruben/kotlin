@@ -5,7 +5,9 @@
 
 package org.jetbrains.kotlin.fir.analysis.checkers.expression
 
-import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.fir.syntax.FirSyntaxComponent
+import org.jetbrains.kotlin.fir.syntax.withSyntax
+import org.jetbrains.kotlin.syntax.KotlinSyntaxNodeTypeIds
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.diagnostics.reportOn
 import org.jetbrains.kotlin.fir.FirSession
@@ -13,6 +15,7 @@ import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.isExplicit
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
+import org.jetbrains.kotlin.fir.analysis.forEachChildOfType
 import org.jetbrains.kotlin.fir.analysis.getChild
 import org.jetbrains.kotlin.fir.declarations.InlineStatus
 import org.jetbrains.kotlin.fir.declarations.isRestrictSuspensionReceiver
@@ -28,9 +31,10 @@ import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.util.getChildren
+import org.jetbrains.kotlin.syntax.SyntaxIdSet
 
 object FirSuspendCallChecker : FirQualifiedAccessExpressionChecker(MppCheckerKind.Common) {
+    private val VALUE_ARGUMENT_TYPES = SyntaxIdSet.of(KotlinSyntaxNodeTypeIds.VALUE_ARGUMENT)
 
     context(context: CheckerContext, reporter: DiagnosticReporter)
     override fun check(expression: FirQualifiedAccessExpression) {
@@ -86,12 +90,12 @@ object FirSuspendCallChecker : FirQualifiedAccessExpressionChecker(MppCheckerKin
         if (symbol.callableId == StandardClassIds.Callables.suspend) {
             if (reference.name != StandardClassIds.Callables.suspend.callableName ||
                 expression.explicitReceiver != null ||
-                expression.formOfSuspendModifierForLambdaOrFun() == null
+                withSyntax { expression.formOfSuspendModifierForLambdaOrFun() } == null
             ) {
                 reporter.reportOn(expression.source, FirErrors.NON_MODIFIER_FORM_FOR_BUILT_IN_SUSPEND)
             }
         } else if (reference.name == StandardClassIds.Callables.suspend.callableName) {
-            when (expression.formOfSuspendModifierForLambdaOrFun()) {
+            when (withSyntax { expression.formOfSuspendModifierForLambdaOrFun() }) {
                 SuspendCallArgumentKind.FUN -> {
                     reporter.reportOn(expression.source, FirErrors.MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND_FUN_ERROR)
                 }
@@ -105,6 +109,7 @@ object FirSuspendCallChecker : FirQualifiedAccessExpressionChecker(MppCheckerKin
         }
     }
 
+    context(syntax: FirSyntaxComponent<*>)
     private fun FirQualifiedAccessExpression.formOfSuspendModifierForLambdaOrFun(): SuspendCallArgumentKind? {
         if (this !is FirFunctionCall) return null
         val reference = this.calleeReference
@@ -114,15 +119,17 @@ object FirSuspendCallChecker : FirQualifiedAccessExpressionChecker(MppCheckerKin
             // No brackets should be in a selector call
             val callExpressionSource =
                 if (explicitReceiver == null) source
-                else source?.getChild(KtNodeTypes.CALL_EXPRESSION, index = 1, depth = 1)
-            if (callExpressionSource?.getChild(KtNodeTypes.VALUE_ARGUMENT_LIST, depth = 1) == null) {
+                else source?.getChild(KotlinSyntaxNodeTypeIds.CALL_EXPRESSION, index = 1, depth = 1)
+            if (callExpressionSource?.getChild(KotlinSyntaxNodeTypeIds.VALUE_ARGUMENT_LIST, depth = 1) == null) {
                 return SuspendCallArgumentKind.LAMBDA
             }
         }
         if (origin == FirFunctionCallOrigin.Infix) {
             val lastArgument = arguments.lastOrNull()
-            if (lastArgument is FirAnonymousFunctionExpression && source?.getChild(KtNodeTypes.PARENTHESIZED, depth = 1) == null) {
-                return if (lastArgument.source?.lighterASTNode?.tokenType == KtNodeTypes.FUN) {
+            if (lastArgument is FirAnonymousFunctionExpression &&
+                source?.getChild(KotlinSyntaxNodeTypeIds.PARENTHESIZED, depth = 1) == null
+            ) {
+                return if (lastArgument.source?.syntaxId == KotlinSyntaxNodeTypeIds.FUNCTION) {
                     SuspendCallArgumentKind.FUN
                 } else {
                     SuspendCallArgumentKind.LAMBDA
@@ -185,7 +192,7 @@ object FirSuspendCallChecker : FirQualifiedAccessExpressionChecker(MppCheckerKin
         enclosingSuspendFunction: FirFunctionSymbol<*>,
         calledDeclarationSymbol: FirCallableSymbol<*>,
     ): Boolean {
-        if (expression is FirFunctionCall && isCaseMissedByK1(expression)) {
+        if (expression is FirFunctionCall && withSyntax { isCaseMissedByK1(expression) }) {
             return true
         }
 
@@ -253,6 +260,7 @@ object FirSuspendCallChecker : FirQualifiedAccessExpressionChecker(MppCheckerKin
      * an implicit invoke call on a receiver of an extension function type
      * such that the receiver argument is passed as a value argument.
      */
+    context(syntax: FirSyntaxComponent<*>)
     private fun isCaseMissedByK1(expression: FirFunctionCall): Boolean {
         val isInvokeFromExtensionFunctionType = expression is FirImplicitInvokeCall
                 && expression.explicitReceiver?.resolvedType?.isExtensionFunctionType == true
@@ -264,12 +272,11 @@ object FirSuspendCallChecker : FirQualifiedAccessExpressionChecker(MppCheckerKin
         val source = expression.source
             ?: return false
 
-        val visualValueArgumentsCount = source
-            .getChild(KtNodeTypes.VALUE_ARGUMENT_LIST, depth = 1)
-            ?.lighterASTNode?.getChildren(source.treeStructure)
-            ?.filter { it.tokenType == KtNodeTypes.VALUE_ARGUMENT }
-            ?.size
+        val valueArgumentList = source.getChild(KotlinSyntaxNodeTypeIds.VALUE_ARGUMENT_LIST, depth = 1)
             ?: return false
+
+        var visualValueArgumentsCount = 0
+        valueArgumentList.forEachChildOfType(VALUE_ARGUMENT_TYPES, depth = 1) { visualValueArgumentsCount++ }
 
         return visualValueArgumentsCount != expression.arguments.count() - 1
     }

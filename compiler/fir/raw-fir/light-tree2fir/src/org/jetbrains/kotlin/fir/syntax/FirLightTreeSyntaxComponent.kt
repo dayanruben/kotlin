@@ -14,17 +14,20 @@ import com.intellij.util.diff.FlyweightCapableTreeStructure
 import org.jetbrains.kotlin.ElementTypeUtils.isExpression
 import org.jetbrains.kotlin.KtLightSourceElement
 import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.KtNodeTypes.DOT_QUALIFIED_EXPRESSION
 import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.config.ParserMode
 import org.jetbrains.kotlin.diagnostics.findChildByType
 import org.jetbrains.kotlin.diagnostics.findChildrenByType
+import org.jetbrains.kotlin.diagnostics.getAssignmentLhsIfUnwrappable
 import org.jetbrains.kotlin.diagnostics.nameIdentifier
 import org.jetbrains.kotlin.diagnostics.valOrVarKeyword
 import org.jetbrains.kotlin.fir.NoMutableState
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.KtImplementationDetail
 import org.jetbrains.kotlin.psi.stubs.elements.KtTokenSets
-import org.jetbrains.kotlin.resolve.source.getExplicitReceiverOfDotQualified
+import org.jetbrains.kotlin.syntax.syntaxId
 import org.jetbrains.kotlin.toKtLightSourceElement
 import org.jetbrains.kotlin.util.getChildren
 import org.jetbrains.kotlin.util.getPreviousSibling
@@ -36,6 +39,23 @@ object FirLightTreeSyntaxComponent : FirSyntaxComponent<KtLightSourceElement>() 
 
     override fun KtSourceElement.unwrap(): KtLightSourceElement {
         return this as? KtLightSourceElement ?: unwrapError(this@unwrap)
+    }
+
+    override fun KtSourceElement.forEachChildMatching(
+        depth: Int,
+        reverse: Boolean,
+        isTargetType: SyntaxIdPredicate,
+        processChild: (KtSourceElement) -> Boolean,
+    ) {
+        val source = unwrap()
+        val tree = source.treeStructure
+        forEachChildMatching(
+            source.lighterASTNode, depth, reverse, isTargetType,
+            getSyntaxId = { @OptIn(KtImplementationDetail::class) it.tokenType.syntaxId() },
+            getChildren = { it.getChildren(tree) },
+        ) {
+            processChild(it.toKtLightSourceElement(tree))
+        }
     }
 
     override fun KtSourceElement.findContextParameterListSources(): List<KtSourceElement> {
@@ -89,7 +109,15 @@ object FirLightTreeSyntaxComponent : FirSyntaxComponent<KtLightSourceElement>() 
     override fun KtSourceElement.findExplicitReceiverOfDotQualifiedSource(): KtSourceElement? {
         val source = unwrap()
         val tree = source.treeStructure
-        return source.lighterASTNode.getExplicitReceiverOfDotQualified(tree)?.toKtLightSourceElement(tree)
+        return when {
+            source.lighterASTNode.tokenType == DOT_QUALIFIED_EXPRESSION -> source.lighterASTNode.getChildren(tree).firstOrNull()
+            else -> null
+        }?.toKtLightSourceElement(tree)
+    }
+
+    override fun KtSourceElement.hasUnwrappableAsAssignmentLhs(): Boolean {
+        val source = unwrap()
+        return source.lighterASTNode.getAssignmentLhsIfUnwrappable(source.treeStructure) != null
     }
 
     override fun KtSourceElement.findParameterNameSource(name: Name): KtSourceElement? {

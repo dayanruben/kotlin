@@ -47,6 +47,21 @@ sourceSets {
     "test" {
         projectDefault()
     }
+    /* Tests that inspect compiled classes, dist or run Gradle; executed by the `withBinariesTest` task */
+    "withBinariesTest" {
+        codebaseTestDir(project, "withBinariesTest")
+    }
+    /* Long-running tests; executed by the `nightlyTests` task */
+    "nightlyTests" {
+        codebaseTestDir(project, "nightlyTests")
+    }
+}
+
+/* Gives the tests from the additional source sets access to `internal` declarations of `main` */
+for (sourceSetName in listOf("withBinariesTest", "nightlyTests")) {
+    kotlin.target.compilations.named(sourceSetName) {
+        associateWith(kotlin.target.compilations.getByName("main"))
+    }
 }
 
 open class TestSystemPropertiesProvider @Inject constructor(
@@ -82,10 +97,34 @@ open class TestSystemPropertiesProvider @Inject constructor(
 
 projectTests {
     testTask(javaLauncher = JdkMajorVersion.JDK_21_0, maxHeapSize = testMaxHeapSizeTiny) {
-        dependsOn(":dist")
-        dependsOn(":compileAll")
+        description = "Runs tests that checks files in the repository"
         workingDir = rootDir
-        jvmArgs("--add-opens=java.base/java.io=ALL-UNNAMED")
+
+        jvmArgumentProviders.add(objects.newInstance<TestSystemPropertiesProvider>().apply {
+            spaceCodeOwnersFile.from(rootDir.resolve(".space/CODEOWNERS"))
+            gradleUserHome.set(gradle.gradleUserHomeDir)
+            teamcity = kotlinBuildProperties.isTeamcityBuild
+        })
+
+        testFederation {
+            smokeTests { includeAll() }
+        }
+    }
+
+    testTask("withBinariesTest", javaLauncher = JdkMajorVersion.JDK_21_0, maxHeapSize = testMaxHeapSizeTiny, skipInLocalBuild = false) {
+        description = "Runs codebase tests from the 'withBinariesTest' source set, which depend on the compilation of the project and dist"
+        if (!dryRun.get()) {
+            dependsOn(":dist", ":compileAll")
+        }
+
+        val withBinariesTestSourceSet = sourceSets["withBinariesTest"]
+        testClassesDirs = withBinariesTestSourceSet.output.classesDirs
+        classpath = withBinariesTestSourceSet.runtimeClasspath
+
+        workingDir = rootDir
+
+        withJvmStdlibAndReflect()
+        withTestJar()
 
         jvmArgumentProviders.add(objects.newInstance<TestSystemPropertiesProvider>().apply {
             spaceCodeOwnersFile.from(rootDir.resolve(".space/CODEOWNERS"))
@@ -99,12 +138,14 @@ projectTests {
             smokeTests { includeAll() }
         }
 
-        useJUnitPlatform {
-            excludeTags("codebaseNightly")
-        }
+        assertKotlinNativeIsEnabled()
     }
 
     testTask("nightlyTests", javaLauncher = JdkMajorVersion.JDK_21_0, skipInLocalBuild = false) {
+        val nightlyTestsSourceSet = sourceSets["nightlyTests"]
+        testClassesDirs = nightlyTestsSourceSet.output.classesDirs
+        classpath = nightlyTestsSourceSet.runtimeClasspath
+
         workingDir = rootDir
 
         jvmArgumentProviders.add(objects.newInstance<TestSystemPropertiesProvider>().apply {
@@ -114,16 +155,9 @@ projectTests {
 
         forkEvery = 1
 
-        useJUnitPlatform {
-            includeTags("codebaseNightly")
-        }
+        assertKotlinNativeIsEnabled()
     }
-
-    withJvmStdlibAndReflect()
-    withScriptRuntime()
-    withTestJar()
 }
-
 
 tasks.register<JavaExec>("updateTestLifecycleTaskDump") {
     doNotTrackState("Should always run")
@@ -141,18 +175,17 @@ tasks.register<JavaExec>("updateDomainsDump") {
     mainClass = "org.jetbrains.kotlin.code.UpdateDomainsDump"
 }
 
+fun Task.assertKotlinNativeIsEnabled() {
+    val isKotlinNativeEnabled = kotlinBuildProperties.isKotlinNativeEnabled
+    doFirst {
+        if (!isKotlinNativeEnabled.get()) error(
+            "Running '$path' requires Kotlin/Native to be enabled (-Pkotlin.native.enabled=true)"
+        )
+    }
+}
+
 tasks.configureEach {
     if (this !is JavaForkOptions) return@configureEach
-
-    /* The dump includes tests from Kotlin/Native */
-    if (this is Test) {
-        val isKotlinNativeEnabled = kotlinBuildProperties.isKotlinNativeEnabled
-        doFirst {
-            if (!isKotlinNativeEnabled.get()) error(
-                "Running '$path' requires Kotlin/Native to be enabled (-Pkotlin.native.enabled=true)"
-            )
-        }
-    }
 
     /* Nested/Deep debugging support */
     val debuggerDispatchPort = providers.systemProperty("idea.debugger.dispatch.port")

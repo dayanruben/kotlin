@@ -6,13 +6,14 @@
 package org.jetbrains.kotlin.analysis.api.fir.test.cases.symbols
 
 import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiPackage
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.components.KaFirIllegalPsiException
 import org.jetbrains.kotlin.analysis.api.fir.symbols.pointers.KaFirCachedSymbolPointer.Companion.isCacheable
 import org.jetbrains.kotlin.analysis.api.fir.symbols.pointers.KaFirPsiSymbolPointer
+import org.jetbrains.kotlin.analysis.api.fir.test.cases.symbols.SymbolTestDirectives.DO_NOT_REQUIRE_DISTINCT_NON_PSI_SYMBOL_POINTERS
+import org.jetbrains.kotlin.analysis.api.fir.test.cases.symbols.SymbolTestDirectives.DO_NOT_REQUIRE_DISTINCT_SYMBOL_POINTERS
 import org.jetbrains.kotlin.analysis.api.fir.test.cases.symbols.SymbolTestDirectives.DO_NOT_REQUIRE_NON_PSI_SYMBOL_RESTORATION
 import org.jetbrains.kotlin.analysis.api.fir.test.cases.symbols.SymbolTestDirectives.DO_NOT_REQUIRE_SYMBOL_RESTORATION
 import org.jetbrains.kotlin.analysis.api.fir.test.cases.symbols.SymbolTestDirectives.PRETTY_RENDERER_OPTION
@@ -52,8 +53,6 @@ import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 import org.jetbrains.kotlin.utils.exceptions.KotlinIllegalArgumentExceptionWithAttachments
 import org.jetbrains.kotlin.utils.mapToSetOrEmpty
 import java.util.concurrent.ExecutionException
-import kotlin.reflect.full.*
-import kotlin.reflect.jvm.javaField
 import kotlin.test.assertEquals
 import kotlin.test.fail
 
@@ -141,6 +140,8 @@ abstract class AbstractSymbolTest : AbstractAnalysisApiBasedTest() {
                     }
                     .toList()
 
+                checkPointersOfDifferentSymbolsAreDistinct(pointerWithRenderedSymbol, directives, disablePsiBasedLogic)
+
                 val pointerWithPrettyRenderedSymbol = symbolForPrettyRendering.map { symbol ->
                     PointerWithRenderedSymbol(
                         pointer = safePointer(symbol),
@@ -184,6 +185,51 @@ abstract class AbstractSymbolTest : AbstractAnalysisApiBasedTest() {
         testServices.assertions.assertTrue(value = pointer.pointsToTheSameSymbolAs(pointer)) {
             "The symbol is not equal to itself: ${pointer::class}"
         }
+    }
+
+    /**
+     * Checks that no two pointers of [pointersWithRendered], which are created for different symbols, point to the same symbol,
+     * unless the test suppresses this check.
+     */
+    private fun checkPointersOfDifferentSymbolsAreDistinct(
+        pointersWithRendered: List<PointerWithRenderedSymbol>,
+        directives: RegisteredDirectives,
+        disablePsiBasedLogic: Boolean,
+    ) {
+        val directive = if (disablePsiBasedLogic) {
+            DO_NOT_REQUIRE_DISTINCT_NON_PSI_SYMBOL_POINTERS
+        } else {
+            DO_NOT_REQUIRE_DISTINCT_SYMBOL_POINTERS
+        }
+
+        val symbolsWithSamePointers = pointersWithRendered.findSymbolsWithSamePointers()
+        val isSuppressed = directive in directives
+        when {
+            symbolsWithSamePointers != null && !isSuppressed -> {
+                val [first, second] = symbolsWithSamePointers
+                fail("Pointers of different symbols point to the same symbol. Add // $directive directive.\n\n$first\n\n$second")
+            }
+
+            symbolsWithSamePointers == null && isSuppressed -> fail("'// ${directive.name}' directive has no effect on the test")
+        }
+    }
+
+    /**
+     * Returns the rendered symbols of the first two pointers that point to the same symbol, or `null` if all pointers are distinct.
+     *
+     * The pointers are compared pairwise, as they have no hash code consistent with [KaSymbolPointer.pointsToTheSameSymbolAs].
+     * A test has at most a few hundred pointers, so this is cheap.
+     */
+    private fun List<PointerWithRenderedSymbol>.findSymbolsWithSamePointers(): Pair<String, String>? {
+        val pointers = mapNotNull { (val pointer, val rendered) -> pointer?.let { it to rendered } }
+        for ([index, pointerWithRendered] in pointers.withIndex()) {
+            val [firstPointer, firstRendered] = pointerWithRendered
+            for ([secondPointer, secondRendered] in pointers.subList(index + 1, pointers.size)) {
+                if (firstPointer.pointsToTheSameSymbolAs(secondPointer)) return firstRendered to secondRendered
+            }
+        }
+
+        return null
     }
 
     context(_: KaSession)
@@ -332,6 +378,7 @@ abstract class AbstractSymbolTest : AbstractAnalysisApiBasedTest() {
 
         val restoredPointers = mutableListOf<KaSymbolPointer<*>>()
         val nonRestoredSymbols = mutableListOf<String>()
+        var hasRenderedWrongRestore = false
 
         val restored = analyzeForTest(analyzeContext ?: ktFile) {
             pointersWithRendered.mapNotNull { (val pointer, val expectedRender = rendered, val shouldBeRendered, val psiOnly) ->
@@ -342,6 +389,7 @@ abstract class AbstractSymbolTest : AbstractAnalysisApiBasedTest() {
                 }
 
                 val restored = pointer?.let { restoreSymbol(it, disablePsiBasedLogic) }
+                val actualRender = restored?.let { renderSymbolForComparison(it, directives) }
                 if (restored != null) {
                     if (psiOnly && disablePsiBasedLogic) {
                         fail(
@@ -350,22 +398,18 @@ abstract class AbstractSymbolTest : AbstractAnalysisApiBasedTest() {
                         )
                     }
 
-                    restoredPointers += pointer
+                    // A pointer that restores another symbol skips `compareRestoredSymbols` and `compareCachedSymbols` but needs a
+                    // restoration directive. A rendered symbol isn't listed as non-restored, as `.restored.txt` shows the other one.
+                    when {
+                        actualRender == expectedRender -> restoredPointers += pointer
+                        shouldBeRendered -> hasRenderedWrongRestore = true
+                        else -> addNonRestoredSymbol()
+                    }
                 } else {
                     addNonRestoredSymbol()
                 }
 
-                val actualRender = restored?.let { renderSymbolForComparison(it, directives) }
-
-                when {
-                    shouldBeRendered -> actualRender ?: expectedRender
-                    actualRender != null && actualRender != expectedRender -> {
-                        addNonRestoredSymbol()
-                        null
-                    }
-
-                    else -> null
-                }
+                if (shouldBeRendered) actualRender ?: expectedRender else null
             }
         }
 
@@ -376,7 +420,7 @@ abstract class AbstractSymbolTest : AbstractAnalysisApiBasedTest() {
         }
 
         val actual = restored.renderAsDeclarations()
-        val hasNonRestorable = nonRestoredSymbols.isNotEmpty()
+        val hasNonRestorable = nonRestoredSymbols.isNotEmpty() || hasRenderedWrongRestore
         val nonRestorableActual = nonRestoredSymbols.ifNotEmpty { joinToString(separator = "\n\n").trimEnd() }
         assertEqualsToTestOutputFile(
             actual = nonRestorableActual,
@@ -401,7 +445,7 @@ abstract class AbstractSymbolTest : AbstractAnalysisApiBasedTest() {
                 DO_NOT_REQUIRE_SYMBOL_RESTORATION
             }
 
-            fail("Some symbols are non-restorable. Add // $directive directive.")
+            fail("Some symbols are non-restorable or restored as other symbols. Add // $directive directive.")
         }
 
         if (directiveToIgnore != null && !hasNonRestorable) {
@@ -488,6 +532,14 @@ object SymbolTestDirectives : SimpleDirectivesContainer() {
 
     val DO_NOT_REQUIRE_NON_PSI_SYMBOL_RESTORATION by directive(
         description = "Symbol restoring w/o psi for some symbols in current test is not supported yet",
+    )
+
+    val DO_NOT_REQUIRE_DISTINCT_SYMBOL_POINTERS by directive(
+        description = "Pointers of some different symbols in current test point to the same symbol",
+    )
+
+    val DO_NOT_REQUIRE_DISTINCT_NON_PSI_SYMBOL_POINTERS by directive(
+        description = "Pointers w/o psi of some different symbols in current test point to the same symbol",
     )
 
     val PRETTY_RENDERER_OPTION by enumDirective(description = "Explicit rendering mode") { PrettyRendererOption.valueOf(it) }
@@ -644,58 +696,6 @@ private fun <S : KaSymbol> restoreSymbol(pointer: KaSymbolPointer<S>, disablePsi
 private fun SymbolsData.dropBackingPsi() {
     symbols.forEach(KaSymbol::dropBackingPsi)
     symbolsForPrettyRendering.forEach(KaSymbol::dropBackingPsi)
-}
-
-/**
- * Some K2 implementations of [KaSymbol] is backed by some [PsiElement],
- * so they may implement some API on top of PSI, FirSymbols or both of them.
- *
- * FirSymbol-based implementation is the source of truth, so the PSI-based implementation
- * exists to cover simple cases.
- *
- * As most of the symbols have the underlying PSI element, it is crucial to
- * have consistent implementation for PSI-based and FirSymbol-based symbols.
- */
-private fun KaSymbol.dropBackingPsi() {
-    val interfaceInstance = Class.forName("org.jetbrains.kotlin.analysis.api.fir.symbols.KaFirPsiSymbol")
-    val symbolType = KaSymbol::class.createType()
-
-    val thisClass = this::class
-    for (property in thisClass.declaredMemberProperties) {
-        // Some symbols may have owning symbols, so they should be invalidated as well
-        if (!property.name.startsWith("owning") || !property.returnType.isSubtypeOf(symbolType)) continue
-
-        val symbol = property.getter.call(this) as KaSymbol
-        symbol.dropBackingPsi()
-    }
-
-    if (!interfaceInstance.isInstance(this)) return
-
-    when (thisClass.simpleName) {
-        // Those classes are PSI-based only, so they have FirSymbol only for the compatibility with other classes
-        "KaFirPsiJavaClassSymbol",
-        "KaFirPsiJavaTypeParameterSymbol",
-            -> return
-
-        // There classes depend on the property PSI. The owning property is already invalidated above
-        "KaFirDefaultPropertyGetterSymbol",
-        "KaFirDefaultPropertySetterSymbol",
-        "KaFirPropertyGetterSymbol",
-        "KaFirPropertySetterSymbol",
-            -> return
-    }
-
-    val property = thisClass.memberProperties.single { it.name == "backingPsi" }
-    val returnType = property.returnType
-    if (!returnType.isSubtypeOf(PsiElement::class.createType().withNullability(true))) {
-        error("Unexpected return type '$returnType' for '${this::class.simpleName}' class")
-    }
-
-    val field = property.javaField ?: error("Backing field is not found")
-    field.isAccessible = true
-
-    // Drop backing PSI to trigger non-psi implementation
-    field.set(this, null)
 }
 
 private val Throwable.isIllegalPsiException: Boolean

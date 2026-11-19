@@ -570,6 +570,24 @@ class ExportExtensionXcodeIntegrationTests {
     }
 
     @Test
+    fun `test the xcode integration can be activated before the targets are declared`() {
+        val project = buildProjectWithMPP(
+            preApplyCode = { configureRepositoriesForTests() },
+            code = {
+                exportExtension.swift {
+                    xcodeIntegration()
+                }
+                kotlin { iosSimulatorArm64() }
+                exportExtension.swift {
+                    moduleName.set("Shared")
+                }
+            }
+        ).also { it.evaluate() }
+
+        assertNotNull(project.tasks.findByName(EMBED_SWIFT_EXPORT_TASK_NAME))
+    }
+
+    @Test
     fun `test the pipeline is registered for an activated project in the xcode environment`() {
         val project = exportDslProject(withXcodeEnvironment = true) {
             exportExtension.swift {
@@ -2470,6 +2488,92 @@ class ExportExtensionSwiftPackageIntegrationTests {
         project.assertSwiftPackageTasksRegistered(true)
         val exportTask = assertIs<Sync>(project.tasks.findByName("exportDebugSwiftPackage"))
         assertEquals(project.projectDir.resolve("SwiftPackage/Debug"), exportTask.destinationDir)
+    }
+
+    @Test
+    fun `test the swift package product is named after the module by default`() {
+        val project = exportDslProject {
+            exportExtension.swift {
+                moduleName.set("Shared")
+                swiftPackageIntegration()
+            }
+        }
+
+        val generateTask = assertIs<GenerateSPMPackageFromSwiftExport>(project.tasks.findByName("generateDebugSwiftPackage"))
+        assertEquals("SharedLibrary", generateTask.swiftLibraryName.get())
+    }
+
+    @Test
+    fun `test the swift package product name is configurable`() {
+        val project = exportDslProject {
+            exportExtension.swift {
+                moduleName.set("Shared")
+                swiftPackageIntegration {
+                    productName.set("SharedKit")
+                }
+            }
+        }
+
+        listOf("generateDebugSwiftPackage", "generateReleaseSwiftPackage").forEach { name ->
+            val generateTask = assertIs<GenerateSPMPackageFromSwiftExport>(project.tasks.findByName(name))
+            assertEquals("SharedKit", generateTask.swiftLibraryName.get(), name)
+        }
+    }
+
+    @Test
+    fun `test the default swift package product name can be read while the dsl is configured`() {
+        var defaultWithModuleName: String? = null
+        exportDslProject {
+            exportExtension.swift {
+                moduleName.set("Shared")
+                swiftPackageIntegration {
+                    defaultWithModuleName = productName.get()
+                }
+            }
+        }
+        assertEquals("SharedLibrary", defaultWithModuleName)
+    }
+
+    @Test
+    fun `test the default swift package product name follows the project name without a module name`() {
+        val project = buildProjectWithMPP(projectBuilder = { withName("my-shared") })
+        var default: String? = null
+        project.exportExtension.swift {
+            swiftPackageIntegration {
+                default = productName.get()
+            }
+        }
+        assertEquals("MySharedLibrary", default)
+    }
+
+    @Test
+    fun `test a blank swift package product name is reported`() {
+        listOf("", "  ").forEach { blankName ->
+            val project = exportDslProject {
+                exportExtension.swift {
+                    moduleName.set("Shared")
+                    swiftPackageIntegration {
+                        productName.set(blankName)
+                    }
+                }
+            }
+
+            project.assertContainsDiagnostic(KotlinToolingDiagnostics.SwiftPackageBlankProductName(project.path))
+        }
+    }
+
+    @Test
+    fun `test a swift package product name that is not an identifier is not reported`() {
+        val project = exportDslProject {
+            exportExtension.swift {
+                moduleName.set("Shared")
+                swiftPackageIntegration {
+                    productName.set("Shared-Kit")
+                }
+            }
+        }
+
+        project.assertNoDiagnostics(KotlinToolingDiagnostics.SwiftPackageBlankProductName)
     }
 
     @Test

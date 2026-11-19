@@ -22,6 +22,15 @@ object FirKmpSyntaxComponent : FirSyntaxComponent<Any>() {
         notYetImplemented()
     }
 
+    override fun KtSourceElement.forEachChildMatching(
+        depth: Int,
+        reverse: Boolean,
+        isTargetType: SyntaxIdPredicate,
+        processChild: (KtSourceElement) -> Boolean,
+    ) {
+        notYetImplemented()
+    }
+
     override fun KtSourceElement.findContextParameterListSources(): List<KtSourceElement> {
         notYetImplemented()
     }
@@ -39,6 +48,10 @@ object FirKmpSyntaxComponent : FirSyntaxComponent<Any>() {
     }
 
     override fun KtSourceElement.findExplicitReceiverOfDotQualifiedSource(): KtSourceElement? {
+        notYetImplemented()
+    }
+
+    override fun KtSourceElement.hasUnwrappableAsAssignmentLhs(): Boolean {
         notYetImplemented()
     }
 
