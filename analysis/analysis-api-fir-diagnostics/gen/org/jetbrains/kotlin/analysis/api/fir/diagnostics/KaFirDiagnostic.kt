@@ -6112,6 +6112,13 @@ public interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
 
     @KaUnstableDiagnosticApi
     @SubclassOptInRequired(KaImplementationDetail::class)
+    public interface NonLocalDestructuringDeclaration : KaFirDiagnostic<KtDestructuringDeclaration> {
+        override val diagnosticClass: KClass<NonLocalDestructuringDeclaration>
+            get() = NonLocalDestructuringDeclaration::class
+    }
+
+    @KaUnstableDiagnosticApi
+    @SubclassOptInRequired(KaImplementationDetail::class)
     public interface ExpectedDeclarationWithBody : KaFirDiagnostic<KtDeclaration> {
         override val diagnosticClass: KClass<ExpectedDeclarationWithBody>
             get() = ExpectedDeclarationWithBody::class
@@ -8656,6 +8663,16 @@ public interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
 
     @KaUnstableDiagnosticApi
     @SubclassOptInRequired(KaImplementationDetail::class)
+    public interface UnresolvedReferenceWrongCompanionReceiver : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass: KClass<UnresolvedReferenceWrongCompanionReceiver>
+            get() = UnresolvedReferenceWrongCompanionReceiver::class
+
+        public val candidate: KaSymbol
+        public val actualClass: ClassId
+    }
+
+    @KaUnstableDiagnosticApi
+    @SubclassOptInRequired(KaImplementationDetail::class)
     public interface NonErrorClassExtendsRichError : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass: KClass<NonErrorClassExtendsRichError>
             get() = NonErrorClassExtendsRichError::class
@@ -8743,6 +8760,13 @@ public interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
     public interface ActualTypealiasWithExpectRichError : KaFirDiagnostic<PsiElement> {
         override val diagnosticClass: KClass<ActualTypealiasWithExpectRichError>
             get() = ActualTypealiasWithExpectRichError::class
+    }
+
+    @KaUnstableDiagnosticApi
+    @SubclassOptInRequired(KaImplementationDetail::class)
+    public interface TypealiasToUnionTypeAsQualifier : KaFirDiagnostic<PsiElement> {
+        override val diagnosticClass: KClass<TypealiasToUnionTypeAsQualifier>
+            get() = TypealiasToUnionTypeAsQualifier::class
     }
 
     @KaUnstableDiagnosticApi

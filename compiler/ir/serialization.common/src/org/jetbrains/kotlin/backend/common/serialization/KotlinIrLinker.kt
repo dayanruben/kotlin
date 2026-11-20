@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.backend.common.serialization
 
-import org.jetbrains.kotlin.backend.common.linkage.IrDeserializer
 import org.jetbrains.kotlin.backend.common.linkage.issues.*
 import org.jetbrains.kotlin.backend.common.linkage.partial.PartialLinkageDiagnostics
 import org.jetbrains.kotlin.backend.common.linkage.partial.PartialLinkageSupportForLinker
@@ -16,6 +15,7 @@ import org.jetbrains.kotlin.cli.report
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.ir.IrBuiltIns
+import org.jetbrains.kotlin.ir.IrProvider
 import org.jetbrains.kotlin.ir.declarations.IrDeclaration
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
@@ -42,7 +42,7 @@ abstract class KotlinIrLinker(
     private val friendModules: Map<KotlinLibrary, Collection<KotlinLibrary>>,
     val errorCallback: (String) -> Unit,
     val deserializedSymbolPostProcessor: (IrSymbol, IdSignature, IrFileSymbol) -> IrSymbol = { s, _, _ -> s },
-) : IrDeserializer {
+) : IrProvider {
     constructor(
         configuration: CompilerConfiguration,
         symbolTable: SymbolTable,
@@ -116,10 +116,7 @@ abstract class KotlinIrLinker(
 
     private val triedToDeserializeDeclarationForSymbol = hashSetOf<IrSymbol>()
 
-    open val partialLinkageSupport: PartialLinkageSupportForLinker get() = PartialLinkageSupportForLinker.DISABLED
-
-    open val returnUnboundSymbolsIfSignatureNotFound: Boolean
-        get() = partialLinkageSupport.isEnabled
+    abstract val partialLinkageSupport: PartialLinkageSupportForLinker
 
     open val moduleDependencyTracker: IrModuleDependencyTracker get() = IrModuleDependencyTracker.DISABLED
 
@@ -174,20 +171,15 @@ abstract class KotlinIrLinker(
         // might return null (like KonanInteropModuleDeserializer does) or non-null unbound symbol (like JsModuleDeserializer does).
         val symbol: IrSymbol? = actualModuleDeserializer?.tryDeserializeIrSymbol(idSignature, symbolKind)
 
-        if (symbol != null) {
+        return if (symbol != null) {
             moduleDependencyTracker.trackDependency(
                 fromModule = moduleDeserializer.moduleFragment,
                 toModule = actualModuleDeserializer.moduleFragment
             )
 
-            return symbol
-        } else if (returnUnboundSymbolsIfSignatureNotFound)
-            return referenceDeserializedSymbol(symbolTable, null, symbolKind, idSignature)
-        else
-            SignatureIdNotFoundInModuleWithDependencies(
-                idSignature = idSignature,
-                problemModuleDeserializer = moduleDeserializer,
-            ).raiseIssue(errorCallback)
+            symbol
+        } else
+            referenceDeserializedSymbol(symbolTable, null, symbolKind, idSignature)
     }
 
     private fun resolveModuleDeserializer(idSignature: IdSignature): IrModuleDeserializer? =
@@ -201,7 +193,7 @@ abstract class KotlinIrLinker(
      * in the following order:
      * 1. Module deserializers whose list of defined package names includes [packageFqName].
      * 2. Module deserializers that cannot tell which packages they define
-     *    ([IrModuleDeserializer.getDefinedPackageNames] returns `null`). These are checked for every package.
+     *    ([IrModuleDeserializer.contributedPackageNames] returns `null`). These are checked for every package.
      *
      * Inside each group, module deserializers are checked in the order they were registered with [createAndRegisterModuleDeserializer].
      */
@@ -219,7 +211,7 @@ abstract class KotlinIrLinker(
      * in the following order:
      * 1. Module deserializers whose list of defined package names includes [packageFqName].
      * 2. Module deserializers that cannot tell which packages they define
-     *    ([IrModuleDeserializer.getDefinedPackageNames] returns `null`). These are checked for every package.
+     *    ([IrModuleDeserializer.contributedPackageNames] returns `null`). These are checked for every package.
      *
      * Inside each group, module deserializers are checked in the order they were registered with [createAndRegisterModuleDeserializer].
      */
@@ -251,6 +243,30 @@ abstract class KotlinIrLinker(
 
             moduleDeserializer.deserializeReachableDeclarations()
         }
+    }
+
+    /**
+     * Deserializes declarations for all unbound symbols in [symbolTable] and everything reachable from them,
+     * repeating until the set of unbound symbols stops changing.
+     *
+     * Must be called before [finalizeIrLinkage], which handles the symbols that remain unbound.
+     */
+    fun drainDeserializationQueue() {
+        // Deserializing a reference may lead to new unbound references, so we loop until none are left.
+        var unbound: Set<IrSymbol> = emptySet()
+        do {
+            val prevUnbound: Set<IrSymbol> = unbound
+            unbound = symbolTable.descriptorExtension.allUnboundSymbols
+            for (symbol: IrSymbol in unbound) {
+                // Symbol could get bound as a side effect of deserializing other symbols.
+                if (!symbol.isBound && triedToDeserializeDeclarationForSymbol.add(symbol)) {
+                    val signature = symbol.signature ?: continue
+                    getSymbolAndPutIntoQueue(signature, symbol.kind())
+                }
+            }
+            deserializeAllReachableTopLevels()
+            // We wait for the unbound to stabilize on fake overrides.
+        } while (unbound != prevUnbound)
     }
 
     private fun findDeserializedDeclarationForSymbol(symbol: IrSymbol): Boolean {
@@ -289,46 +305,59 @@ abstract class KotlinIrLinker(
         return symbol.owner as IrDeclaration
     }
 
-    override fun getSymbolAndPutIntoQueue(signature: IdSignature, kind: IrDeserializer.TopLevelSymbolKind): IrSymbol? {
+    /**
+     * Retrieves the symbol associated with the given signature and kind.
+     *
+     * It is guaranteed that the returned symbol is not null if such a symbol belongs to the module represented by the current deserializer.
+     * The returned symbol may be unbound (and put in the deserialization queue to be deserialized later).
+     *
+     * However, it is guaranteed that the returned symbol is always bound if [getSymbolAndPutIntoQueue] is called after the
+     * main part of the deserialization process has been finished, i.e. after [finalizeIrLinkage] was called.
+     *
+     * @return The symbol for the given signature and kind if successfully found; otherwise, null.
+     */
+    fun getSymbolAndPutIntoQueue(signature: IdSignature, kind: BinarySymbolData.SymbolKind): IrSymbol? {
+        // TODO (KT-91417): Need to make it without an excessive IrModuleDeserializer.contains() call!
         val moduleDeserializer = resolveModuleDeserializer(signature) ?: return null
-        return moduleDeserializer.tryDeserializeIrSymbol(signature, topLevelKindToSymbolKind(kind)).also {
+        return moduleDeserializer.tryDeserializeIrSymbol(signature, kind).also {
             if (finished) deserializeAllReachableTopLevels()
         }
     }
 
-    fun clear() {
+
+    /**
+     * Drops everything interned by [irInterner] during IR deserialization to free memory.
+     *
+     * Call it only when deserialization is over: instances interned afterwards are not deduplicated
+     * against the ones interned before.
+     */
+    fun clearInternedData() {
         irInterner.reset()
     }
 
-    override fun postProcess(irBuiltIns: IrBuiltIns, inOrAfterLinkageStep: Boolean) {
-        finished = finished || inOrAfterLinkageStep
-        if (inOrAfterLinkageStep) {
-            // We have to exclude classifiers with unbound symbols in supertypes and in type parameter upper bounds from F.O. generation
-            // to avoid failing with `Symbol for <signature> is unbound` error or generating fake overrides with incorrect signatures.
-            partialLinkageSupport.exploreClassifiers(fakeOverrideBuilder)
-            partialLinkageSupport.preprocessBeforeFakeOverridesBuilding(symbolTable, fakeOverrideBuilder)
-        }
+    /**
+     * Completes IR linkage: builds fake overrides, lets the partial linkage replace the symbols that remain unbound
+     * with stubs, and checks that no unbound symbols are left.
+     *
+     * Must be called after [drainDeserializationQueue]. Declarations requested later are linked right at deserialization.
+     */
+    fun finalizeIrLinkage(irBuiltIns: IrBuiltIns) {
+        finished = true
+
+        // We have to exclude classifiers with unbound symbols in supertypes and in type parameter upper bounds from F.O. generation
+        // to avoid failing with `Symbol for <signature> is unbound` error or generating fake overrides with incorrect signatures.
+        partialLinkageSupport.exploreClassifiers(fakeOverrideBuilder)
+        partialLinkageSupport.preprocessBeforeFakeOverridesBuilding(symbolTable, fakeOverrideBuilder)
 
         // Fake override generator creates new IR declarations. This may have effect of binding for certain symbols.
         fakeOverrideBuilder.provideFakeOverrides(createTypeSystemContext(irBuiltIns))
         triedToDeserializeDeclarationForSymbol.clear()
 
-        if (inOrAfterLinkageStep) {
-            // Finally, generate stubs for the remaining unbound symbols and patch every usage of any unbound symbol inside the IR tree.
-            partialLinkageSupport.generateStubsAndPatchUsages(irBuiltIns, symbolTable)
-            allModuleDeserializers.forEach { if (it is IrModuleDeserializerWithBuiltIns) it.finish(irBuiltIns) }
-        }
-        // TODO: fix IrPluginContext to make it not produce additional external reference
-        // symbolTable.noUnboundLeft("unbound after fake overrides:")
-    }
+        // Finally, generate stubs for the remaining unbound symbols and patch every usage of any unbound symbol inside the IR tree.
+        partialLinkageSupport.generateStubsAndPatchUsages(irBuiltIns, symbolTable)
+        allModuleDeserializers.forEach { if (it is IrModuleDeserializerWithBuiltIns) it.finish(irBuiltIns) }
 
-    private fun topLevelKindToSymbolKind(kind: IrDeserializer.TopLevelSymbolKind): BinarySymbolData.SymbolKind {
-        return when (kind) {
-            IrDeserializer.TopLevelSymbolKind.CLASS_SYMBOL -> BinarySymbolData.SymbolKind.CLASS_SYMBOL
-            IrDeserializer.TopLevelSymbolKind.PROPERTY_SYMBOL -> BinarySymbolData.SymbolKind.PROPERTY_SYMBOL
-            IrDeserializer.TopLevelSymbolKind.FUNCTION_SYMBOL -> BinarySymbolData.SymbolKind.FUNCTION_SYMBOL
-            IrDeserializer.TopLevelSymbolKind.TYPEALIAS_SYMBOL -> BinarySymbolData.SymbolKind.TYPEALIAS_SYMBOL
-        }
+        checkNoUnboundSymbols("at the end of IR linkage process")
     }
 
     fun createAndRegisterModuleDeserializer(
@@ -356,11 +385,9 @@ abstract class KotlinIrLinker(
             nonKlibDeserializers += deserializer
         }
 
-        val definedPackageNames = deserializer.getDefinedPackageNames()
-        if (definedPackageNames == null) {
-            moduleDeserializersWithUnknownPackageNames += deserializer
-        } else {
-            for (packageName in definedPackageNames) {
+        when (val contributedPackageNames: Set<FqName>? = deserializer.contributedPackageNames) {
+            null -> moduleDeserializersWithUnknownPackageNames += deserializer
+            else -> for (packageName in contributedPackageNames) {
                 moduleDeserializersByPackageName.putToMultiMap(packageName, deserializer)
             }
         }
@@ -383,9 +410,14 @@ abstract class KotlinIrLinker(
             )
         } else moduleDeserializer
 
-    fun getAllMatchingSignatures(callableId: CallableId, signatureKind: IrDeserializer.TopLevelSymbolKind): List<IdSignature> {
-        return allModuleDeserializers.flatMap { moduleDeserializer ->
-            moduleDeserializer.getAllMatchingSignatures(callableId, signatureKind)
+    fun getAllMatchingSignatures(callableId: CallableId, signatureKind: BinarySymbolData.SymbolKind): List<IdSignature> {
+        return buildList {
+            fun List<IrModuleDeserializer>?.collectMatchingSignatures() {
+                this?.flatMapTo(this@buildList) { it.getAllMatchingSignatures(callableId, signatureKind) }
+            }
+
+            moduleDeserializersByPackageName[callableId.packageName]?.collectMatchingSignatures()
+            moduleDeserializersWithUnknownPackageNames.collectMatchingSignatures()
         }
     }
 }

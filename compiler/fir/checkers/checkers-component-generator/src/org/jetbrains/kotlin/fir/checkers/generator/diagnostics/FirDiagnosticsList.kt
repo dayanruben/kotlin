@@ -1782,6 +1782,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         }
         val DESTRUCTURING_SHORT_FORM_UNDERSCORE by warning<KtElement>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED)
         val NAME_BASED_DESTRUCTURING_UNDERSCORE_WITHOUT_RENAMING by error<KtElement>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED)
+        val NON_LOCAL_DESTRUCTURING_DECLARATION by error<KtDestructuringDeclaration>(PositioningStrategy.DESTRUCTURING_DECLARATION_ENTRIES)
     }
 
     val MPP_PROJECTS by object : DiagnosticGroup("Multi-platform projects") {
@@ -2556,6 +2557,10 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         }
         val COMPANION_EXTENSION_RECEIVER_ANNOTATED by error<PsiElement>()
         val COMPANION_EXTENSION_NULLABLE_RECEIVER by error<PsiElement>()
+        val UNRESOLVED_REFERENCE_WRONG_COMPANION_RECEIVER by error<PsiElement>(PositioningStrategy.REFERENCE_BY_QUALIFIED) {
+            parameter<Symbol>("candidate")
+            parameter<ClassId>("actualClass")
+        }
     }
 
     val RICH_ERRORS by object : DiagnosticGroup("Rich Errors") {
@@ -2572,6 +2577,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val ACTUAL_TYPEALIAS_TO_NON_ERROR by error<PsiElement>()
         val NON_FINAL_RICH_ERROR_CLASS by error<PsiElement>(MODALITY_MODIFIER)
         val ACTUAL_TYPEALIAS_WITH_EXPECT_RICH_ERROR by error<PsiElement>()
+        val TYPEALIAS_TO_UNION_TYPE_AS_QUALIFIER by error<PsiElement>()
     }
 }
 

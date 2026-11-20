@@ -1411,6 +1411,12 @@ private fun KaDiagnosticConverterBuilder.addConversions25() {
             token,
         )
     }
+    add(FirErrors.NON_LOCAL_DESTRUCTURING_DECLARATION) { firDiagnostic ->
+        NonLocalDestructuringDeclarationImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
     add(FirErrors.EXPECT_ACTUAL_INCOMPATIBLE_TYPE_PARAMETER_NAMES) { firDiagnostic ->
         ExpectActualIncompatibleTypeParameterNamesImpl(
             firSymbolBuilder.buildSymbol(firDiagnostic.a),
@@ -3036,6 +3042,14 @@ private fun KaDiagnosticConverterBuilder.addConversions64() {
     }
     add(FirErrors.REDUNDANT_EXPLICIT_BACKING_FIELD) { firDiagnostic ->
         RedundantExplicitBackingFieldImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirErrors.UNRESOLVED_REFERENCE_WRONG_COMPANION_RECEIVER) { firDiagnostic ->
+        UnresolvedReferenceWrongCompanionReceiverImpl(
+            firSymbolBuilder.buildSymbol(firDiagnostic.a),
+            firDiagnostic.b,
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -7270,6 +7284,12 @@ private fun KaDiagnosticConverterBuilder.addConversions152() {
     }
     add(FirErrors.NON_ERROR_CLASS_EXTENDS_RICH_ERROR) { firDiagnostic ->
         NonErrorClassExtendsRichErrorImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirErrors.TYPEALIAS_TO_UNION_TYPE_AS_QUALIFIER) { firDiagnostic ->
+        TypealiasToUnionTypeAsQualifierImpl(
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )

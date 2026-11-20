@@ -11,15 +11,20 @@ import org.jetbrains.kotlin.konan.test.blackbox.AbstractTwoStageNativeCoreTest
 import org.jetbrains.kotlin.konan.test.blackbox.NativeGroupingTestIsolator
 import org.jetbrains.kotlin.konan.test.blackbox.support.TestDirectives
 import org.jetbrains.kotlin.konan.test.configuration.commonConfigurationForNativeCodegenTest
+import org.jetbrains.kotlin.konan.test.configuration.commonConfigurationForNativeFirstStageUpToSerialization
 import org.jetbrains.kotlin.konan.test.configuration.setupStepsForNativeFirstStageUpToSerialization
 import org.jetbrains.kotlin.konan.test.handlers.NativeBoxRunnerGroupingStage
 import org.jetbrains.kotlin.konan.test.services.CInteropTestSkipper
 import org.jetbrains.kotlin.konan.test.services.DisabledNativeTestSkipper
 import org.jetbrains.kotlin.konan.test.services.FileCheckTestTotalSkipper
 import org.jetbrains.kotlin.konan.test.services.sourceProviders.NativeLauncherAdditionalSourceProvider
+import org.jetbrains.kotlin.platform.konan.NativePlatforms
+import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlin.test.backend.handlers.KlibAbiDumpHandler
 import org.jetbrains.kotlin.test.builders.TwoStageTestConfigurationBuilder
+import org.jetbrains.kotlin.test.builders.configureFirHandlersStep
 import org.jetbrains.kotlin.test.builders.klibArtifactsHandlersStep
+import org.jetbrains.kotlin.test.configuration.commonFirHandlersForCodegenTest
 import org.jetbrains.kotlin.test.directives.LanguageSettingsDirectives.LANGUAGE
 import org.jetbrains.kotlin.test.directives.LanguageSettingsDirectives.OPT_IN
 import org.jetbrains.kotlin.test.directives.NativeEnvironmentConfigurationDirectives
@@ -32,6 +37,8 @@ import org.jetbrains.kotlin.test.klib.isolateReflectionPackageNameDependentTests
 import org.jetbrains.kotlin.test.klib.setupCustomLVForKlibForwardCompatibilityTest
 import org.jetbrains.kotlin.test.klib.useReflectionPackageNameAnnotationIfSupported
 import org.jetbrains.kotlin.test.model.ArtifactKinds
+import org.jetbrains.kotlin.test.model.DependencyKind
+import org.jetbrains.kotlin.test.model.FrontendKinds
 import org.jetbrains.kotlin.test.services.CompilationStage
 import org.jetbrains.kotlin.test.services.TargetBackendTestSkipper
 import org.jetbrains.kotlin.test.services.configuration.CommonEnvironmentConfigurator
@@ -53,7 +60,13 @@ open class AbstractCustomNativeCompilerSecondStageTest : AbstractTwoStageNativeC
         super.configure(builder)
         val customLanguageVersion = customNativeCompilerSettings.defaultLanguageVersion
         commonConfiguration {
-            commonConfigurationForNativeCodegenTest()
+            globalDefaults {
+                frontend = FrontendKinds.FIR
+                targetPlatform = NativePlatforms.unspecifiedNativePlatform
+                targetBackend = TargetBackend.NATIVE
+                dependencyKind = DependencyKind.Binary
+            }
+
             useMetaTestConfigurators(
                 ::UnsupportedFeaturesTestConfigurator,
                 ::TargetBackendTestSkipper,
@@ -97,12 +110,7 @@ open class AbstractCustomNativeCompilerSecondStageTest : AbstractTwoStageNativeC
                 ::NativeLauncherAdditionalSourceProvider,
             )
 
-            // Because of package escaping various dumps for grouping mode would be different from
-            // the regular one, so we don't want all the frontend handlers to be set up, only some specific ones.
-            setupStepsForNativeFirstStageUpToSerialization(
-                includeBasicFirHandlers = true,
-                includeDumpFirHandlers = false,
-            )
+            commonConfigurationForNativeCodegenTest()
             facadeStep(::KlibSerializerNativeCliFacade)
             klibArtifactsHandlersStep {
                 // Tests with KLIB ABI dumps are not renamed: `NativeGroupingTestIsolator` isolates them.
@@ -113,6 +121,10 @@ open class AbstractCustomNativeCompilerSecondStageTest : AbstractTwoStageNativeC
             // so the latter one must run last, for its output to be used for compilation of other modules.
             facadeStep(::ObjCInteropFacade.bind(/*isForwardTest*/true, /*customClassLoader*/null))
             useAfterAnalysisCheckers(::KlibOnlyFirstStageStateReleaser)
+
+            configureFirHandlersStep {
+                commonFirHandlersForCodegenTest()
+            }
 
             useFailureSuppressors(
                 // Suppress all tests that failed on the first stage if they are anyway marked as "IGNORE_BACKEND*".

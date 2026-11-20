@@ -25,7 +25,6 @@ import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.declarations.impl.IrModuleFragmentImpl
 import org.jetbrains.kotlin.ir.objcinterop.IrObjCOverridabilityCondition
-import org.jetbrains.kotlin.ir.util.ExternalDependenciesGenerator
 import org.jetbrains.kotlin.ir.util.ReferenceSymbolTable
 import org.jetbrains.kotlin.ir.util.SymbolTable
 import org.jetbrains.kotlin.konan.library.isImplicitlyLoadedFromKotlinNativeDistribution
@@ -88,8 +87,8 @@ internal fun LinkKlibsContext.linkKlibs(
     val irBuiltIns = IrBuiltInsForLinker(irLinker, config.configuration.languageVersionSettings)
     val symbols = BackendNativeSymbols(this, irBuiltIns, config.configuration)
 
-    ExternalDependenciesGenerator(irLinker.symbolTable, listOf(irLinker)).generateUnboundSymbolsAsDependencies()
-    irLinker.postProcess(irBuiltIns, inOrAfterLinkageStep = true)
+    irLinker.drainDeserializationQueue()
+    irLinker.finalizeIrLinkage(irBuiltIns)
 
     // Drop those platform library modules which remain unused (untouched) during the deserialization.
     val usefulModuleDependencies = originalModuleDependencies.filterOutUnusedPlatformLibraryModules(irLinker)
@@ -97,7 +96,7 @@ internal fun LinkKlibsContext.linkKlibs(
     // Generate stubs only for useful modules.
     generateImplForCStructsAndEnums(usefulModuleDependencies, irBuiltIns, symbols)
 
-    config.configuration.checkNoUnboundSymbols(symbolTable, "at the end of IR linkage process")
+    config.configuration.checkNoUnboundSymbols(symbolTable, "after generating implementations for C structs and enums")
 
     // Also, sort modules in RTO according to their actual dependencies DAG.
     val sortedUsefulModuleDependencies = usefulModuleDependencies.reverseTopoSortUsingKlibDAG(config.klibDag)

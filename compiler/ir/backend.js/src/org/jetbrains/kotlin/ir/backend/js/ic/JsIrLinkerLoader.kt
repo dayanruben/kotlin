@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.ir.backend.js.ic
 
 import org.jetbrains.kotlin.backend.common.IrBuiltInsForLinker
 import org.jetbrains.kotlin.backend.common.IrModuleDependencies
-import org.jetbrains.kotlin.backend.common.linkage.issues.checkNoUnboundSymbols
 import org.jetbrains.kotlin.backend.common.serialization.DeserializationStrategy
 import org.jetbrains.kotlin.backend.common.serialization.checkIsFunctionInterface
 import org.jetbrains.kotlin.backend.common.serialization.encodings.BinarySymbolData
@@ -26,7 +25,6 @@ import org.jetbrains.kotlin.ir.backend.js.lower.serialization.ir.JsIrLinker
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
-import org.jetbrains.kotlin.ir.util.ExternalDependenciesGenerator
 import org.jetbrains.kotlin.ir.util.IdSignature
 import org.jetbrains.kotlin.ir.util.SymbolTable
 import org.jetbrains.kotlin.library.*
@@ -95,10 +93,9 @@ internal class LoadedJsIr(
 
     fun loadUnboundSymbols() {
         signatureProvidersImpl.clear()
-        ExternalDependenciesGenerator(linker.symbolTable, listOf(linker)).generateUnboundSymbolsAsDependencies()
-        linker.postProcess(irBuiltIns, inOrAfterLinkageStep = true)
-        linker.checkNoUnboundSymbols(linker.symbolTable, "at the end of IR linkage process")
-        linker.clear()
+        linker.drainDeserializationQueue()
+        linker.finalizeIrLinkage(irBuiltIns)
+        linker.clearInternedData()
     }
 
     fun collectSymbolsReplacedWithStubs(): Set<IrSymbol> {

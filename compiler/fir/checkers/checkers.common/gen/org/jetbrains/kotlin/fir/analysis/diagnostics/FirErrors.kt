@@ -863,6 +863,7 @@ object FirErrors : KtDiagnosticsContainer() {
     val DESTRUCTURING_SHORT_FORM_OF_NON_DATA_CLASS: KtDiagnosticFactory3<ConeKotlinType, Name, String> = KtDiagnosticFactory3("DESTRUCTURING_SHORT_FORM_OF_NON_DATA_CLASS", WARNING, SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED, KtElement::class, getRendererFactory())
     val DESTRUCTURING_SHORT_FORM_UNDERSCORE: KtDiagnosticFactory0 = KtDiagnosticFactory0("DESTRUCTURING_SHORT_FORM_UNDERSCORE", WARNING, SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED, KtElement::class, getRendererFactory())
     val NAME_BASED_DESTRUCTURING_UNDERSCORE_WITHOUT_RENAMING: KtDiagnosticFactory0 = KtDiagnosticFactory0("NAME_BASED_DESTRUCTURING_UNDERSCORE_WITHOUT_RENAMING", ERROR, SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED, KtElement::class, getRendererFactory())
+    val NON_LOCAL_DESTRUCTURING_DECLARATION: KtDiagnosticFactory0 = KtDiagnosticFactory0("NON_LOCAL_DESTRUCTURING_DECLARATION", ERROR, SourceElementPositioningStrategies.DESTRUCTURING_DECLARATION_ENTRIES, KtDestructuringDeclaration::class, getRendererFactory())
 
     // Multi-platform projects
     val EXPECTED_DECLARATION_WITH_BODY: KtDiagnosticFactory0 = KtDiagnosticFactory0("EXPECTED_DECLARATION_WITH_BODY", ERROR, SourceElementPositioningStrategies.DECLARATION_SIGNATURE, KtDeclaration::class, getRendererFactory())
@@ -1188,6 +1189,7 @@ object FirErrors : KtDiagnosticsContainer() {
     val COMPANION_EXTENSION_RECEIVER_IS_TYPE_PARAMETER: KtDiagnosticFactory1<FirTypeParameterSymbol> = KtDiagnosticFactory1("COMPANION_EXTENSION_RECEIVER_IS_TYPE_PARAMETER", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class, getRendererFactory())
     val COMPANION_EXTENSION_RECEIVER_ANNOTATED: KtDiagnosticFactory0 = KtDiagnosticFactory0("COMPANION_EXTENSION_RECEIVER_ANNOTATED", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class, getRendererFactory())
     val COMPANION_EXTENSION_NULLABLE_RECEIVER: KtDiagnosticFactory0 = KtDiagnosticFactory0("COMPANION_EXTENSION_NULLABLE_RECEIVER", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class, getRendererFactory())
+    val UNRESOLVED_REFERENCE_WRONG_COMPANION_RECEIVER: KtDiagnosticFactory2<FirBasedSymbol<*>, ClassId> = KtDiagnosticFactory2("UNRESOLVED_REFERENCE_WRONG_COMPANION_RECEIVER", ERROR, SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED, PsiElement::class, getRendererFactory())
 
     // Rich Errors
     val NON_ERROR_CLASS_EXTENDS_RICH_ERROR: KtDiagnosticFactory0 = KtDiagnosticFactory0("NON_ERROR_CLASS_EXTENDS_RICH_ERROR", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class, getRendererFactory())
@@ -1203,6 +1205,7 @@ object FirErrors : KtDiagnosticsContainer() {
     val ACTUAL_TYPEALIAS_TO_NON_ERROR: KtDiagnosticFactory0 = KtDiagnosticFactory0("ACTUAL_TYPEALIAS_TO_NON_ERROR", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class, getRendererFactory())
     val NON_FINAL_RICH_ERROR_CLASS: KtDiagnosticFactory0 = KtDiagnosticFactory0("NON_FINAL_RICH_ERROR_CLASS", ERROR, SourceElementPositioningStrategies.MODALITY_MODIFIER, PsiElement::class, getRendererFactory())
     val ACTUAL_TYPEALIAS_WITH_EXPECT_RICH_ERROR: KtDiagnosticFactory0 = KtDiagnosticFactory0("ACTUAL_TYPEALIAS_WITH_EXPECT_RICH_ERROR", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class, getRendererFactory())
+    val TYPEALIAS_TO_UNION_TYPE_AS_QUALIFIER: KtDiagnosticFactory0 = KtDiagnosticFactory0("TYPEALIAS_TO_UNION_TYPE_AS_QUALIFIER", ERROR, SourceElementPositioningStrategies.DEFAULT, PsiElement::class, getRendererFactory())
 
     override fun getRendererFactory(): BaseDiagnosticRendererFactory = FirErrorsDefaultMessages
 }

@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.backend.common.serialization
 
-import org.jetbrains.kotlin.backend.common.linkage.IrDeserializer
 import org.jetbrains.kotlin.backend.common.serialization.encodings.BinarySymbolData
 import org.jetbrains.kotlin.backend.common.serialization.signature.PublicIdSignatureComputer
 import org.jetbrains.kotlin.ir.*
@@ -84,7 +83,7 @@ abstract class IrModuleDeserializer(
      * Null value means that the set of packages is unknown (or not feasible to be provided).
      * In that case the module may be probed for every sought signature, just in case.
      */
-    abstract fun getDefinedPackageNames(): Set<FqName>?
+    abstract val contributedPackageNames: Set<FqName>?
 
     open val preferLinkingToTheCurrentModule: Boolean get() = true
 
@@ -120,7 +119,7 @@ abstract class IrModuleDeserializer(
 
     val compatibilityMode: CompatibilityMode get() = CompatibilityMode(libraryAbiVersion)
 
-    open fun getAllMatchingSignatures(callableId: CallableId, signatureKind: IrDeserializer.TopLevelSymbolKind): List<IdSignature> {
+    open fun getAllMatchingSignatures(callableId: CallableId, signatureKind: BinarySymbolData.SymbolKind): List<IdSignature> {
         return fileDeserializers.flatMap { [_, fileDeserializer] ->
             fileDeserializer.getAllMatchingSignatures(callableId, signatureKind)
         }
@@ -163,12 +162,10 @@ class IrModuleDeserializerWithBuiltIns(
         symbol.signature to symbol
     }
 
-    private val builtinPackageNames: Set<FqName> =
-        syntheticProvider.operatorsPackageFragment.declarations
-            .map { it.getPackageFragment().packageFqName }
-            .toSet()
-
-    override fun getDefinedPackageNames() = delegate.getDefinedPackageNames()?.plus(builtinPackageNames)
+    override val contributedPackageNames: Set<FqName> = buildSet {
+        this += syntheticProvider.operatorsPackageFragment.packageFqName
+        delegate.contributedPackageNames?.let { addAll(it) }
+    }
 
     private val irBuiltInsCallableIdMap: Map<CallableId, MutableList<IdSignature>> by lazy {
         buildMap {
@@ -253,7 +250,7 @@ class IrModuleDeserializerWithBuiltIns(
         irBuiltIns.functionFactory = syntheticFunctionClassGenerator
     }
 
-    override fun getAllMatchingSignatures(callableId: CallableId, signatureKind: IrDeserializer.TopLevelSymbolKind): List<IdSignature> {
+    override fun getAllMatchingSignatures(callableId: CallableId, signatureKind: BinarySymbolData.SymbolKind): List<IdSignature> {
         irBuiltInsCallableIdMap[callableId]?.let { return it }
         return super.getAllMatchingSignatures(callableId, signatureKind)
     }

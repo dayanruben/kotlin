@@ -637,6 +637,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_FINAL_MEMBER_
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_FINAL_MEMBER_IN_OBJECT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_FINAL_PROPERTY_WITH_EXPLICIT_BACKING_FIELD
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_INTERNAL_PUBLISHED_API
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_LOCAL_DESTRUCTURING_DECLARATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_LOCAL_RETURN_NOT_ALLOWED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_LOCAL_SUSPENSION_POINT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_MEMBER_FUNCTION_NO_BODY
@@ -860,6 +861,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPEALIAS_EXPANSI
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPEALIAS_EXPANSION_DEPRECATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPEALIAS_EXPANSION_DEPRECATION_ERROR
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPEALIAS_SHOULD_EXPAND_TO_CLASS
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPEALIAS_TO_UNION_TYPE_AS_QUALIFIER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPECHECKER_HAS_RUN_INTO_RECURSIVE_PROBLEM
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPE_ARGUMENTS_FOR_OUTER_CLASS_WHEN_NESTED_REFERENCED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPE_ARGUMENTS_NOT_ALLOWED
@@ -918,6 +920,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_ERROR_GET_CLA
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_ERROR_SUPERTYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_FINAL_RICH_ERROR_CLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REDUNDANT_JVM_INLINE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNRESOLVED_REFERENCE_WRONG_COMPANION_RECEIVER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNSUPPORTED_ARRAY_LITERAL_OUTSIDE_OF_ANNOTATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNSUPPORTED_ARRAY_OF_NOTHING_IN_CLASS_LITERAL_LHS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNSUPPORTED_CLASS_LITERALS_WITH_EMPTY_LHS
@@ -3339,6 +3342,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             },
         )
         map.put(NAME_BASED_DESTRUCTURING_UNDERSCORE_WITHOUT_RENAMING, "Underscore in name-based destructuring without renaming is forbidden.")
+        map.put(NON_LOCAL_DESTRUCTURING_DECLARATION, "Destructuring declarations are only allowed for local variables.")
 
         map.put(CONST_VAL_NOT_TOP_LEVEL_OR_OBJECT, "Const 'val' is only allowed on top level, in named objects, in companion objects or companion blocks.")
         map.put(CONST_VAL_WITH_GETTER, "Const 'val' cannot have a getter.")
@@ -4261,6 +4265,12 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             COMPANION_EXTENSION_NULLABLE_RECEIVER,
             "Companion extension receiver type cannot be nullable.",
         )
+        map.put(
+            UNRESOLVED_REFERENCE_WRONG_COMPANION_RECEIVER,
+            "Companion extension ''{0}'' cannot be called on receiver class ''{1}''.",
+            SYMBOL,
+            CLASS_ID,
+        )
         map.put(NON_ERROR_CLASS_EXTENDS_RICH_ERROR, "Non-error class cannot extend 'RichError'.")
         map.put(ERROR_CLASS_HAS_SUPERTYPE, "Error class cannot have any explicit supertypes except 'RichError'.")
         map.put(ERROR_CLASS_HAS_TYPE_PARAMETER, "Error class cannot have type parameters.")
@@ -4274,5 +4284,6 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(ACTUAL_TYPEALIAS_TO_NON_ERROR, "'actual typealias' cannot expand to 'NonError'.")
         map.put(NON_FINAL_RICH_ERROR_CLASS, "Error class must be final.")
         map.put(ACTUAL_TYPEALIAS_WITH_EXPECT_RICH_ERROR, "'actual typealias' cannot be used for 'expect error class/object'.")
+        map.put(TYPEALIAS_TO_UNION_TYPE_AS_QUALIFIER, "Type alias expanding to a union type cannot be used as a qualifier.")
     }
 }
