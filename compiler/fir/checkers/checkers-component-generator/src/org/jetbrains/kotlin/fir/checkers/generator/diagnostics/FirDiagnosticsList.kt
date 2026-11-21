@@ -544,6 +544,8 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<FirRegularClassSymbol>("dslMarkerSymbol")
             parameter<String>("actualTarget")
         }
+
+        val INAPPLICABLE_EAGER_INITIALIZATION by deprecationError<KtElement>(ForbidNonTopLevelEagerInitialization)
     }
 
     val EQUALITY_BOUND by object : DiagnosticGroup("EqualityBound") {
@@ -2143,6 +2145,9 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val ITERATOR_MISSING by error<KtExpression>()
         val HAS_NEXT_MISSING by error<KtExpression>()
         val NEXT_MISSING by error<KtExpression>()
+        val FOR_LOOP_OPERATOR_WILL_BECOME_ERROR by warning<KtExpression>() {
+            parameter<String>("message")
+        }
         val COMPONENT_FUNCTION_MISSING by error<PsiElement> {
             parameter<Name>("missingFunctionName")
             parameter<ConeKotlinType>("destructingType")

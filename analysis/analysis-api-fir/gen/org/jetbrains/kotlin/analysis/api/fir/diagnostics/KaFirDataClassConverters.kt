@@ -13,6 +13,8 @@ import org.jetbrains.kotlin.diagnostics.KtDiagnosticWithSource
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.fir.analysis.diagnostics.js.FirJsErrors
 import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors
+import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors
+import org.jetbrains.kotlin.fir.analysis.diagnostics.wasm.FirWasmErrors
 import org.jetbrains.kotlin.fir.analysis.diagnostics.web.common.FirWebCommonErrors
 import org.jetbrains.kotlin.fir.builder.FirSyntaxErrors
 import org.jetbrains.kotlin.fir.declarations.FirDeclaration
@@ -391,6 +393,13 @@ private fun KaDiagnosticConverterBuilder.addConversions1() {
             token,
         )
     }
+    add(FirNativeErrors.CALLABLE_REFERENCES_TO_VARIADIC_OBJECTIVE_C_METHODS_ARE_NOT_SUPPORTED) { firDiagnostic ->
+        CallableReferencesToVariadicObjectiveCMethodsAreNotSupportedImpl(
+            firSymbolBuilder.buildSymbol(firDiagnostic.a),
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions2() {
@@ -422,6 +431,13 @@ private fun KaDiagnosticConverterBuilder.addConversions2() {
     }
     add(FirWebCommonErrors.NON_ABSTRACT_MEMBER_OF_EXTERNAL_INTERFACE) { firDiagnostic ->
         NonAbstractMemberOfExternalInterfaceImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirWasmErrors.INTERNAL_WASM_EXPORT_NAME_AS_JS_EXPORT_NAME) { firDiagnostic ->
+        InternalWasmExportNameAsJsExportNameImpl(
+            firDiagnostic.a,
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -545,6 +561,18 @@ private fun KaDiagnosticConverterBuilder.addConversions5() {
             token,
         )
     }
+    add(FirWasmErrors.JSCODE_INVALID_PARAMETER_NAME) { firDiagnostic ->
+        JscodeInvalidParameterNameImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirNativeErrors.STRING_AS_VARIADIC_OBJC_PARAM_IS_AMBIGUOUS) { firDiagnostic ->
+        StringAsVariadicObjcParamIsAmbiguousImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions6() {
@@ -579,6 +607,13 @@ private fun KaDiagnosticConverterBuilder.addConversions6() {
         UncheckedCastToExternalInterfaceImpl(
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.b),
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirNativeErrors.FORWARD_DECLARATION_AS_CLASS_LITERAL) { firDiagnostic ->
+        ForwardDeclarationAsClassLiteralImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -760,6 +795,13 @@ private fun KaDiagnosticConverterBuilder.addConversions10() {
             token,
         )
     }
+    add(FirNativeErrors.PROPERTY_MUST_BE_VAR) { firDiagnostic ->
+        PropertyMustBeVarImpl(
+            firDiagnostic.a,
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions11() {
@@ -792,6 +834,12 @@ private fun KaDiagnosticConverterBuilder.addConversions11() {
     }
     add(FirJsErrors.INLINE_CLASS_IN_EXTERNAL_DECLARATION) { firDiagnostic ->
         InlineClassInExternalDeclarationImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirWasmErrors.EXPORT_DECLARATION_WITH_CONTEXT_PARAMETERS) { firDiagnostic ->
+        ExportDeclarationWithContextParametersImpl(
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -833,6 +881,12 @@ private fun KaDiagnosticConverterBuilder.addConversions12() {
     }
     add(FirJvmErrors.NO_REFLECTION_IN_CLASS_PATH) { firDiagnostic ->
         NoReflectionInClassPathImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirNativeErrors.INVALID_OBJC_HIDES_TARGETS) { firDiagnostic ->
+        InvalidObjcHidesTargetsImpl(
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -1164,6 +1218,13 @@ private fun KaDiagnosticConverterBuilder.addConversions20() {
             token,
         )
     }
+    add(FirWasmErrors.NON_EXTERNAL_TYPE_EXTENDS_EXTERNAL_TYPE) { firDiagnostic ->
+        NonExternalTypeExtendsExternalTypeImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions21() {
@@ -1294,6 +1355,12 @@ private fun KaDiagnosticConverterBuilder.addConversions22() {
     }
     add(FirJvmErrors.INAPPLICABLE_JVM_EXPOSE_BOXED_WITH_NAME) { firDiagnostic ->
         InapplicableJvmExposeBoxedWithNameImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirNativeErrors.THROWS_LIST_EMPTY) { firDiagnostic ->
+        ThrowsListEmptyImpl(
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -1507,6 +1574,12 @@ private fun KaDiagnosticConverterBuilder.addConversions27() {
             token,
         )
     }
+    add(FirNativeErrors.STRING_AS_C_OR_OBJC_VARIADIC_ARGUMENT) { firDiagnostic ->
+        StringAsCOrObjcVariadicArgumentImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions28() {
@@ -1596,6 +1669,12 @@ private fun KaDiagnosticConverterBuilder.addConversions30() {
     }
     add(FirJsErrors.EXTERNAL_ENUM_ENTRY_WITH_BODY) { firDiagnostic ->
         ExternalEnumEntryWithBodyImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirWasmErrors.WASM_IMPORT_ON_NON_EXTERNAL_DECLARATION) { firDiagnostic ->
+        WasmImportOnNonExternalDeclarationImpl(
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -2048,6 +2127,14 @@ private fun KaDiagnosticConverterBuilder.addConversions39() {
             token,
         )
     }
+    add(FirNativeErrors.MUST_BE_OBJC_OBJECT_TYPE) { firDiagnostic ->
+        MustBeObjcObjectTypeImpl(
+            firDiagnostic.a,
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.b),
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions40() {
@@ -2139,6 +2226,12 @@ private fun KaDiagnosticConverterBuilder.addConversions41() {
     add(FirJvmErrors.INAPPLICABLE_JVM_FIELD_WARNING) { firDiagnostic ->
         InapplicableJvmFieldWarningImpl(
             firDiagnostic.a,
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirWasmErrors.NESTED_WASM_EXPORT) { firDiagnostic ->
+        NestedWasmExportImpl(
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -2250,6 +2343,21 @@ private fun KaDiagnosticConverterBuilder.addConversions44() {
             token,
         )
     }
+    add(FirNativeErrors.INCOMPATIBLE_THROWS_INHERITED) { firDiagnostic ->
+        IncompatibleThrowsInheritedImpl(
+            firDiagnostic.a.map { firRegularClassSymbol ->
+                firSymbolBuilder.classifierBuilder.buildClassLikeSymbol(firRegularClassSymbol)
+            },
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirNativeErrors.EMPTY_OBJC_NAME) { firDiagnostic ->
+        EmptyObjcNameImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions45() {
@@ -2267,6 +2375,12 @@ private fun KaDiagnosticConverterBuilder.addConversions45() {
     }
     add(FirJvmErrors.JVM_RECORDS_ILLEGAL_BYTECODE_TARGET) { firDiagnostic ->
         JvmRecordsIllegalBytecodeTargetImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirWasmErrors.WASM_IMPORT_EXPORT_VARARG_PARAMETER) { firDiagnostic ->
+        WasmImportExportVarargParameterImpl(
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -2369,7 +2483,7 @@ private fun KaDiagnosticConverterBuilder.addConversions48() {
             token,
         )
     }
-    add(FirWebCommonErrors.INAPPLICABLE_EAGER_INITIALIZATION.warningFactory) { firDiagnostic ->
+    add(FirErrors.INAPPLICABLE_EAGER_INITIALIZATION.warningFactory) { firDiagnostic ->
         InapplicableEagerInitializationWarningImpl(
             firDiagnostic as KtDiagnosticWithSource,
             token,
@@ -2390,6 +2504,12 @@ private fun KaDiagnosticConverterBuilder.addConversions48() {
     add(FirJsErrors.EXPOSED_NOT_EXPORTED_SUPER_INTERFACE.warningFactory) { firDiagnostic ->
         ExposedNotExportedSuperInterfaceWarningImpl(
             firSymbolBuilder.classifierBuilder.buildClassLikeSymbol(firDiagnostic.a),
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirWasmErrors.JSCODE_WRONG_CONTEXT) { firDiagnostic ->
+        JscodeWrongContextImpl(
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -2456,8 +2576,9 @@ private fun KaDiagnosticConverterBuilder.addConversions49() {
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions50() {
-    add(FirJsErrors.JS_MODULE_PROHIBITED_ON_VAR_IN_MODULE_FILE.errorFactory) { firDiagnostic ->
+    add(FirWebCommonErrors.JS_MODULE_PROHIBITED_ON_VAR_IN_MODULE_FILE.errorFactory) { firDiagnostic ->
         JsModuleProhibitedOnVarInModuleFileErrorImpl(
+            firDiagnostic.a,
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -2563,6 +2684,13 @@ private fun KaDiagnosticConverterBuilder.addConversions53() {
     add(FirJvmErrors.INAPPLICABLE_JVM_FIELD) { firDiagnostic ->
         InapplicableJvmFieldImpl(
             firDiagnostic.a,
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirWasmErrors.WASM_IMPORT_EXPORT_UNSUPPORTED_PARAMETER_TYPE) { firDiagnostic ->
+        WasmImportExportUnsupportedParameterTypeImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -3250,6 +3378,23 @@ private fun KaDiagnosticConverterBuilder.addConversions68() {
             token,
         )
     }
+    add(FirNativeErrors.INCOMPATIBLE_OBJC_NAME_OVERRIDE) { firDiagnostic ->
+        IncompatibleObjcNameOverrideImpl(
+            firSymbolBuilder.buildSymbol(firDiagnostic.a),
+            firDiagnostic.b.map { firRegularClassSymbol ->
+                firSymbolBuilder.classifierBuilder.buildClassLikeSymbol(firRegularClassSymbol)
+            },
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirWasmErrors.RESERVED_WORD_AS_JS_EXPORT_NAME) { firDiagnostic ->
+        ReservedWordAsJsExportNameImpl(
+            firDiagnostic.a,
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions69() {
@@ -3649,6 +3794,13 @@ private fun KaDiagnosticConverterBuilder.addConversions75() {
             token,
         )
     }
+    add(FirWasmErrors.JSCODE_UNSUPPORTED_FUNCTION_KIND) { firDiagnostic ->
+        JscodeUnsupportedFunctionKindImpl(
+            firDiagnostic.a,
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions76() {
@@ -3852,6 +4004,12 @@ private fun KaDiagnosticConverterBuilder.addConversions81() {
             token,
         )
     }
+    add(FirWasmErrors.WASI_EXTERNAL_NOT_TOP_LEVEL_FUNCTION) { firDiagnostic ->
+        WasiExternalNotTopLevelFunctionImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions82() {
@@ -3978,6 +4136,13 @@ private fun KaDiagnosticConverterBuilder.addConversions84() {
     }
     add(FirErrors.PRIVATE_PROPERTY_IN_INTERFACE) { firDiagnostic ->
         PrivatePropertyInInterfaceImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirNativeErrors.NATIVE_SPECIFIC_ATOMIC) { firDiagnostic ->
+        NativeSpecificAtomicImpl(
+            firDiagnostic.a,
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -4135,6 +4300,12 @@ private fun KaDiagnosticConverterBuilder.addConversions87() {
             token,
         )
     }
+    add(FirNativeErrors.REDUNDANT_SWIFT_REFINEMENT) { firDiagnostic ->
+        RedundantSwiftRefinementImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions88() {
@@ -4186,6 +4357,13 @@ private fun KaDiagnosticConverterBuilder.addConversions88() {
             firDiagnostic.b.source!!.psi as KtExpression,
             firDiagnostic.c,
             firDiagnostic.d?.source?.psi as? KtExpression,
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirNativeErrors.INVALID_CHARACTERS_NATIVE_ERROR) { firDiagnostic ->
+        InvalidCharactersNativeErrorImpl(
+            firDiagnostic.a,
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -4437,6 +4615,13 @@ private fun KaDiagnosticConverterBuilder.addConversions92() {
             token,
         )
     }
+    add(FirNativeErrors.MUST_NOT_HAVE_EXTENSION_RECEIVER) { firDiagnostic ->
+        MustNotHaveExtensionReceiverImpl(
+            firDiagnostic.a,
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions93() {
@@ -4460,6 +4645,13 @@ private fun KaDiagnosticConverterBuilder.addConversions93() {
     }
     add(FirJvmErrors.USELESS_JVM_EXPOSE_BOXED) { firDiagnostic ->
         UselessJvmExposeBoxedImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirNativeErrors.OVERRIDING_VARIADIC_OBJECTIVE_C_METHODS_IS_NOT_SUPPORTED) { firDiagnostic ->
+        OverridingVariadicObjectiveCMethodsIsNotSupportedImpl(
+            firSymbolBuilder.buildSymbol(firDiagnostic.a),
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -4563,6 +4755,12 @@ private fun KaDiagnosticConverterBuilder.addConversions96() {
             token,
         )
     }
+    add(FirNativeErrors.VARIADIC_C_SPREAD_IS_SUPPORTED_ONLY_FOR_ARRAYOF) { firDiagnostic ->
+        VariadicCSpreadIsSupportedOnlyForArrayofImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions97() {
@@ -4630,8 +4828,9 @@ private fun KaDiagnosticConverterBuilder.addConversions98() {
             token,
         )
     }
-    add(FirJsErrors.JS_MODULE_PROHIBITED_ON_VAR_IN_MODULE_FILE.warningFactory) { firDiagnostic ->
+    add(FirWebCommonErrors.JS_MODULE_PROHIBITED_ON_VAR_IN_MODULE_FILE.warningFactory) { firDiagnostic ->
         JsModuleProhibitedOnVarInModuleFileWarningImpl(
+            firDiagnostic.a,
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -4755,6 +4954,12 @@ private fun KaDiagnosticConverterBuilder.addConversions100() {
     add(FirJsErrors.EXPOSED_NOT_EXPORTED_SUPER_INTERFACE.errorFactory) { firDiagnostic ->
         ExposedNotExportedSuperInterfaceErrorImpl(
             firSymbolBuilder.classifierBuilder.buildClassLikeSymbol(firDiagnostic.a),
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirNativeErrors.INAPPLICABLE_OBJC_OVERRIDE) { firDiagnostic ->
+        InapplicableObjcOverrideImpl(
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -5095,6 +5300,12 @@ private fun KaDiagnosticConverterBuilder.addConversions106() {
             token,
         )
     }
+    add(FirNativeErrors.INAPPLICABLE_EXACT_OBJC_NAME) { firDiagnostic ->
+        InapplicableExactObjcNameImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions107() {
@@ -5146,7 +5357,7 @@ private fun KaDiagnosticConverterBuilder.addConversions108() {
             token,
         )
     }
-    add(FirWebCommonErrors.INAPPLICABLE_EAGER_INITIALIZATION.errorFactory) { firDiagnostic ->
+    add(FirErrors.INAPPLICABLE_EAGER_INITIALIZATION.errorFactory) { firDiagnostic ->
         InapplicableEagerInitializationErrorImpl(
             firDiagnostic as KtDiagnosticWithSource,
             token,
@@ -5316,6 +5527,12 @@ private fun KaDiagnosticConverterBuilder.addConversions110() {
             token,
         )
     }
+    add(FirWasmErrors.WASI_EXTERNAL_FUNCTION_WITHOUT_IMPORT) { firDiagnostic ->
+        WasiExternalFunctionWithoutImportImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions111() {
@@ -5416,6 +5633,13 @@ private fun KaDiagnosticConverterBuilder.addConversions113() {
             token,
         )
     }
+    add(FirNativeErrors.CONSTRUCTOR_DOES_NOT_OVERRIDE_ANY_SUPER_CONSTRUCTOR) { firDiagnostic ->
+        ConstructorDoesNotOverrideAnySuperConstructorImpl(
+            firDiagnostic.a,
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions114() {
@@ -5462,6 +5686,13 @@ private fun KaDiagnosticConverterBuilder.addConversions114() {
     }
     add(FirErrors.NON_ERROR_SUPERTYPE) { firDiagnostic ->
         NonErrorSupertypeImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirNativeErrors.MISSING_EXCEPTION_IN_THROWS_ON_SUSPEND) { firDiagnostic ->
+        MissingExceptionInThrowsOnSuspendImpl(
+            firDiagnostic.a,
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -5616,6 +5847,12 @@ private fun KaDiagnosticConverterBuilder.addConversions117() {
             token,
         )
     }
+    add(FirWasmErrors.ASSOCIATED_OBJECT_INVALID_BINDING) { firDiagnostic ->
+        AssociatedObjectInvalidBindingImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions118() {
@@ -5660,6 +5897,20 @@ private fun KaDiagnosticConverterBuilder.addConversions118() {
     }
     add(FirJsErrors.JS_NO_RUNTIME_FORBIDDEN_CLASS_REFERENCE) { firDiagnostic ->
         JsNoRuntimeForbiddenClassReferenceImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirNativeErrors.VARIADIC_FUNCTION_POINTERS_ARE_NOT_SUPPORTED) { firDiagnostic ->
+        VariadicFunctionPointersAreNotSupportedImpl(
+            firSymbolBuilder.buildSymbol(firDiagnostic.a),
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirWasmErrors.WASM_IMPORT_EXPORT_UNSUPPORTED_RETURN_TYPE) { firDiagnostic ->
+        WasmImportExportUnsupportedReturnTypeImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -5792,6 +6043,18 @@ private fun KaDiagnosticConverterBuilder.addConversions120() {
             token,
         )
     }
+    add(FirNativeErrors.INAPPLICABLE_SHARED_IMMUTABLE_TOP_LEVEL) { firDiagnostic ->
+        InapplicableSharedImmutableTopLevelImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirNativeErrors.MISSING_EXACT_OBJC_NAME) { firDiagnostic ->
+        MissingExactObjcNameImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions121() {
@@ -5836,6 +6099,19 @@ private fun KaDiagnosticConverterBuilder.addConversions121() {
     }
     add(FirJvmErrors.LOCAL_JVM_RECORD) { firDiagnostic ->
         LocalJvmRecordImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirNativeErrors.VARIADIC_OBJC_SPREAD_IS_SUPPORTED_ONLY_FOR_ARRAYOF) { firDiagnostic ->
+        VariadicObjcSpreadIsSupportedOnlyForArrayofImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirWasmErrors.WASM_EXPORT_UNSUPPORTED_FUNCTION_KIND) { firDiagnostic ->
+        WasmExportUnsupportedFunctionKindImpl(
+            firDiagnostic.a,
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -5949,6 +6225,13 @@ private fun KaDiagnosticConverterBuilder.addConversions123() {
             token,
         )
     }
+    add(FirNativeErrors.CALLABLE_REFERENCES_TO_VARIADIC_C_FUNCTIONS_ARE_NOT_SUPPORTED) { firDiagnostic ->
+        CallableReferencesToVariadicCFunctionsAreNotSupportedImpl(
+            firSymbolBuilder.buildSymbol(firDiagnostic.a),
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions124() {
@@ -5995,6 +6278,12 @@ private fun KaDiagnosticConverterBuilder.addConversions124() {
     }
     add(FirJvmErrors.SYNCHRONIZED_IN_ANNOTATION.warningFactory) { firDiagnostic ->
         SynchronizedInAnnotationWarningImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirNativeErrors.TWO_OR_LESS_PARAMETERS_ARE_SUPPORTED_HERE) { firDiagnostic ->
+        TwoOrLessParametersAreSupportedHereImpl(
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -6248,6 +6537,14 @@ private fun KaDiagnosticConverterBuilder.addConversions129() {
     }
     add(FirWebCommonErrors.EXTERNAL_CLASS_CONSTRUCTOR_PROPERTY_PARAMETER) { firDiagnostic ->
         ExternalClassConstructorPropertyParameterImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirWasmErrors.WRONG_JS_INTEROP_TYPE) { firDiagnostic ->
+        WrongJsInteropTypeImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
+            firDiagnostic.b,
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -6516,6 +6813,13 @@ private fun KaDiagnosticConverterBuilder.addConversions134() {
             token,
         )
     }
+    add(FirErrors.FOR_LOOP_OPERATOR_WILL_BECOME_ERROR) { firDiagnostic ->
+        ForLoopOperatorWillBecomeErrorImpl(
+            firDiagnostic.a,
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
     add(FirErrors.EXPECTED_TYPEALIAS) { firDiagnostic ->
         ExpectedTypealiasImpl(
             firDiagnostic as KtDiagnosticWithSource,
@@ -6742,6 +7046,13 @@ private fun KaDiagnosticConverterBuilder.addConversions138() {
             token,
         )
     }
+    add(FirNativeErrors.INCOMPATIBLE_THROWS_OVERRIDE) { firDiagnostic ->
+        IncompatibleThrowsOverrideImpl(
+            firSymbolBuilder.classifierBuilder.buildClassLikeSymbol(firDiagnostic.a),
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions139() {
@@ -6806,6 +7117,12 @@ private fun KaDiagnosticConverterBuilder.addConversions140() {
     }
     add(FirErrors.DYNAMIC_NOT_ALLOWED) { firDiagnostic ->
         DynamicNotAllowedImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirWasmErrors.EXTERNAL_DECLARATION_WITH_CONTEXT_PARAMETERS) { firDiagnostic ->
+        ExternalDeclarationWithContextParametersImpl(
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -6925,6 +7242,13 @@ private fun KaDiagnosticConverterBuilder.addConversions143() {
     }
     add(FirWebCommonErrors.WRONG_DEFAULT_VALUE_FOR_EXTERNAL_FUN_PARAMETER) { firDiagnostic ->
         WrongDefaultValueForExternalFunParameterImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirNativeErrors.CONSTRUCTOR_OVERRIDES_ALREADY_OVERRIDDEN_OBJC_INITIALIZER) { firDiagnostic ->
+        ConstructorOverridesAlreadyOverriddenObjcInitializerImpl(
+            firDiagnostic.a,
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -7206,6 +7530,13 @@ private fun KaDiagnosticConverterBuilder.addConversions149() {
             token,
         )
     }
+    add(FirNativeErrors.IDENTITY_HASH_CODE_ON_VALUE_TYPE) { firDiagnostic ->
+        IdentityHashCodeOnValueTypeImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions150() {
@@ -7437,6 +7768,12 @@ private fun KaDiagnosticConverterBuilder.addConversions156() {
             token,
         )
     }
+    add(FirWasmErrors.WASM_IMPORT_EXPORT_PARAMETER_DEFAULT_VALUE) { firDiagnostic ->
+        WasmImportExportParameterDefaultValueImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions157() {
@@ -7479,6 +7816,12 @@ private fun KaDiagnosticConverterBuilder.addConversions157() {
             token,
         )
     }
+    add(FirNativeErrors.INAPPLICABLE_THREAD_LOCAL) { firDiagnostic ->
+        InapplicableThreadLocalImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions158() {
@@ -7505,6 +7848,12 @@ private fun KaDiagnosticConverterBuilder.addConversions158() {
     add(FirJsErrors.JS_NO_RUNTIME_INTERFACE_AS_REIFIED_TYPE_ARGUMENT) { firDiagnostic ->
         JsNoRuntimeInterfaceAsReifiedTypeArgumentImpl(
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirNativeErrors.INAPPLICABLE_SHARED_IMMUTABLE_PROPERTY) { firDiagnostic ->
+        InapplicableSharedImmutablePropertyImpl(
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -7546,6 +7895,13 @@ private fun KaDiagnosticConverterBuilder.addConversions159() {
             token,
         )
     }
+    add(FirNativeErrors.CANNOT_CHECK_FOR_FORWARD_DECLARATION) { firDiagnostic ->
+        CannotCheckForForwardDeclarationImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions160() {
@@ -7583,6 +7939,13 @@ private fun KaDiagnosticConverterBuilder.addConversions160() {
     }
     add(FirSyntaxErrors.TRAILING_WHITESPACE_REQUIRED) { firDiagnostic ->
         TrailingWhitespaceRequiredImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirNativeErrors.INVALID_OBJC_NAME_FIRST_CHAR) { firDiagnostic ->
+        InvalidObjcNameFirstCharImpl(
+            firDiagnostic.a,
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -7738,6 +8101,12 @@ private fun KaDiagnosticConverterBuilder.addConversions163() {
             token,
         )
     }
+    add(FirNativeErrors.NON_LITERAL_OBJC_NAME_ARG) { firDiagnostic ->
+        NonLiteralObjcNameArgImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions164() {
@@ -7819,6 +8188,12 @@ private fun KaDiagnosticConverterBuilder.addConversions165() {
     }
     add(FirErrors.UNSAFE_CAST_RELYING_ON_NULL) { firDiagnostic ->
         UnsafeCastRelyingOnNullImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirNativeErrors.INVALID_REFINES_IN_SWIFT_TARGETS) { firDiagnostic ->
+        InvalidRefinesInSwiftTargetsImpl(
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -7924,6 +8299,13 @@ private fun KaDiagnosticConverterBuilder.addConversions167() {
             token,
         )
     }
+    add(FirNativeErrors.INVALID_OBJC_NAME_CHARS) { firDiagnostic ->
+        InvalidObjcNameCharsImpl(
+            firDiagnostic.a,
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions168() {
@@ -7957,6 +8339,25 @@ private fun KaDiagnosticConverterBuilder.addConversions168() {
     }
     add(FirErrors.INC_DEC_SHOULD_NOT_RETURN_UNIT) { firDiagnostic ->
         IncDecShouldNotReturnUnitImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirNativeErrors.FORWARD_DECLARATION_AS_REIFIED_TYPE_ARGUMENT) { firDiagnostic ->
+        ForwardDeclarationAsReifiedTypeArgumentImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirWasmErrors.JS_AND_WASM_EXPORTS_ON_SAME_DECLARATION) { firDiagnostic ->
+        JsAndWasmExportsOnSameDeclarationImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirWasmErrors.NESTED_WASM_IMPORT) { firDiagnostic ->
+        NestedWasmImportImpl(
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -8087,6 +8488,15 @@ private fun KaDiagnosticConverterBuilder.addConversions171() {
     }
     add(FirWebCommonErrors.EXTERNAL_DELEGATION) { firDiagnostic ->
         ExternalDelegationImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirNativeErrors.CONFLICTING_OBJC_OVERLOADS) { firDiagnostic ->
+        ConflictingObjcOverloadsImpl(
+            firDiagnostic.a.map { firBasedSymbol ->
+                firSymbolBuilder.buildSymbol(firBasedSymbol)
+            },
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -8396,6 +8806,12 @@ private fun KaDiagnosticConverterBuilder.addConversions177() {
             token,
         )
     }
+    add(FirNativeErrors.SUBTYPE_OF_HIDDEN_FROM_OBJC) { firDiagnostic ->
+        SubtypeOfHiddenFromObjcImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions178() {
@@ -8459,6 +8875,14 @@ private fun KaDiagnosticConverterBuilder.addConversions178() {
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.b),
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.c),
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirNativeErrors.MUST_BE_UNIT_TYPE) { firDiagnostic ->
+        MustBeUnitTypeImpl(
+            firDiagnostic.a,
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.b),
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -8530,6 +8954,14 @@ private fun KaDiagnosticConverterBuilder.addConversions181() {
             token,
         )
     }
+    add(FirNativeErrors.UNCHECKED_CAST_TO_FORWARD_DECLARATION) { firDiagnostic ->
+        UncheckedCastToForwardDeclarationImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.b),
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions182() {
@@ -8562,6 +8994,12 @@ private fun KaDiagnosticConverterBuilder.addConversions182() {
     }
     add(FirWebCommonErrors.COMPANION_OBJECT_IN_EXTERNAL_INTERFACE) { firDiagnostic ->
         CompanionObjectInExternalInterfaceImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirNativeErrors.INVALID_OBJC_NAME) { firDiagnostic ->
+        InvalidObjcNameImpl(
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -8715,6 +9153,12 @@ private fun KaDiagnosticConverterBuilder.addConversions186() {
             token,
         )
     }
+    add(FirWasmErrors.WRONG_JS_FUN_TARGET) { firDiagnostic ->
+        WrongJsFunTargetImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions187() {
@@ -8735,6 +9179,12 @@ private fun KaDiagnosticConverterBuilder.addConversions187() {
     add(FirJvmErrors.MISSING_BUILT_IN_DECLARATION) { firDiagnostic ->
         MissingBuiltInDeclarationImpl(
             firSymbolBuilder.buildSymbol(firDiagnostic.a),
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirNativeErrors.INAPPLICABLE_OBJC_NAME) { firDiagnostic ->
+        InapplicableObjcNameImpl(
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -8819,6 +9269,12 @@ private fun KaDiagnosticConverterBuilder.addConversions188() {
     }
     add(FirJvmErrors.OVERLOADS_WITHOUT_DEFAULT_ARGUMENTS) { firDiagnostic ->
         OverloadsWithoutDefaultArgumentsImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirNativeErrors.INAPPLICABLE_THREAD_LOCAL_TOP_LEVEL) { firDiagnostic ->
+        InapplicableThreadLocalTopLevelImpl(
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -9055,6 +9511,12 @@ private fun KaDiagnosticConverterBuilder.addConversions192() {
             token,
         )
     }
+    add(FirWasmErrors.WASM_EXPORT_ON_EXTERNAL_DECLARATION) { firDiagnostic ->
+        WasmExportOnExternalDeclarationImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions193() {
@@ -9276,6 +9738,16 @@ private fun KaDiagnosticConverterBuilder.addConversions196() {
             token,
         )
     }
+    add(FirNativeErrors.INCOMPATIBLE_OBJC_REFINEMENT_OVERRIDE) { firDiagnostic ->
+        IncompatibleObjcRefinementOverrideImpl(
+            firSymbolBuilder.buildSymbol(firDiagnostic.a),
+            firDiagnostic.b.map { firRegularClassSymbol ->
+                firSymbolBuilder.classifierBuilder.buildClassLikeSymbol(firRegularClassSymbol)
+            },
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
 }
 
 private fun KaDiagnosticConverterBuilder.addConversions197() {
@@ -9358,6 +9830,13 @@ private fun KaDiagnosticConverterBuilder.addConversions199() {
         ImplementationByDelegationWithDifferentGenericSignatureWarningImpl(
             firSymbolBuilder.functionBuilder.buildNamedFunctionSymbol(firDiagnostic.a),
             firSymbolBuilder.functionBuilder.buildNamedFunctionSymbol(firDiagnostic.b),
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirNativeErrors.CONSTRUCTOR_MATCHES_SEVERAL_SUPER_CONSTRUCTORS) { firDiagnostic ->
+        ConstructorMatchesSeveralSuperConstructorsImpl(
+            firDiagnostic.a,
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )

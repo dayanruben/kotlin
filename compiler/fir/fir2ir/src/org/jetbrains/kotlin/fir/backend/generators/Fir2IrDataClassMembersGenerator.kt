@@ -37,7 +37,6 @@ import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin.Companion.GENERA
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin.Companion.GENERATED_INLINE_CLASS_MEMBER
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin.Companion.GENERATED_FULL_VALUE_CLASS_MEMBER
 import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
-import org.jetbrains.kotlin.ir.expressions.IrMemberAccessExpression
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI
 import org.jetbrains.kotlin.ir.symbols.impl.IrValueParameterSymbolImpl
@@ -49,15 +48,14 @@ import org.jetbrains.kotlin.resolve.DataClassResolver
 import org.jetbrains.kotlin.util.OperatorNameConventions.EQUALS
 import org.jetbrains.kotlin.util.OperatorNameConventions.HASH_CODE
 import org.jetbrains.kotlin.util.OperatorNameConventions.TO_STRING
-import org.jetbrains.kotlin.utils.addToStdlib.shouldNotBeCalled
 
 /**
  * A generator that generates synthetic members of data class as well as part of inline class.
  *
- * This one uses [DataClassMembersGenerator] to generate function bodies, shared with the counterpart in psi. But, there are two main
+ * This one uses [DataClassLikeMembersBodyGenerator] to generate function bodies, shared with the counterpart in psi. But, there are two main
  * differences. Unlike the counterpart in psi, which uses descriptor-based logic to determine which members to synthesize, this one uses
  * fir own logic that traverses class hierarchies in fir elements. Also, this one creates and passes IR elements, instead of providing how
- * to declare them, to [DataClassMembersGenerator].
+ * to declare them, to [DataClassLikeMembersBodyGenerator].
  */
 class Fir2IrDataClassMembersGenerator(
     private val c: Fir2IrComponents,
@@ -138,7 +136,7 @@ class Fir2IrDataClassMembersGenerator(
             }
 
             generatedDataValueClassSyntheticFunctionsStorage[irClass] = DataValueClassGeneratedMembersInfo(
-                c, klass, origin, generatedIrFunctions
+                c, klass, generatedIrFunctions
             )
 
             return result
@@ -228,11 +226,10 @@ class Fir2IrDataClassMembersGenerator(
 class Fir2IrDataClassGeneratedMemberBodyGenerator(private val irBuiltins: IrBuiltIns) {
     fun generateBodiesForClassesWithSyntheticDataClassMembers(
         members: Map<IrClass, DataValueClassGeneratedMembersInfo>,
-        symbolTable: SymbolTable,
     ) {
         for ([irClass, info] in members) {
-            (val c = components, val firClass, val origin, val functions = generatedFunctions) = info
-            MyDataClassMethodsGenerator(c, irClass, firClass, origin, symbolTable).generateBodies(functions)
+            (val c = components, val firClass, val functions = generatedFunctions) = info
+            MyDataClassMethodsGenerator(c, irClass, firClass).generateBodies(functions)
         }
     }
 
@@ -240,8 +237,6 @@ class Fir2IrDataClassGeneratedMemberBodyGenerator(private val irBuiltins: IrBuil
         val c: Fir2IrComponents,
         val irClass: IrClass,
         val klass: FirRegularClass,
-        val origin: IrDeclarationOrigin,
-        symbolTable: SymbolTable,
     ) : Fir2IrComponents by c {
         // `irClass` is a source class and definitely is not a lazy class
         @OptIn(UnsafeDuringIrConstructionAPI::class)
@@ -257,14 +252,16 @@ class Fir2IrDataClassGeneratedMemberBodyGenerator(private val irBuiltins: IrBuil
                     EQUALS -> irDataClassMembersGenerator.generateEqualsMethod(irFunction, properties)
                     DATA_CLASS_COPY -> {
                         irFunction.origin = GENERATED_DATA_CLASS_MEMBER
-                        irDataClassMembersGenerator.generateCopyFunction(irFunction, irClass.primaryConstructor!!.symbol)
+                        irDataClassMembersGenerator.generateCopyFunction(irFunction, irClass.primaryConstructor!!.symbol) {
+                            getProperty(it)
+                        }
                     }
                     else -> {
                         require(DataClassResolver.isComponentLike(name)) { "Unknown data class member: $name" }
                         irFunction.origin = GENERATED_DATA_CLASS_MEMBER
                         val index = DataClassResolver.getComponentIndex(irFunction.name.asString())
                         val valueParameter = constructorParameters[index - 1]
-                        val irProperty = irDataClassMembersGenerator.getProperty(valueParameter)
+                        val irProperty = getProperty(valueParameter)
                         irDataClassMembersGenerator.generateComponentFunction(irFunction, irProperty)
                     }
                 }
@@ -282,37 +279,21 @@ class Fir2IrDataClassGeneratedMemberBodyGenerator(private val irBuiltins: IrBuil
             }
         }
 
-        private val irDataClassMembersGenerator = object : IrBasedDataClassMembersGenerator(
+        private fun getProperty(irValueParameter: IrValueParameter): IrProperty {
+            // `irClass` is a source class and definitely is not a lazy class
+            @OptIn(UnsafeDuringIrConstructionAPI::class)
+            return irClass.properties.first { irProperty ->
+                irProperty.name == irValueParameter.name && irProperty.backingField?.type == irValueParameter.type
+            }
+        }
+
+        private val irDataClassMembersGenerator = object : DataClassLikeMembersBodyGenerator(
             IrGeneratorContextBase(irBuiltins),
-            symbolTable,
             irClass,
             irClass.kotlinFqName,
-            origin,
             forbidDirectFieldAccess = false,
             generateBodies = !configuration.skipBodies,
         ) {
-            override fun generateSyntheticFunctionParameterDeclarations(irFunction: IrFunction) {
-                // TODO
-            }
-
-            override fun getProperty(irValueParameter: IrValueParameter?): IrProperty {
-                requireNotNull(irValueParameter)
-                // `irClass` is a source class and definitely is not a lazy class
-                @OptIn(UnsafeDuringIrConstructionAPI::class)
-                return irClass.properties.first { irProperty ->
-                    irProperty.name == irValueParameter.name && irProperty.backingField?.type == irValueParameter.type
-                }
-            }
-
-            inner class Fir2IrHashCodeFunctionInfo(
-                override val symbol: IrSimpleFunctionSymbol,
-                override val hasDispatchReceiver: Boolean,
-            ) : HashCodeFunctionInfo {
-                override fun commitSubstituted(irMemberAccessExpression: IrMemberAccessExpression<*>) {
-                    // TODO
-                }
-            }
-
             private fun getHashCodeFunction(klass: FirRegularClass): FirNamedFunctionSymbol {
                 if (klass.classId == StandardClassIds.Nothing) {
                     // scope of kotlin.Nothing is empty, so we need to search for `hashCode` in the scope of kotlin.Any
@@ -346,10 +327,6 @@ class Fir2IrDataClassGeneratedMemberBodyGenerator(private val irBuiltins: IrBuil
                     }
                 }
 
-            override fun getHashCodeFunctionInfo(type: IrType): HashCodeFunctionInfo {
-                shouldNotBeCalled()
-            }
-
             override fun getHashCodeFunctionInfo(property: IrProperty): HashCodeFunctionInfo {
                 val firProperty = klass.symbol.declaredScope()
                     .getProperties(property.name)
@@ -371,7 +348,7 @@ class Fir2IrDataClassGeneratedMemberBodyGenerator(private val irBuiltins: IrBuil
                         functionSymbol to (firHashCode.dispatchReceiverType != null)
                     }
                 }
-                return Fir2IrHashCodeFunctionInfo(symbol, hasDispatchReceiver)
+                return HashCodeFunctionInfo(symbol, hasDispatchReceiver)
             }
         }
     }

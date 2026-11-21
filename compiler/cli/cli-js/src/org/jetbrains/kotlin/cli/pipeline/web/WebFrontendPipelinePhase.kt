@@ -13,8 +13,8 @@ import org.jetbrains.kotlin.cli.common.messages.SyntaxErrorReporter
 import org.jetbrains.kotlin.cli.extensionsStorage
 import org.jetbrains.kotlin.cli.hasMessageCollectorErrors
 import org.jetbrains.kotlin.cli.js.platformChecker
-import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
+import org.jetbrains.kotlin.cli.jvm.compiler.computeKtSources
 import org.jetbrains.kotlin.cli.jvm.compiler.toVfsBasedProjectEnvironment
 import org.jetbrains.kotlin.cli.pipeline.CheckCompilationErrors
 import org.jetbrains.kotlin.cli.pipeline.ConfigurationPipelineArtifact
@@ -52,7 +52,7 @@ object WebFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifact, W
         val configuration = input.configuration
 
         @OptIn(CoreEnvironmentDeprecation::class)
-        val environmentForJS = KotlinCoreEnvironment.createForProduction(input.rootDisposable, configuration, EnvironmentConfigFiles.JS_CONFIG_FILES)
+        val environmentForJS = KotlinCoreEnvironment.create(input.rootDisposable, configuration)
         configuration.perfManager?.let {
             @OptIn(PotentiallyIncorrectPhaseTimeMeasurement::class)
             it.notifyCurrentPhaseFinishedIfNeeded()
@@ -67,13 +67,10 @@ object WebFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifact, W
         val klibs = loadWebKlibs(configuration, configuration.platformChecker)
 
         val extensionStorage = configuration.extensionsStorage ?: error("Extensions storage is not registered")
+        val vfsBasedProjectEnvironment = environmentForJS.toVfsBasedProjectEnvironment()
 
         val analyzedOutput = if (configuration.parserMode.treeBased) {
-            val groupedSources =
-                collectSources(
-                    configuration,
-                    environmentForJS.toVfsBasedProjectEnvironment()
-                )
+            val groupedSources = collectSources(configuration, vfsBasedProjectEnvironment)
 
             if (
                 groupedSources.isEmpty() &&
@@ -103,7 +100,7 @@ object WebFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifact, W
                 useWasmPlatform = isWasm,
             )
         } else {
-            val sourceFiles = environmentForJS.getSourceFiles()
+            val sourceFiles = vfsBasedProjectEnvironment.computeKtSources(configuration)
             if (
                 sourceFiles.isEmpty() &&
                 !configuration.allowNoSourceFiles &&

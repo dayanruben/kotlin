@@ -10,7 +10,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.psi.impl.PsiFileFactoryImpl
 import org.jetbrains.kotlin.CoreEnvironmentDeprecation
 import org.jetbrains.kotlin.cli.create
-import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.idea.KotlinLanguage
@@ -43,9 +42,8 @@ private fun Path.parseAsKtFile(project: Project): KtFile {
 
 private fun createProjectForParsing(): Project {
     @OptIn(CoreEnvironmentDeprecation::class)
-    return KotlinCoreEnvironment.createForProduction(
+    return KotlinCoreEnvironment.create(
         Disposer.newDisposable("Disposable for project of ${ExperimentalOptInUsageInSourceChecker::class.simpleName}"),
-        CompilerConfiguration.create(),
-        EnvironmentConfigFiles.JVM_CONFIG_FILES
+        CompilerConfiguration.create()
     ).project
 }

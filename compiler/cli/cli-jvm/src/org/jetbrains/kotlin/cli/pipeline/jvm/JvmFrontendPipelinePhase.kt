@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.cli.common.config.KotlinSourceRoot
 import org.jetbrains.kotlin.cli.common.messages.SyntaxErrorReporter
 import org.jetbrains.kotlin.cli.common.modules.ModuleChunk
 import org.jetbrains.kotlin.cli.jvm.compiler.*
+import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreApplicationEnvironment
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment.Companion.configureProjectEnvironment
 import org.jetbrains.kotlin.cli.jvm.config.*
 import org.jetbrains.kotlin.cli.jvm.index.JavaRoot
@@ -49,6 +50,8 @@ import org.jetbrains.kotlin.fir.java.deserialization.JvmClassFileBasedSymbolProv
 import org.jetbrains.kotlin.fir.lightTree.isScript
 import org.jetbrains.kotlin.fir.pipeline.*
 import org.jetbrains.kotlin.fir.session.*
+import org.jetbrains.kotlin.jvm.environment.JvmClasspath
+import org.jetbrains.kotlin.jvm.environment.JvmClasspathRootId
 import org.jetbrains.kotlin.load.kotlin.MetadataFinderFactory
 import org.jetbrains.kotlin.load.kotlin.PackagePartProvider
 import org.jetbrains.kotlin.load.kotlin.VirtualFileFinderFactory
@@ -60,8 +63,6 @@ import org.jetbrains.kotlin.psi.KtImplementationDetail
 import org.jetbrains.kotlin.psi.hmppModuleName
 import org.jetbrains.kotlin.psi.isCommonSource
 import org.jetbrains.kotlin.resolve.jvm.modules.JavaModuleResolver
-import org.jetbrains.kotlin.jvm.environment.JvmClasspath
-import org.jetbrains.kotlin.jvm.environment.JvmClasspathRootId
 import org.jetbrains.kotlin.util.PhaseType
 import org.jetbrains.kotlin.utils.addToStdlib.shouldNotBeCalled
 import org.jetbrains.kotlin.utils.fileUtils.descendantRelativeTo
@@ -200,8 +201,7 @@ object JvmFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifact, J
             true -> {
                 val environment = createProjectEnvironment(
                     configuration,
-                    rootDisposable,
-                    EnvironmentConfigFiles.JVM_CONFIG_FILES
+                    rootDisposable
                 )
                 val sources = { collectSources(configuration, environment) }
                 EnvironmentAndSources(environment, sources)
@@ -214,14 +214,15 @@ object JvmFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifact, J
                 val projectEnvironment = kotlinCoreEnvironment.toVfsBasedProjectEnvironment()
 
                 val sources = {
-                    val ktFiles = kotlinCoreEnvironment.getSourceFiles()
+                    val ktFiles = projectEnvironment.computeKtSources(configuration)
+                    configuration.perfManager?.addSourcesStats(ktFiles.size, ktFiles.countLinesOfCode())
                     ktFiles.forEach { SyntaxErrorReporter.reportSyntaxErrors(it, diagnosticReporter) }
                     groupKtFiles(ktFiles)
                 }
 
                 EnvironmentAndSources(projectEnvironment, sources)
             }
-        }.takeUnless { CheckCompilationErrors.CheckDiagnosticCollector.checkHasErrors(configuration) }
+        }.takeUnless { CheckDiagnosticCollector.checkHasErrors(configuration) }
     }
 
     private fun groupKtFiles(ktFiles: List<KtFile>): GroupedKtSources {
@@ -595,12 +596,11 @@ object JvmFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifact, J
     fun createProjectEnvironment(
         configuration: CompilerConfiguration,
         parentDisposable: Disposable,
-        configFiles: EnvironmentConfigFiles,
     ): VfsBasedProjectEnvironment {
         setupIdeaStandaloneExecution()
 
         @OptIn(CoreEnvironmentDeprecation::class)
-        val appEnv = KotlinCoreEnvironment.getOrCreateApplicationEnvironment(parentDisposable, configuration)
+        val appEnv = KotlinCoreApplicationEnvironment.getOrCreateApplicationEnvironment(parentDisposable)
         // TODO: get rid of projEnv too - seems that all needed components could be easily extracted
         val projectEnvironment = KotlinCoreEnvironment.ProjectEnvironment(parentDisposable, appEnv, configuration)
 
@@ -787,14 +787,7 @@ object JvmFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifact, J
         if (CheckDiagnosticCollector.checkHasErrors(configuration)) return null
 
         @OptIn(CoreEnvironmentDeprecation::class)
-        val environment = KotlinCoreEnvironment.createForProduction(
-            rootDisposable,
-            configuration,
-            EnvironmentConfigFiles.JVM_CONFIG_FILES
-        )
-
-        val sourceFiles = environment.getSourceFiles()
-        perfManager?.addSourcesStats(sourceFiles.size, environment.countLinesOfCode(sourceFiles))
+        val environment = KotlinCoreEnvironment.create(rootDisposable, configuration)
 
         return if (CheckDiagnosticCollector.checkHasErrors(configuration)) null else environment
     }

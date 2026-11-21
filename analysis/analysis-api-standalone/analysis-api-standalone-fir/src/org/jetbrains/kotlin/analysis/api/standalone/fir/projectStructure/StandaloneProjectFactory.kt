@@ -3,11 +3,17 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
+@file:Suppress("UnstableApiUsage")
+
 package org.jetbrains.kotlin.analysis.api.standalone.fir.projectStructure
 
+import com.intellij.DynamicBundle
+import com.intellij.codeInsight.ContainerProvider
 import com.intellij.codeInsight.ExternalAnnotationsManager
 import com.intellij.codeInsight.InferredAnnotationsManager
+import com.intellij.codeInsight.runner.JavaMainMethodProvider
 import com.intellij.core.CoreApplicationEnvironment
+import com.intellij.core.CoreApplicationEnvironment.registerApplicationExtensionPoint
 import com.intellij.core.CoreJavaFileManager
 import com.intellij.core.CorePackageIndex
 import com.intellij.ide.highlighter.JavaFileType
@@ -25,8 +31,10 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.PsiJavaModuleModificationTracker
 import com.intellij.psi.impl.file.impl.JavaFileManager
 import com.intellij.psi.impl.smartPointers.PsiClassReferenceTypePointerFactory
+import com.intellij.psi.impl.smartPointers.SmartPointerAnchorProvider
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl
 import com.intellij.psi.impl.smartPointers.SmartTypePointerManagerImpl
+import com.intellij.psi.meta.MetaDataContributor
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
 import com.intellij.util.io.URLUtil.JAR_PROTOCOL
@@ -44,6 +52,7 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.allDirectDependencies
 import org.jetbrains.kotlin.analysis.api.resolve.extensions.KaResolveExtensionProvider
 import org.jetbrains.kotlin.analysis.api.standalone.StandaloneWorkaroundApi
+import org.jetbrains.kotlin.analysis.api.standalone.fir.KotlinCoreApplicationEnvironmentForAnalysisApiTests
 import org.jetbrains.kotlin.analysis.api.standalone.fir.declarations.KotlinStandaloneIndexCache
 import org.jetbrains.kotlin.analysis.api.standalone.fir.declarations.KotlinStandaloneJvmDependenciesIndex
 import org.jetbrains.kotlin.analysis.api.standalone.fir.java.KotlinStandaloneJavaModuleAccessibilityChecker
@@ -55,6 +64,7 @@ import org.jetbrains.kotlin.analysis.decompiler.stub.file.ClsKotlinBinaryClassCa
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.create
 import org.jetbrains.kotlin.cli.jvm.compiler.*
+import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreApplicationEnvironment
 import org.jetbrains.kotlin.cli.jvm.index.JavaRoot
 import org.jetbrains.kotlin.cli.jvm.index.JvmDependenciesDynamicCompoundIndex
 import org.jetbrains.kotlin.cli.jvm.index.SingleJavaFileRootsIndex
@@ -79,14 +89,17 @@ import kotlin.io.path.isDirectory
 object StandaloneProjectFactory {
     fun createProjectEnvironment(
         projectDisposable: Disposable,
-        applicationEnvironmentMode: KotlinCoreApplicationEnvironmentMode,
-        compilerConfiguration: CompilerConfiguration = CompilerConfiguration.create(),
+        unitTestMode: Boolean,
     ): KotlinCoreProjectEnvironment {
+        val environmentFactory = when (unitTestMode) {
+            false -> KotlinCoreApplicationEnvironment.environmentFactoryForProduction
+            true -> ::KotlinCoreApplicationEnvironmentForAnalysisApiTests
+        }
+
         @OptIn(CoreEnvironmentDeprecation::class)
-        val applicationEnvironment = KotlinCoreEnvironment.getOrCreateApplicationEnvironment(
+        val applicationEnvironment = KotlinCoreApplicationEnvironment.getOrCreateApplicationEnvironment(
             projectDisposable = projectDisposable,
-            compilerConfiguration,
-            applicationEnvironmentMode,
+            environmentFactory,
         )
 
         // JAR/klib files used in the Standalone Analysis API session remain open because of a global ZIP cache in IntelliJ.
@@ -123,7 +136,7 @@ object StandaloneProjectFactory {
     @OptIn(KtPlatformInterface::class)
     private fun registerApplicationServices(applicationEnvironment: KotlinCoreApplicationEnvironment) {
         val application = applicationEnvironment.application
-        KotlinCoreEnvironment.underApplicationLock {
+        KotlinCoreApplicationEnvironment.underApplicationLock {
             if (application.getServiceIfCreated(KotlinStandaloneIndexCache::class.java) != null) {
                 // application services already registered by som other threads, tests
                 return
@@ -152,14 +165,21 @@ object StandaloneProjectFactory {
     private fun registerApplicationExtensionPoints(applicationEnvironment: KotlinCoreApplicationEnvironment) {
         val applicationArea = applicationEnvironment.application.extensionArea
         if (!applicationArea.hasExtensionPoint(ClassTypePointerFactory.EP_NAME)) {
-            KotlinCoreEnvironment.underApplicationLock {
+            KotlinCoreApplicationEnvironment.underApplicationLock {
                 if (applicationArea.hasExtensionPoint(ClassTypePointerFactory.EP_NAME)) return@underApplicationLock
-                CoreApplicationEnvironment.registerApplicationExtensionPoint(
+                registerApplicationExtensionPoint(
                     ClassTypePointerFactory.EP_NAME,
                     ClassTypePointerFactory::class.java
                 )
                 applicationArea.getExtensionPoint(ClassTypePointerFactory.EP_NAME)
                     .registerExtension(PsiClassReferenceTypePointerFactory(), applicationEnvironment.application)
+
+                registerApplicationExtensionPoint(DynamicBundle.LanguageBundleEP.EP_NAME, DynamicBundle.LanguageBundleEP::class.java)
+                registerApplicationExtensionPoint(FileContextProvider.EP_NAME, FileContextProvider::class.java)
+                registerApplicationExtensionPoint(MetaDataContributor.EP_NAME, MetaDataContributor::class.java)
+                registerApplicationExtensionPoint(JavaMainMethodProvider.EP_NAME, JavaMainMethodProvider::class.java)
+                registerApplicationExtensionPoint(ContainerProvider.EP_NAME, ContainerProvider::class.java)
+                registerApplicationExtensionPoint(SmartPointerAnchorProvider.EP_NAME, SmartPointerAnchorProvider::class.java)
             }
         }
     }

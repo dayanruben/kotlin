@@ -3,42 +3,29 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-@file:Suppress("DEPRECATION", "DEPRECATION_ERROR")
+@file:Suppress("DEPRECATION", "DEPRECATION_ERROR", "UnstableApiUsage")
 
 package org.jetbrains.kotlin.cli.jvm.compiler
 
 import com.intellij.codeInsight.ExternalAnnotationsManager
 import com.intellij.codeInsight.InferredAnnotationsManager
 import com.intellij.core.CoreApplicationEnvironment
+import com.intellij.core.CoreApplicationEnvironment.registerExtensionPoint
 import com.intellij.core.CoreJavaFileManager
-import com.intellij.core.JavaCoreProjectEnvironment
 import com.intellij.ide.highlighter.JavaFileType
-import com.intellij.lang.java.JavaParserDefinition
+import com.intellij.lang.jvm.facade.JvmElementProvider
 import com.intellij.mock.MockProject
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.Application
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.TransactionGuard
-import com.intellij.openapi.application.TransactionGuardImpl
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionsArea
-import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.*
-import com.intellij.openapi.vfs.impl.ZipHandler
-import com.intellij.pom.java.InternalPersistentJavaLanguageLevelReaderService
 import com.intellij.psi.PsiElementFinder
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiNameHelper
 import com.intellij.psi.impl.*
 import com.intellij.psi.impl.file.impl.JavaFileManager
-import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.util.JavaClassSupers
 import com.intellij.util.io.URLUtil
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.CoreEnvironmentDeprecation
 import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.cli.CliDiagnostics.INITIALIZATION_WARNING
@@ -47,7 +34,6 @@ import org.jetbrains.kotlin.cli.common.*
 import org.jetbrains.kotlin.cli.common.config.ContentRoot
 import org.jetbrains.kotlin.cli.common.config.KotlinSourceRoot
 import org.jetbrains.kotlin.cli.common.environment.setIdeaIoUseFallback
-import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.extensionsStorage
 import org.jetbrains.kotlin.cli.jvm.config.*
 import org.jetbrains.kotlin.cli.jvm.index.*
@@ -58,15 +44,11 @@ import org.jetbrains.kotlin.cli.reportInfo
 import org.jetbrains.kotlin.compiler.plugin.*
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.extensions.*
-import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.jvm.environment.JvmClasspath
 import org.jetbrains.kotlin.load.java.structure.impl.source.JavaElementSourceFactory
 import org.jetbrains.kotlin.load.java.structure.impl.source.JavaFixedElementSourceFactory
-import org.jetbrains.kotlin.load.kotlin.KotlinBinaryClassCache
 import org.jetbrains.kotlin.load.kotlin.MetadataFinderFactory
 import org.jetbrains.kotlin.load.kotlin.VirtualFileFinderFactory
-import org.jetbrains.kotlin.parsing.KotlinParserDefinition
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.jvm.KotlinJavaPsiFacade
 import org.jetbrains.kotlin.resolve.jvm.modules.JavaModuleResolver
 import java.io.File
@@ -74,16 +56,14 @@ import java.io.File
 @OptIn(K1Deprecation::class, CoreEnvironmentDeprecation::class)
 class KotlinCoreEnvironment private constructor(
     val projectEnvironment: ProjectEnvironment,
-    val configuration: CompilerConfiguration,
-    configFiles: EnvironmentConfigFiles
+    val configuration: CompilerConfiguration
 ) {
 
     class ProjectEnvironment(
         disposable: Disposable,
         applicationEnvironment: KotlinCoreApplicationEnvironment,
         configuration: CompilerConfiguration
-    ) :
-        KotlinCoreProjectEnvironment(disposable, applicationEnvironment) {
+    ) : KotlinCoreProjectEnvironment(disposable, applicationEnvironment) {
 
         val jarFileSystem: VirtualFileSystem
 
@@ -182,7 +162,6 @@ class KotlinCoreEnvironment private constructor(
         }
     }
 
-    private val sourceFiles = mutableListOf<KtFile>()
     private val rootsIndex: JvmDependenciesDynamicCompoundIndex
 
     val packagePartProviders: List<JvmPackagePartProvider>
@@ -194,15 +173,6 @@ class KotlinCoreEnvironment private constructor(
     init {
         projectEnvironment.configureProjectEnvironment(configuration)
         val project = projectEnvironment.project
-
-        sourceFiles += createSourceFilesFromSourceRoots(
-            configuration, project,
-            getSourceRootsCheckingForDuplicates(configuration)
-        )
-
-        if (!configuration.dontSortSourceFiles) {
-            sourceFiles.sortBy { it.virtualFile.path }
-        }
 
         val javaFileManager = project.getService(CoreJavaFileManager::class.java) as KotlinCliJavaFileManagerImpl
 
@@ -274,15 +244,6 @@ class KotlinCoreEnvironment private constructor(
         project.setupHighestLanguageLevel()
     }
 
-    /** Scope-based factory for the K1 analysis entry points only; K2 code uses the [JvmClasspath] overload. */
-    @K1Deprecation
-    fun createPackagePartProvider(scope: GlobalSearchScope): JvmPackagePartProvider {
-        return JvmPackagePartProvider(configuration.languageVersionSettings) { it in scope }.apply {
-            addRoots(initialRoots, configuration)
-            packagePartProviders += this
-        }
-    }
-
     fun createPackagePartProvider(classpath: JvmClasspath): JvmPackagePartProvider {
         return JvmPackagePartProvider(configuration.languageVersionSettings, classpath).apply {
             addRoots(initialRoots, configuration)
@@ -295,12 +256,6 @@ class KotlinCoreEnvironment private constructor(
 
     val project: Project
         get() = projectEnvironment.project
-
-    fun countLinesOfCode(sourceFiles: List<KtFile>): Int =
-        sourceFiles.sumBy { sourceFile ->
-            val text = sourceFile.text
-            StringUtil.getLineBreakCount(text) + (if (StringUtil.endsWithLineBreak(text)) 0 else 1)
-        }
 
     /**
      * The classpath roots this compilation indexed, in classpath order. A root is named by its identity
@@ -369,226 +324,22 @@ class KotlinCoreEnvironment private constructor(
     private fun findJarRoot(file: File): VirtualFile? =
         projectEnvironment.jarFileSystem.findFileByPath("$file${URLUtil.JAR_SEPARATOR}")
 
-    fun getSourceFiles(): List<KtFile> = sourceFiles
-
     companion object {
-        private val LOG = Logger.getInstance(KotlinCoreEnvironment::class.java)
-
-        @PublishedApi
-        internal val APPLICATION_LOCK = Any()
-
-        private var ourApplicationEnvironment: KotlinCoreApplicationEnvironment? = null
-        private var ourProjectCount = 0
-
-        inline fun <R> underApplicationLock(action: () -> R): R =
-            synchronized(APPLICATION_LOCK) { action() }
-
         @JvmStatic
         @CoreEnvironmentDeprecation
-        fun createForProduction(
-            projectDisposable: Disposable,
-            configuration: CompilerConfiguration,
-            configFiles: EnvironmentConfigFiles,
-        ): KotlinCoreEnvironment {
+        fun create(projectDisposable: Disposable, configuration: CompilerConfiguration): KotlinCoreEnvironment {
             setupIdeaStandaloneExecution()
-            val appEnv = getOrCreateApplicationEnvironment(projectDisposable, configuration)
+            val appEnv = KotlinCoreApplicationEnvironment.getOrCreateApplicationEnvironment(projectDisposable)
             val projectEnv = ProjectEnvironment(projectDisposable, appEnv, configuration)
-            val environment = KotlinCoreEnvironment(projectEnv, configuration, configFiles)
+            val environment = KotlinCoreEnvironment(projectEnv, configuration)
 
             return environment
         }
 
         @JvmStatic
         @CoreEnvironmentDeprecation
-        fun createForProduction(
-            projectEnvironment: ProjectEnvironment,
-            configuration: CompilerConfiguration,
-            configFiles: EnvironmentConfigFiles,
-        ): KotlinCoreEnvironment {
-            return KotlinCoreEnvironment(projectEnvironment, configuration, configFiles)
-        }
-
-        @TestOnly
-        @JvmStatic
-        @CoreEnvironmentDeprecation
-        fun createForTests(
-            parentDisposable: Disposable, initialConfiguration: CompilerConfiguration, extensionConfigs: EnvironmentConfigFiles
-        ): KotlinCoreEnvironment {
-            val configuration = initialConfiguration.copy()
-            // Tests are supposed to create a single project and dispose it right after use
-            val appEnv = createApplicationEnvironment(
-                parentDisposable,
-                KotlinCoreApplicationEnvironmentMode.UnitTest,
-            )
-            val projectEnv = ProjectEnvironment(parentDisposable, appEnv, configuration)
-            return KotlinCoreEnvironment(projectEnv, configuration, extensionConfigs)
-        }
-
-        @TestOnly
-        @JvmStatic
-        @CoreEnvironmentDeprecation
-        fun createForParallelTests(
-            projectDisposable: Disposable,
-            initialConfiguration: CompilerConfiguration,
-            extensionConfigs: EnvironmentConfigFiles,
-        ): KotlinCoreEnvironment {
-            val configuration = initialConfiguration.copy()
-            val appEnv = getOrCreateApplicationEnvironmentForTests(projectDisposable, configuration)
-            val projectEnv = ProjectEnvironment(projectDisposable, appEnv, configuration)
-            return KotlinCoreEnvironment(projectEnv, configuration, extensionConfigs)
-        }
-
-        @TestOnly
-        @JvmStatic
-        @CoreEnvironmentDeprecation
-        fun createForTests(
-            projectEnvironment: ProjectEnvironment, initialConfiguration: CompilerConfiguration, extensionConfigs: EnvironmentConfigFiles
-        ): KotlinCoreEnvironment {
-            return KotlinCoreEnvironment(projectEnvironment, initialConfiguration, extensionConfigs)
-        }
-
-        @TestOnly
-        @CoreEnvironmentDeprecation
-        fun createProjectEnvironmentForTests(projectDisposable: Disposable, configuration: CompilerConfiguration): ProjectEnvironment {
-            val appEnv = createApplicationEnvironment(
-                projectDisposable,
-                KotlinCoreApplicationEnvironmentMode.UnitTest,
-            )
-            return ProjectEnvironment(projectDisposable, appEnv, configuration)
-        }
-
-        // used in the daemon for jar cache cleanup
-        @CoreEnvironmentDeprecation
-        val applicationEnvironment: KotlinCoreApplicationEnvironment? get() = ourApplicationEnvironment
-
-        @CoreEnvironmentDeprecation
-        fun getOrCreateApplicationEnvironmentForProduction(
-            projectDisposable: Disposable,
-            configuration: CompilerConfiguration,
-        ): KotlinCoreApplicationEnvironment = getOrCreateApplicationEnvironment(
-            projectDisposable,
-            configuration,
-            KotlinCoreApplicationEnvironmentMode.Production,
-        )
-
-        @CoreEnvironmentDeprecation
-        fun getOrCreateApplicationEnvironmentForTests(
-            projectDisposable: Disposable,
-            configuration: CompilerConfiguration,
-        ): KotlinCoreApplicationEnvironment = getOrCreateApplicationEnvironment(
-            projectDisposable,
-            configuration,
-            KotlinCoreApplicationEnvironmentMode.UnitTest,
-        )
-
-        /**
-         * Test or Production mode is determined by [CLIConfigurationKeys.TEST_ENVIRONMENT] configuration key
-         */
-        @CoreEnvironmentDeprecation
-        fun getOrCreateApplicationEnvironment(
-            projectDisposable: Disposable,
-            configuration: CompilerConfiguration,
-        ): KotlinCoreApplicationEnvironment {
-            val mode = when (configuration.testEnvironment) {
-                false -> KotlinCoreApplicationEnvironmentMode.Production
-                true -> KotlinCoreApplicationEnvironmentMode.UnitTest
-            }
-            return getOrCreateApplicationEnvironment(projectDisposable, configuration, mode)
-        }
-
-        @CoreEnvironmentDeprecation
-        fun getOrCreateApplicationEnvironment(
-            projectDisposable: Disposable,
-            configuration: CompilerConfiguration,
-            environmentMode: KotlinCoreApplicationEnvironmentMode,
-        ): KotlinCoreApplicationEnvironment {
-            synchronized(APPLICATION_LOCK) {
-                if (ourApplicationEnvironment == null) {
-                    val disposable = Disposer.newDisposable("Disposable for the KotlinCoreApplicationEnvironment")
-                    ourApplicationEnvironment = createApplicationEnvironment(
-                        disposable,
-                        environmentMode,
-                    )
-                    ourProjectCount = 0
-                    Disposer.register(disposable, Disposable {
-                        synchronized(APPLICATION_LOCK) {
-                            ourApplicationEnvironment = null
-                        }
-                    })
-                }
-                try {
-                    val disposeAppEnv =
-                        CompilerSystemProperties.KOTLIN_COMPILER_ENVIRONMENT_KEEPALIVE_PROPERTY.value.toBooleanLenient() != true
-                    // Disposer uses identity of passed object to deduplicate registered disposables
-                    // We should everytime pass new instance to avoid un-registering from previous one
-                    @Suppress("ObjectLiteralToLambda")
-                    Disposer.register(projectDisposable, object : Disposable {
-                        override fun dispose() {
-                            synchronized(APPLICATION_LOCK) {
-                                // Build-systems may run many instances of the compiler in parallel
-                                // All projects share the same ApplicationEnvironment, and when the last project is disposed,
-                                // the ApplicationEnvironment is disposed as well
-                                if (--ourProjectCount <= 0) {
-                                    // Do not use this property unless you sure need it, causes Application to MEMORY LEAK
-                                    // Only valid use-case is when Application should be cached to avoid
-                                    // initialization costs
-                                    if (disposeAppEnv) {
-                                        disposeApplicationEnvironment()
-                                    } else {
-                                        ourApplicationEnvironment?.idleCleanup()
-                                    }
-                                }
-                            }
-                        }
-                    })
-                } finally {
-                    ourProjectCount++
-                }
-
-                return ourApplicationEnvironment!!
-            }
-        }
-
-        /**
-         * This method is also used in Gradle after configuration phase finished.
-         */
-        @JvmStatic
-        @CoreEnvironmentDeprecation
-        fun disposeApplicationEnvironment() {
-            synchronized(APPLICATION_LOCK) {
-                val environment = ourApplicationEnvironment ?: return
-                ourApplicationEnvironment = null
-                Disposer.dispose(environment.parentDisposable)
-                resetApplicationManager(environment.application)
-                ZipHandler.clearFileAccessorCache()
-            }
-        }
-
-        /**
-         * Resets the application managed by [ApplicationManager] to `null`. If [applicationToReset] is specified, [resetApplicationManager]
-         * will only reset the application if it's the expected one. Otherwise, the application will already have been changed to another
-         * application. For example, application disposal can trigger one of the disposables registered via
-         * [ApplicationManager.setApplication], which reset the managed application to the previous application.
-         */
-        @JvmStatic
-        @CoreEnvironmentDeprecation
-        fun resetApplicationManager(applicationToReset: Application? = null) {
-            val currentApplication = ApplicationManager.getApplication() ?: return
-            if (applicationToReset != null && applicationToReset != currentApplication) {
-                return
-            }
-
-            try {
-                val ourApplicationField = ApplicationManager::class.java.getDeclaredField("ourApplication")
-                ourApplicationField.isAccessible = true
-                ourApplicationField.set(null, null)
-            } catch (exception: Exception) {
-                // Resetting the application manager is not critical in a production context. If the reflective access fails, we shouldn't
-                // expose the user to the failure.
-                if (currentApplication.isUnitTestMode) {
-                    throw exception
-                }
-            }
+        fun create(projectEnvironment: ProjectEnvironment, configuration: CompilerConfiguration): KotlinCoreEnvironment {
+            return KotlinCoreEnvironment(projectEnvironment, configuration)
         }
 
         @JvmStatic
@@ -599,9 +350,6 @@ class KotlinCoreEnvironment private constructor(
                 .setInt(null, FileUtilRt.LARGE_FOR_CONTENT_LOADING)
 
             registerExtensionsFromPlugins(configuration)
-
-            registerProjectServicesForCLI(this)
-
             registerProjectServices(project)
 
             for (extension in configuration.getCompilerExtensions(CompilerConfigurationExtension)) {
@@ -609,19 +357,7 @@ class KotlinCoreEnvironment private constructor(
             }
         }
 
-        private fun createApplicationEnvironment(
-            parentDisposable: Disposable,
-            environmentMode: KotlinCoreApplicationEnvironmentMode,
-        ): KotlinCoreApplicationEnvironment {
-            val applicationEnvironment = KotlinCoreApplicationEnvironment.create(parentDisposable, environmentMode)
-
-            registerApplicationServicesForCLI(applicationEnvironment)
-            registerApplicationServices(applicationEnvironment)
-
-            return applicationEnvironment
-        }
-
-        internal fun registerExtensionsFromPlugins(project: MockProject, configuration: CompilerConfiguration) {
+        private fun registerExtensionsFromPlugins(project: MockProject, configuration: CompilerConfiguration) {
             fun createErrorMessage(extension: Any): String {
                 return "The provided plugin ${extension.javaClass.name} is not compatible with this version of compiler"
             }
@@ -635,53 +371,12 @@ class KotlinCoreEnvironment private constructor(
             extensionStorage.registerInProject(project) { createErrorMessage(it) }
         }
 
-        private fun registerApplicationServicesForCLI(applicationEnvironment: KotlinCoreApplicationEnvironment) {
-            // ability to get text from annotations xml files
-            applicationEnvironment.registerFileType(PlainTextFileType.INSTANCE, "xml")
-            applicationEnvironment.registerParserDefinition(JavaParserDefinition())
-        }
-
-        // made public for Upsource
-        @Suppress("MemberVisibilityCanBePrivate")
-        @JvmStatic
-        @CoreEnvironmentDeprecation
-        fun registerApplicationServices(applicationEnvironment: KotlinCoreApplicationEnvironment) {
-            with(applicationEnvironment) {
-                registerFileType(KotlinFileType.INSTANCE, "kt")
-                registerFileType(KotlinFileType.INSTANCE, KotlinParserDefinition.STD_SCRIPT_SUFFIX)
-                registerParserDefinition(KotlinParserDefinition())
-                application.registerService(KotlinBinaryClassCache::class.java, KotlinBinaryClassCache())
-                application.registerService(JavaClassSupers::class.java, JavaClassSupersImpl::class.java)
-                application.registerService(TransactionGuard::class.java, TransactionGuardImpl::class.java)
-                application.registerService(VirtualFileSetFactory::class.java, KotlinCoreVirtualFileSetFactory)
-                application.registerService(InternalPersistentJavaLanguageLevelReaderService::class.java, InternalPersistentJavaLanguageLevelReaderService.DefaultImpl())
-            }
-        }
-
         @JvmStatic
         @CoreEnvironmentDeprecation
         fun registerProjectExtensionPoints(area: ExtensionsArea) {
-            CoreApplicationEnvironment.registerExtensionPoint(
-                area, PsiTreeChangePreprocessor.EP.name, PsiTreeChangePreprocessor::class.java
-            )
-            CoreApplicationEnvironment.registerExtensionPoint(area, PsiElementFinder.EP.name, PsiElementFinder::class.java)
-
-            IdeaExtensionPoints.registerVersionSpecificProjectExtensionPoints(area)
-        }
-
-        // made public for Upsource
-        @JvmStatic
-        @Deprecated(
-            "Use registerProjectServices(project) instead.",
-            ReplaceWith("registerProjectServices(projectEnvironment.project)"),
-            level = DeprecationLevel.ERROR,
-        )
-        @CoreEnvironmentDeprecation
-        fun registerProjectServices(
-            projectEnvironment: JavaCoreProjectEnvironment,
-            @Suppress("UNUSED_PARAMETER") messageCollector: MessageCollector?
-        ) {
-            registerProjectServices(projectEnvironment.project)
+            registerExtensionPoint(area, PsiTreeChangePreprocessor.EP.name, PsiTreeChangePreprocessor::class.java)
+            registerExtensionPoint(area, PsiElementFinder.EP.name, PsiElementFinder::class.java)
+            registerExtensionPoint(area, JvmElementProvider.EP_NAME, JvmElementProvider::class.java)
         }
 
         // made public for Android Lint
@@ -696,14 +391,6 @@ class KotlinCoreEnvironment private constructor(
                     registerService(PsiNameHelper::class.java, PsiNameHelperImpl::class.java)
                 }
             }
-        }
-
-        @CoreEnvironmentDeprecation
-        fun registerProjectServicesForCLI(@Suppress("UNUSED_PARAMETER") projectEnvironment: JavaCoreProjectEnvironment) {
-            /**
-             * Note that Kapt may restart code analysis process, and CLI services should be aware of that.
-             * Use PsiManager.getModificationTracker() to ensure that all the data you cached is still valid.
-             */
         }
     }
 }

@@ -16,7 +16,6 @@ import com.intellij.psi.impl.source.tree.TreeCopyHandler
 import org.jetbrains.kotlin.CoreEnvironmentDeprecation
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.cli.create
-import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.name.FqName
@@ -193,10 +192,9 @@ class BatchingPackageInserter(testServices: TestServices) : ReversibleSourceFile
         val configuration = CompilerConfiguration.create()
 
         @OptIn(CoreEnvironmentDeprecation::class)
-        val environment = KotlinCoreEnvironment.createForProduction(
+        val environment = KotlinCoreEnvironment.create(
             projectDisposable = testServices.compilerConfigurationProvider.testRootDisposable,
-            configuration = configuration,
-            configFiles = EnvironmentConfigFiles.METADATA_CONFIG_FILES
+            configuration = configuration
         )
 
         synchronized(lock) {

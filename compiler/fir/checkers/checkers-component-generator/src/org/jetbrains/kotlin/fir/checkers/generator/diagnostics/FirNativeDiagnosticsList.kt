@@ -6,8 +6,6 @@
 package org.jetbrains.kotlin.fir.checkers.generator.diagnostics
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.config.LanguageFeature.*
-import org.jetbrains.kotlin.util.PrivateForInline
 import org.jetbrains.kotlin.fir.checkers.generator.diagnostics.model.DiagnosticList
 import org.jetbrains.kotlin.fir.checkers.generator.diagnostics.model.PositioningStrategy
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
@@ -18,6 +16,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.util.PrivateForInline
 
 @Suppress("UNUSED_VARIABLE", "ClassName", "unused")
 @OptIn(PrivateForInline::class)
@@ -37,7 +36,6 @@ object NATIVE_DIAGNOSTICS_LIST : DiagnosticList("FirNativeErrors") {
         val INAPPLICABLE_SHARED_IMMUTABLE_TOP_LEVEL by error<KtElement>()
         val INAPPLICABLE_THREAD_LOCAL by error<KtElement>()
         val INAPPLICABLE_THREAD_LOCAL_TOP_LEVEL by error<KtElement>()
-        val INAPPLICABLE_EAGER_INITIALIZATION by deprecationError<KtElement>(ForbidNonTopLevelEagerInitialization)
         val INVALID_CHARACTERS_NATIVE_ERROR by error<PsiElement>(PositioningStrategy.NAME_IDENTIFIER) {
             parameter<String>("message")
         }
@@ -126,6 +124,7 @@ object NATIVE_DIAGNOSTICS_LIST : DiagnosticList("FirNativeErrors") {
             parameter<FirBasedSymbol<*>>("function")
         }
         val STRING_AS_VARIADIC_OBJC_PARAM_IS_AMBIGUOUS by error<KtElement> {}
+        val STRING_AS_C_OR_OBJC_VARIADIC_ARGUMENT by warning<KtElement> {}
         val VARIADIC_OBJC_SPREAD_IS_SUPPORTED_ONLY_FOR_ARRAYOF by error<KtElement> {}
         val VARIADIC_C_SPREAD_IS_SUPPORTED_ONLY_FOR_ARRAYOF by error<KtElement> {}
     }

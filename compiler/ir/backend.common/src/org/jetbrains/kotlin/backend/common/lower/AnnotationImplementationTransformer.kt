@@ -18,12 +18,14 @@ import org.jetbrains.kotlin.ir.builders.declarations.buildClass
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
 import org.jetbrains.kotlin.ir.expressions.IrExpression
+import org.jetbrains.kotlin.ir.expressions.IrMemberAccessExpression
 import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrInstanceInitializerCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.fromSymbolOwner
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
+import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classOrNull
 import org.jetbrains.kotlin.ir.types.isArray
@@ -67,7 +69,7 @@ open class AnnotationImplementationLowering(
     }
 }
 
-abstract class AnnotationImplementationTransformer(val context: CommonBackendContext, val symbolTable: ReferenceSymbolTable, val irFile: IrFile?) :
+abstract class AnnotationImplementationTransformer(val context: CommonBackendContext, val irFile: IrFile?) :
     IrElementTransformerVoidWithContext() {
     internal val implementations: MutableMap<IrClass, IrClass> = mutableMapOf()
 
@@ -253,7 +255,7 @@ abstract class AnnotationImplementationTransformer(val context: CommonBackendCon
         }
 
         val generator = AnnotationImplementationMemberGenerator(
-            context, symbolTable, implClass,
+            context, implClass,
             nameForToString = "@" + annotationClass.fqNameWhenAvailable!!.asString(),
             forbidDirectFieldAccess = forbidDirectFieldAccessInMethods
         ) { type, a, b ->
@@ -267,13 +269,35 @@ abstract class AnnotationImplementationTransformer(val context: CommonBackendCon
 }
 
 class AnnotationImplementationMemberGenerator(
-    loweringContext: LoweringContext,
-    symbolTable: ReferenceSymbolTable,
+    private val loweringContext: LoweringContext,
     irClass: IrClass,
     val nameForToString: String,
     forbidDirectFieldAccess: Boolean,
     val selectEquals: IrBlockBodyBuilder.(IrType, IrExpression, IrExpression) -> IrExpression
-) : LoweringDataClassMemberGenerator(loweringContext, symbolTable, irClass, ANNOTATION_IMPLEMENTATION, forbidDirectFieldAccess) {
+) : DataClassLikeMembersBodyGenerator(
+    context = IrGeneratorContextBase(loweringContext.irBuiltIns),
+    irClass = irClass,
+    fqName = irClass.kotlinFqName,
+    forbidDirectFieldAccess = forbidDirectFieldAccess,
+    generateBodies = true,
+) {
+    override fun getHashCodeFunctionInfo(property: IrProperty): HashCodeFunctionInfo {
+        return getHashCodeFunctionInfo(property.type)
+    }
+
+    private fun getHashCodeFunctionInfo(type: IrType): HashCodeFunctionInfo {
+        val symbol = if (type.isArray() || type.isPrimitiveArray()) {
+            context.irBuiltIns.dataClassArrayMemberHashCodeSymbol
+        } else {
+            type.classOrNull?.functions?.singleOrNull { it.owner.isHashCode() }
+                ?: context.irBuiltIns.anyClass.functions.single { it.owner.name.asString() == "hashCode" }
+        }
+        return HashCodeFunctionInfo(symbol, hasDispatchReceiver = symbol.hasDispatchReceiver())
+    }
+
+    private fun IrSimpleFunctionSymbol.hasDispatchReceiver(): Boolean {
+        return owner.dispatchReceiverParameter != null
+    }
 
     override fun IrClass.classNameForToString(): String = nameForToString
 

@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors.EMPT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors.FORWARD_DECLARATION_AS_CLASS_LITERAL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors.FORWARD_DECLARATION_AS_REIFIED_TYPE_ARGUMENT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors.IDENTITY_HASH_CODE_ON_VALUE_TYPE
-import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors.INAPPLICABLE_EAGER_INITIALIZATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors.INAPPLICABLE_EXACT_OBJC_NAME
 import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors.INAPPLICABLE_OBJC_NAME
 import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors.INAPPLICABLE_OBJC_OVERRIDE
@@ -50,6 +49,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors.NON_
 import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors.OVERRIDING_VARIADIC_OBJECTIVE_C_METHODS_IS_NOT_SUPPORTED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors.PROPERTY_MUST_BE_VAR
 import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors.REDUNDANT_SWIFT_REFINEMENT
+import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors.STRING_AS_C_OR_OBJC_VARIADIC_ARGUMENT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors.STRING_AS_VARIADIC_OBJC_PARAM_IS_AMBIGUOUS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors.SUBTYPE_OF_HIDDEN_FROM_OBJC
 import org.jetbrains.kotlin.fir.analysis.diagnostics.native.FirNativeErrors.THROWS_LIST_EMPTY
@@ -79,7 +79,6 @@ object FirNativeErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             "'@ThreadLocal' is applicable only to property with backing field, to property with delegation, or to objects."
         )
         map.put(INAPPLICABLE_THREAD_LOCAL_TOP_LEVEL, "'@ThreadLocal' is applicable only to top-level declarations.")
-        map.put(INAPPLICABLE_EAGER_INITIALIZATION, "'@EagerInitialization' is only applicable to a top-level property with an initializer.")
         map.put(INVALID_CHARACTERS_NATIVE_ERROR, "Name {0}.", TO_STRING)
         map.put(REDUNDANT_SWIFT_REFINEMENT, "ObjC refined declarations cannot be refined in Swift.")
         map.put(
@@ -206,7 +205,13 @@ object FirNativeErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         )
         map.put(
             STRING_AS_VARIADIC_OBJC_PARAM_IS_AMBIGUOUS,
-            "Passing String as variadic Objective-C argument is ambiguous; cast it to NSString or pass with '.cstr' as C string.",
+            "Passing 'String' as a variadic Objective-C argument is ambiguous; " +
+                    "cast it to 'NSString' or pass with '.cstr' as a C string.",
+        )
+        map.put(
+            STRING_AS_C_OR_OBJC_VARIADIC_ARGUMENT,
+            "Passing 'String' as a variadic C or Objective-C argument is ambiguous; " +
+                    "cast it to 'NSString' or pass with '.cstr' as a C string.",
         )
         map.put(
             VARIADIC_OBJC_SPREAD_IS_SUPPORTED_ONLY_FOR_ARRAYOF,

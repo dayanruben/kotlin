@@ -27,6 +27,8 @@ import org.jetbrains.kotlin.diagnostics.warning2
 import org.jetbrains.kotlin.diagnostics.warningWithoutSource
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.KOTLIN_TARGETS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.RENDER_TYPE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.SYMBOLS_ON_NEXT_LINES
+import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import org.jetbrains.kotlin.lombok.LombokCliDiagnostics.LOMBOK_CONFIG_IS_MISSING
 import org.jetbrains.kotlin.lombok.LombokCliDiagnostics.LOMBOK_PLUGIN_IS_EXPERIMENTAL
@@ -69,15 +71,12 @@ import org.jetbrains.kotlin.lombok.LombokFirDiagnostics.TO_BUILDER_CANNOT_OBTAIN
 import org.jetbrains.kotlin.lombok.LombokFirDiagnostics.SINGULAR_REQUIRES_EXPLICIT_NAME
 import org.jetbrains.kotlin.lombok.LombokFirDiagnostics.CANNOT_SINGULARIZE_NAME
 import org.jetbrains.kotlin.lombok.LombokFirDiagnostics.COMPANION_OBJECT_SERIALIZABLE_CONFLICT
+import org.jetbrains.kotlin.lombok.LombokFirDiagnostics.LOMBOK_GENERATED_DECLARATION_CLASH
 import org.jetbrains.kotlin.lombok.LombokFirDiagnostics.NOT_INCLUDED_REASON
 import org.jetbrains.kotlin.lombok.LombokFirDiagnostics.UNSUPPORTED_SINGULAR_TYPE
 import org.jetbrains.kotlin.lombok.LombokFirDiagnostics.SINGULAR_REQUIRES_GUAVA
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtAnnotationEntry
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.KtParameter
 import kotlin.getValue
 
 object LombokCliDiagnostics : KtDiagnosticsContainer() {
@@ -89,12 +88,12 @@ object LombokCliDiagnostics : KtDiagnosticsContainer() {
 }
 
 object LombokFirDiagnostics : KtDiagnosticsContainer() {
-    val ANNOTATION_IS_NOT_SUPPORTED by strongWarning1<KtAnnotationEntry, Name>()
-    val ANNOTATION_ARGUMENT_IS_NOT_SUPPORTED by strongWarning1<KtExpression, Name>()
-    val ANNOTATION_HAS_NO_EFFECT by strongWarning2<KtAnnotationEntry, String, Collection<KotlinTarget>>()
-    val LOG_PROPERTY_ALREADY_EXISTS by strongWarning1<KtAnnotationEntry, Name>()
+    val ANNOTATION_IS_NOT_SUPPORTED by strongWarning1<Name>()
+    val ANNOTATION_ARGUMENT_IS_NOT_SUPPORTED by strongWarning1<Name>()
+    val ANNOTATION_HAS_NO_EFFECT by strongWarning2<String, Collection<KotlinTarget>>()
+    val LOG_PROPERTY_ALREADY_EXISTS by strongWarning1<Name>()
 
-    val UNSUPPORTED_ACCESS_LEVEL by error1<KtExpression, Name>()
+    val UNSUPPORTED_ACCESS_LEVEL by error1<Name>()
 
     /**
      * An error, where [ANNOTATION_HAS_NO_EFFECT] next to it is a strong warning. Lombok reports its own
@@ -103,44 +102,46 @@ object LombokFirDiagnostics : KtDiagnosticsContainer() {
      * for such a class here either, so the code could never have worked: what an error refuses is a build that
      * was going to fail at run time, or not link at all.
      */
-    val ANNOTATION_IS_NOT_SUPPORTED_ON_CLASS by error2<KtAnnotationEntry, Name, String>()
-    val FLAG_USAGE_WARNING by warning1<KtAnnotationEntry, Name>()
-    val FLAG_USAGE_ERROR by error1<KtAnnotationEntry, Name>()
-    val EXCLUDE_AND_INCLUDE_MUTUALLY_EXCLUSIVE by error1<KtAnnotationEntry, Name>()
-    val EXCLUDE_IS_REDUNDANT_FOR_DOLLAR_PREFIXED_PROPERTY by warning1<KtAnnotationEntry, Name>()
-    val EXCLUDE_IS_REDUNDANT_FOR_ONLY_EXPLICITLY_INCLUDED by warning1<KtAnnotationEntry, Name>()
-    val DO_NOT_USE_GETTERS_IRRELEVANT by warning0<KtExpression>()
-    val CALL_SUPER_NOT_CALLED by warning2<KtAnnotationEntry, String, Name>()
-    val CALL_SUPER_TO_ANY_IS_POINTLESS by error1<KtExpression, String>()
+    val ANNOTATION_IS_NOT_SUPPORTED_ON_CLASS by error2<Name, String>()
+    val FLAG_USAGE_WARNING by warning1<Name>()
+    val FLAG_USAGE_ERROR by error1<Name>()
+    val EXCLUDE_AND_INCLUDE_MUTUALLY_EXCLUSIVE by error1<Name>()
+    val EXCLUDE_IS_REDUNDANT_FOR_DOLLAR_PREFIXED_PROPERTY by warning1<Name>()
+    val EXCLUDE_IS_REDUNDANT_FOR_ONLY_EXPLICITLY_INCLUDED by warning1<Name>()
+    val DO_NOT_USE_GETTERS_IRRELEVANT by warning0()
+    val CALL_SUPER_NOT_CALLED by warning2<String, Name>()
+    val CALL_SUPER_TO_ANY_IS_POINTLESS by error1<String>()
 
-    val TO_STRING_FUNCTION_ALREADY_EXISTS by warning0<KtAnnotationEntry>()
-    val TO_STRING_FUNCTION_IS_FINAL_IN_SUPERCLASS by error1<KtAnnotationEntry, Name>()
-    val NO_ARGS_CONSTRUCTOR_FORCE_REQUIRED by error0<KtAnnotationEntry>()
-    val NO_ARGS_CONSTRUCTOR_ALREADY_EXISTS by warning0<KtAnnotationEntry>()
-    val NO_NOARG_CONSTRUCTOR_IN_SUPERCLASS by error0<KtAnnotationEntry>()
-    val STATIC_CONSTRUCTOR_ALREADY_EXISTS by strongWarning2<KtAnnotationEntry, Name, Name>()
-    val EQUALS_OR_HASH_CODE_FUNCTIONS_ALREADY_EXIST by error0<KtAnnotationEntry>()
-    val EQUALS_OR_HASH_CODE_FUNCTIONS_ARE_FINAL_IN_SUPERCLASS by error1<KtAnnotationEntry, Name>()
-    val CAN_EQUAL_FUNCTION_IS_NOT_OVERRIDABLE_IN_SUPERCLASS by error1<KtAnnotationEntry, Name>()
+    val TO_STRING_FUNCTION_ALREADY_EXISTS by warning0()
+    val TO_STRING_FUNCTION_IS_FINAL_IN_SUPERCLASS by error1<Name>()
+    val NO_ARGS_CONSTRUCTOR_FORCE_REQUIRED by error0()
+    val NO_ARGS_CONSTRUCTOR_ALREADY_EXISTS by warning0()
+    val NO_NOARG_CONSTRUCTOR_IN_SUPERCLASS by error0()
+    val STATIC_CONSTRUCTOR_ALREADY_EXISTS by strongWarning2<Name, Name>()
+    val EQUALS_OR_HASH_CODE_FUNCTIONS_ALREADY_EXIST by error0()
+    val EQUALS_OR_HASH_CODE_FUNCTIONS_ARE_FINAL_IN_SUPERCLASS by error1<Name>()
+    val CAN_EQUAL_FUNCTION_IS_NOT_OVERRIDABLE_IN_SUPERCLASS by error1<Name>()
 
-    val COMPANION_OBJECT_IS_NOT_GENERATED by strongWarning0<KtNamedDeclaration>(SourceElementPositioningStrategies.NAME_IDENTIFIER)
-    val COMPANION_OBJECT_SERIALIZABLE_CONFLICT by warning0<KtNamedDeclaration>(SourceElementPositioningStrategies.NAME_IDENTIFIER)
+    val COMPANION_OBJECT_IS_NOT_GENERATED by strongWarning0(SourceElementPositioningStrategies.NAME_IDENTIFIER)
+    val COMPANION_OBJECT_SERIALIZABLE_CONFLICT by warning0(SourceElementPositioningStrategies.NAME_IDENTIFIER)
 
-    val BUILDER_WILL_IGNORE_INITIALIZING_EXPRESSION by warning0<KtExpression>()
-    val BUILDER_DEFAULT_REQUIRES_INITIALIZING_EXPRESSION by warning0<KtAnnotationEntry>()
-    val BUILDER_DEFAULT_INITIALIZER_USES_INSTANCE by error0<KtExpression>()
-    val BUILDER_DEFAULT_AND_SINGULAR_MIXED by error0<KtAnnotationEntry>()
-    val BUILDER_FIELD_ANNOTATION_ON_BODY_PROPERTY by strongWarning1<KtAnnotationEntry, String>()
-    val BUILDER_PROPERTY_NOT_INCLUDED by strongWarning2<KtNamedDeclaration, Name, NotIncludedReason>(SourceElementPositioningStrategies.DECLARATION_NAME)
-    val BUILDER_PROPERTY_NOT_INCLUDED_ERROR by strongWarning2<KtNamedDeclaration, Name, NotIncludedReason>(SourceElementPositioningStrategies.DECLARATION_NAME)
-    val BUILDER_REQUIRES_EXPLICIT_RETURN_TYPE by error0<KtAnnotationEntry>()
-    val BUILDER_REQUIRES_PRIMARY_CONSTRUCTOR by error1<KtAnnotationEntry, Name>()
-    val BUILDER_WITH_RECEIVER_OR_CONTEXT_PARAMETERS by error0<KtAnnotationEntry>()
-    val TO_BUILDER_CANNOT_OBTAIN by error1<KtParameter, Name>()
-    val SINGULAR_REQUIRES_EXPLICIT_NAME by error0<KtAnnotationEntry>()
-    val CANNOT_SINGULARIZE_NAME by error0<KtAnnotationEntry>()
-    val UNSUPPORTED_SINGULAR_TYPE by error1<KtAnnotationEntry, ConeKotlinType>()
-    val SINGULAR_REQUIRES_GUAVA by error1<KtAnnotationEntry, FqName>()
+    val BUILDER_WILL_IGNORE_INITIALIZING_EXPRESSION by warning0()
+    val BUILDER_DEFAULT_REQUIRES_INITIALIZING_EXPRESSION by warning0()
+    val BUILDER_DEFAULT_INITIALIZER_USES_INSTANCE by error0()
+    val BUILDER_DEFAULT_AND_SINGULAR_MIXED by error0()
+    val BUILDER_FIELD_ANNOTATION_ON_BODY_PROPERTY by strongWarning1<String>()
+    val BUILDER_PROPERTY_NOT_INCLUDED by strongWarning2<Name, NotIncludedReason>(SourceElementPositioningStrategies.DECLARATION_NAME)
+    val BUILDER_PROPERTY_NOT_INCLUDED_ERROR by strongWarning2<Name, NotIncludedReason>(SourceElementPositioningStrategies.DECLARATION_NAME)
+    val BUILDER_REQUIRES_EXPLICIT_RETURN_TYPE by error0()
+    val BUILDER_REQUIRES_PRIMARY_CONSTRUCTOR by error1<Name>()
+    val BUILDER_WITH_RECEIVER_OR_CONTEXT_PARAMETERS by error0()
+    val TO_BUILDER_CANNOT_OBTAIN by error1<Name>()
+    val SINGULAR_REQUIRES_EXPLICIT_NAME by error0()
+    val CANNOT_SINGULARIZE_NAME by error0()
+    val UNSUPPORTED_SINGULAR_TYPE by error1<ConeKotlinType>()
+    val SINGULAR_REQUIRES_GUAVA by error1<FqName>()
+
+    val LOMBOK_GENERATED_DECLARATION_CLASH by error1<Collection<FirBasedSymbol<*>>>(SourceElementPositioningStrategies.NAME_IDENTIFIER)
 
     override fun getRendererFactory(): BaseDiagnosticRendererFactory = LombokFirDiagnosticsMessages
 
@@ -328,8 +329,8 @@ object LombokFirDiagnosticsMessages : BaseDiagnosticRendererFactory() {
         )
         map.put(
             BUILDER_REQUIRES_EXPLICIT_RETURN_TYPE,
-            "'@Builder' infers the builder class name from the function's return type. " +
-                    "Specify the return type explicitly, or name the builder class with '@Builder(builderClassName = \"...\")'."
+            "It's prohibited to use '@Builder' on functions without explicitly given return type. " +
+                    "Specify the return type explicitly."
         )
         map.put(
             BUILDER_WITH_RECEIVER_OR_CONTEXT_PARAMETERS,
@@ -364,6 +365,11 @@ object LombokFirDiagnosticsMessages : BaseDiagnosticRendererFactory() {
             SINGULAR_REQUIRES_GUAVA,
             "Package ''{0}'' does not exist. ''lombok.singular.useGuava'' requires Guava on the classpath.",
             TO_STRING,
+        )
+        map.put(
+            LOMBOK_GENERATED_DECLARATION_CLASH,
+            "Some Lombok-generated declarations have conflicting signatures:{0}",
+            SYMBOLS_ON_NEXT_LINES
         )
     }
 }
