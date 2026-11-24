@@ -471,14 +471,13 @@ class WasmSerializer(outputStream: OutputStream) {
             is IdSignature.ScopeLocalDeclaration -> withTag(IdSignatureTags.SCOPE_LOCAL_DECLARATION) {
                 serializeScopeLocalDeclaration(idSignature)
             }
-            is IdSignature.SpecialFakeOverrideSignature -> error("SpecialFakeOverrideSignature is not supposed to be serialized")
             is IdSignature.FileSignature -> withTag(IdSignatureTags.FILE) { serializeString(idSignature.fileName) }
         }
     }
 
     private fun serializeAccessorSignature(accessor: IdSignature.AccessorSignature) {
         with(accessor) {
-            serializeIdSignature(propertySignature)
+            serializeCommonSignature(propertySignature)
             serializeCommonSignature(accessorSignature)
         }
     }

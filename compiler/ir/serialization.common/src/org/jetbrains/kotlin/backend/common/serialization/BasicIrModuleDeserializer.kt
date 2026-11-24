@@ -15,9 +15,11 @@ import org.jetbrains.kotlin.library.KotlinAbiVersion
 import org.jetbrains.kotlin.library.KotlinLibrary
 import org.jetbrains.kotlin.library.components.KlibIrComponent
 import org.jetbrains.kotlin.library.components.irOrFail
+import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.protobuf.CodedInputStream
 import org.jetbrains.kotlin.protobuf.ExtensionRegistryLite
+import org.jetbrains.kotlin.utils.putToMultiMap
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrFile as ProtoFile
 
 /**
@@ -38,15 +40,24 @@ abstract class BasicIrModuleDeserializer(
     private val deserializeTypeAliases: Boolean = false,
 ) : IrModuleDeserializer(moduleFragment, libraryAbiVersion) {
 
+    /**
+     * The cache of all [IrFileDeserializer]s by [IrFile].
+     */
     final override val fileDeserializers: Map<IrFile, IrFileDeserializer>
         field = mutableMapOf<IrFile, IrFileDeserializer>()
+
+    /**
+     * The cache of all [IrFileDeserializer]s by their package [FqName]. The list of deserializers retrieved for a certain
+     * package [FqName] follows the order of [FileDeserializationState]s in [fileDeserializationStates].
+     */
+    private val fileDeserializersByPackage: MutableMap<FqName, MutableList<IrFileDeserializer>> = hashMapOf()
+
+    final override val contributedPackageNames: Set<FqName>
+        get() = fileDeserializersByPackage.keys
 
     private val moduleDeserializationState = ModuleDeserializationState()
 
     protected val fileDeserializationStates: List<FileDeserializationState>
-
-    final override val contributedPackageNames: Set<FqName>
-        field = mutableSetOf<FqName>()
 
     protected val moduleReversedFileIndex = hashMapOf<IdSignature, FileDeserializationState>()
 
@@ -61,7 +72,6 @@ abstract class BasicIrModuleDeserializer(
                 val fileReader = IrLibraryFileFromBytes(IrKlibBytesSource(ir, i))
                 val file = fileReader.createFile(moduleFragment, fileProto, linker.fileEntryDeserializer)
 
-                contributedPackageNames += file.packageFqName
                 this += deserializeIrFile(
                     fileProto,
                     file,
@@ -75,6 +85,15 @@ abstract class BasicIrModuleDeserializer(
                 if (!strategyResolver(file.fileEntry.name).onDemand)
                     moduleFragment.files.add(file)
             }
+        }
+    }
+
+    override fun collectAllMatchingSignatures(
+        topLevelCallableId: TopLevelCallableIdAndKind,
+        output: MutableCollection<IdSignature>,
+    ) {
+        fileDeserializersByPackage[topLevelCallableId.packageFqName]?.forEach { fileDeserializer ->
+            fileDeserializer.collectAllMatchingSignatures(topLevelCallableId, output)
         }
     }
 
@@ -101,7 +120,7 @@ abstract class BasicIrModuleDeserializer(
     ): FileDeserializationState {
         val fileStrategy = strategyResolver(file.fileEntry.name)
 
-        val fileDeserializationState = FileDeserializationStateImpl(
+        val fileDeserializationState = FileDeserializationState(
             linker,
             fileIndex,
             file,
@@ -121,6 +140,7 @@ abstract class BasicIrModuleDeserializer(
         )
 
         fileDeserializers[file] = fileDeserializationState.fileDeserializer
+        fileDeserializersByPackage.putToMultiMap(file.packageFqName, fileDeserializationState.fileDeserializer)
 
         val topLevelDeclarations = fileDeserializationState.fileDeserializer.reversedSignatureIndex.keys
         topLevelDeclarations.forEach {

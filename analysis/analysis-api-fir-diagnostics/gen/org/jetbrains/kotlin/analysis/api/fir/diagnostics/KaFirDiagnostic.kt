@@ -3263,6 +3263,7 @@ public interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
             get() = NoneApplicable::class
 
         public val candidates: List<Pair<KaSymbol, List<String>>>
+        public val callSite: PsiElement?
     }
 
     @KaUnstableDiagnosticApi
@@ -3329,6 +3330,7 @@ public interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
             get() = NoValueForParameter::class
 
         public val violatedParameter: Name
+        public val violatedParameterType: KaType?
     }
 
     @KaUnstableDiagnosticApi
@@ -7365,6 +7367,7 @@ public interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
             get() = NoCompanionObject::class
 
         public val klass: KaClassLikeSymbol
+        public val suggestedConstructor: KaFunctionSymbol?
     }
 
     @KaUnstableDiagnosticApi

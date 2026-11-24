@@ -103,7 +103,6 @@ Js:
  - js/js.ast
  - js/js.config/build.gradle.kts
  - js/js.config/gen
- - js/js.config/src/org/jetbrains/kotlin/incremental
  - js/js.config/src/org/jetbrains/kotlin/js/artifacts
  - js/js.config/src/org/jetbrains/kotlin/platform
  - js/js.config/src/org/jetbrains/kotlin/utils
@@ -178,6 +177,7 @@ BuildToolsApi:
  - compiler/compiler-runner-unshaded
  - compiler/daemon
  - compiler/incremental-compilation-impl
+ - compiler/incremental-compilation-klib
 
 BuildToolsLibraries:
  - build-tools/libraries

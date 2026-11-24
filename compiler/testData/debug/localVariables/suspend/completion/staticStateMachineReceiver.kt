@@ -42,14 +42,13 @@ suspend fun box() {
 // test.kt:10 doResume:
 // test.kt:11 doResume: dead=kotlin.Long
 
-// EXPECTATIONS WASM
+// EXPECTATIONS WASM_JS
 // test.kt:14 $box: $$completion:(ref $EmptyContinuation)=(ref $EmptyContinuation) (4, 4)
 // test.kt:4 $A.<init>: $<this>:(ref $A)=(ref $A) (7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7)
 // test.kt:14 $box: $$completion:(ref $EmptyContinuation)=(ref $EmptyContinuation) (13, 13, 8)
 // test.kt:11 $foo1: $<this>:(ref $A)=(ref $A), $l:i64=i64, $$completion:(ref $EmptyContinuation)=(ref $EmptyContinuation) (1, 1, 1, 1, 1, 1)
 // coroutineHelpers.kt:9 $EmptyContinuation.<get-context>: $<this>:(ref $EmptyContinuation)=(ref $EmptyContinuation) (37, 37)
 // test.kt:11 $foo1: $<this>:(ref $A)=(ref $A), $l:i64=i64, $$completion:(ref $EmptyContinuation)=(ref $EmptyContinuation) (1)
-// test.kt:8 $SuspendLambda_2AJ.doResume: $<this>:(ref $SuspendLambda_2AJ)=(ref $SuspendLambda_2AJ) (4, 4, 4, 4, 4, 4)
 // test.kt:8 $$foo1COROUTINE$.doResume: $self:(ref $SuspendLambda_2AJ)=(ref $SuspendLambda_2AJ), $dead:i64=i64, $suspendResult:(ref null $kotlin.Any)=null, $tmp:i32=0:i32, $e:(ref null $kotlin.Throwable)=null (4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4)
 // test.kt:6 $foo: $<this>:(ref $A)=(ref $A), $$completion:(ref $SuspendLambda_2AJ)=(ref $SuspendLambda_2AJ) (21, 21)
 // test.kt:8 $$foo1COROUTINE$.doResume: $self:(ref $SuspendLambda_2AJ)=(ref $SuspendLambda_2AJ), $dead:i64=i64, $suspendResult:(ref $kotlin.Unit)=(ref $kotlin.Unit), $tmp:i32=0:i32, $e:(ref null $kotlin.Throwable)=null (4, 4, 4, 4, 4)
@@ -63,6 +62,5 @@ suspend fun box() {
 // test.kt:9 $$foo1COROUTINE$.doResume: $self:(ref $SuspendLambda_2AJ)=(ref $SuspendLambda_2AJ), $dead:i64=i64, $suspendResult:(ref $kotlin.Unit)=(ref $kotlin.Unit), $tmp:i32=2:i32, $e:(ref null $kotlin.Throwable)=null (4, 4, 4, 4, 4)
 // test.kt:10 $$foo1COROUTINE$.doResume: $self:(ref $SuspendLambda_2AJ)=(ref $SuspendLambda_2AJ), $dead:i64=i64, $suspendResult:(ref $kotlin.Unit)=(ref $kotlin.Unit), $tmp:i32=2:i32, $e:(ref null $kotlin.Throwable)=null (15, 4, 4)
 // test.kt:11 $$foo1COROUTINE$.doResume: $self:(ref $SuspendLambda_2AJ)=(ref $SuspendLambda_2AJ), $dead:i64=i64, $suspendResult:(ref $kotlin.Unit)=(ref $kotlin.Unit), $tmp:i32=2:i32, $e:(ref null $kotlin.Throwable)=null (0)
-// test.kt:8 $SuspendLambda_2AJ.doResume: $<this>:(ref $SuspendLambda_2AJ)=(ref $SuspendLambda_2AJ) (4)
 // test.kt:11 $foo1: $<this>:(ref $A)=(ref $A), $l:i64=i64, $$completion:(ref $EmptyContinuation)=(ref $EmptyContinuation) (1)
 // test.kt:14 $box: $$completion:(ref $EmptyContinuation)=(ref $EmptyContinuation) (8, 8)

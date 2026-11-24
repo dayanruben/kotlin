@@ -28,6 +28,18 @@ public class JsLightTreePluginBlackBoxCodegenForComposeTestGenerated extends Abs
   }
 
   @Test
+  @TestMetadata("composableFunInterfaceOutsideCompositionIsSingleton.kt")
+  public void testComposableFunInterfaceOutsideCompositionIsSingleton() {
+    run("composableFunInterfaceOutsideCompositionIsSingleton.kt");
+  }
+
+  @Test
+  @TestMetadata("composableFunInterfaceRecomposition.kt")
+  public void testComposableFunInterfaceRecomposition() {
+    run("composableFunInterfaceRecomposition.kt");
+  }
+
+  @Test
   @TestMetadata("testAbstractComposableWithDefaultParamCrossModule.kt")
   public void testTestAbstractComposableWithDefaultParamCrossModule() {
     run("testAbstractComposableWithDefaultParamCrossModule.kt");
@@ -49,6 +61,12 @@ public class JsLightTreePluginBlackBoxCodegenForComposeTestGenerated extends Abs
   @TestMetadata("testOverrideLambda.kt")
   public void testTestOverrideLambda() {
     run("testOverrideLambda.kt");
+  }
+
+  @Test
+  @TestMetadata("testParamsDirtyFlagsJs.kt")
+  public void testTestParamsDirtyFlagsJs() {
+    run("testParamsDirtyFlagsJs.kt");
   }
 
   @Test

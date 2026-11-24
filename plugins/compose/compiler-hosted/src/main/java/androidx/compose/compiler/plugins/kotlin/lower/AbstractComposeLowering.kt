@@ -27,7 +27,6 @@ import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.backend.common.serialization.mangle.MangleMode
 import org.jetbrains.kotlin.backend.common.serialization.mangle.ir.IrMangleComputer
-import org.jetbrains.kotlin.backend.jvm.JvmLoweredDeclarationOrigin
 import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
@@ -375,6 +374,21 @@ abstract class AbstractComposeLowering(
     protected fun irAnd(lhs: IrExpression, rhs: IrExpression): IrCallImpl {
         return binaryOperatorCall(lhs, rhs, OperatorNameConventions.AND)
     }
+
+    protected fun irPlus(lhs: IrExpression, rhs: IrExpression): IrCallImpl {
+        val int = context.irBuiltIns.intType
+        return binaryOperatorCall(lhs, rhs, OperatorNameConventions.PLUS, lhsType = int, rhsType = int)
+    }
+
+    protected fun irReinterpretCast(argument: IrExpression, type: IrType): IrExpression =
+        IrTypeOperatorCallImpl(
+            argument.startOffset,
+            argument.endOffset,
+            type,
+            IrTypeOperator.REINTERPRET_CAST,
+            type,
+            argument
+        )
 
     protected fun irShl(lhs: IrExpression, rhs: IrExpression): IrCallImpl {
         val int = context.irBuiltIns.intType
@@ -1141,15 +1155,13 @@ abstract class AbstractComposeLowering(
 
             origin == null -> {
                 if (fqName == ComposeFqNames.remember) {
-                    // if it is a call to remember with 0 input arguments, then we can
-                    // consider the value static if the result type of the lambda is stable
+                    // If it is a call to remember with 0 input arguments, then we can consider the
+                    // result static; the result will be the same instance for the lifetime of its
+                    // group.
                     val syntheticRememberParams = 1 + // composer param
                             1 // changed param
                     val expectedArgumentsCount = 1 + syntheticRememberParams // 1 for lambda
-                    if (
-                        arguments.size == expectedArgumentsCount &&
-                        stabilityInferencer.stabilityOf(type, fileContainingDependent).knownStable()
-                    ) {
+                    if (arguments.size == expectedArgumentsCount) {
                         return true
                     }
                 } else if (
@@ -1760,7 +1772,9 @@ abstract class AbstractComposeLowering(
         if (body == null || this !is IrSimpleFunction)
             return false
 
-        if (isLocal && parentClassOrNull?.origin != JvmLoweredDeclarationOrigin.LAMBDA_IMPL) {
+        // Local functions and members of local classes don't restart, except the method of a
+        // composable SAM conversion class
+        if (isLocal && !isComposableFunInterfaceImplementation) {
             return false
         }
 

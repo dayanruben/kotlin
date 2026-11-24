@@ -4047,6 +4047,7 @@ private fun KaDiagnosticConverterBuilder.addConversions82() {
     add(FirErrors.NO_COMPANION_OBJECT) { firDiagnostic ->
         NoCompanionObjectImpl(
             firSymbolBuilder.classifierBuilder.buildClassLikeSymbol(firDiagnostic.a),
+            firDiagnostic.b?.let { firSymbolBuilder.functionBuilder.buildConstructorSymbol(it) },
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -6442,6 +6443,7 @@ private fun KaDiagnosticConverterBuilder.addConversions128() {
     add(FirErrors.NO_VALUE_FOR_PARAMETER) { firDiagnostic ->
         NoValueForParameterImpl(
             firDiagnostic.a,
+            firDiagnostic.b?.let { firSymbolBuilder.typeBuilder.buildKtType(it) },
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -8378,6 +8380,7 @@ private fun KaDiagnosticConverterBuilder.addConversions169() {
                                     string
                                 }
             },
+            (firDiagnostic.b as? KtPsiSourceElement)?.psi,
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
