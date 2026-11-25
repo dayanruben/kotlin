@@ -1,0 +1,110 @@
+/*
+ * Copyright 2010-2026 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
+ */
+
+package org.jetbrains.kotlin.gradle.mpp
+
+import org.gradle.util.GradleVersion
+import org.jetbrains.kotlin.build.report.metrics.BuildAttribute
+import org.jetbrains.kotlin.gradle.report.BuildReportType
+import org.jetbrains.kotlin.gradle.testbase.*
+import org.jetbrains.kotlin.test.TestMetadata
+import org.jetbrains.kotlin.testFederation.MustRunOnChangesInBuildToolsApi
+import org.jetbrains.kotlin.testFederation.MustRunOnChangesInCompilerInfrastructure
+import org.jetbrains.kotlin.testFederation.MustRunOnChangesInGradle
+import org.junit.jupiter.api.DisplayName
+import kotlin.io.path.writeText
+
+/**
+ * `enableIncrementalCompilationOfCommonSources` is configured per target (KT-87522), so enabling it for one target
+ * must not change the incremental compilation behavior of the others.
+ *
+ * These tests check incremental compilation behavior, not KGP configuration, but the Build Tools API tests do not
+ * support KMP compilation scenarios yet. Move them there once they do.
+ */
+@MppGradlePluginTests
+@DisplayName("Per-target incremental compilation of common sources")
+@MustRunOnChangesInGradle
+@MustRunOnChangesInCompilerInfrastructure
+@MustRunOnChangesInBuildToolsApi
+class PerTargetIncrementalCompilationOfCommonSourcesIT : KGPBaseTest() {
+
+    override val defaultBuildOptions: BuildOptions
+        get() = super.defaultBuildOptions
+            .copy(buildReport = listOf(BuildReportType.FILE))
+            .disableIsolatedProjectsBecauseOfJsAndWasmKT75899()
+
+    @GradleTest
+    @DisplayName("Enabling it for JVM only keeps the whole-module rebuild for JS")
+    @TestMetadata("kt-62686-mpp-source-set-boundary")
+    fun testEnabledForJvmOnly(gradleVersion: GradleVersion) {
+        project(
+            "kt-62686-mpp-source-set-boundary",
+            gradleVersion,
+            buildOptions = defaultBuildOptions.copy(
+                enableJvmIncrementalCompilationOfCommonSources = true,
+                enableJsIncrementalCompilationOfCommonSources = false,
+            )
+        ) {
+            setupJvmAndJsTargets()
+
+            build(JVM_TASK, JS_TASK)
+            changeCommonSource()
+
+            build(JVM_TASK) {
+                assertIncrementalCompilationInBuildReport()
+            }
+            build(JS_TASK) {
+                assertNonIncrementalCompilationInBuildReport(BuildAttribute.UNSAFE_INCREMENTAL_CHANGE_KT_62686)
+            }
+        }
+    }
+
+    @GradleTest
+    @DisplayName("Enabling it for JS only keeps the whole-module rebuild for JVM")
+    @TestMetadata("kt-62686-mpp-source-set-boundary")
+    fun testEnabledForJsOnly(gradleVersion: GradleVersion) {
+        project(
+            "kt-62686-mpp-source-set-boundary",
+            gradleVersion,
+            buildOptions = defaultBuildOptions.copy(
+                enableJvmIncrementalCompilationOfCommonSources = false,
+                enableJsIncrementalCompilationOfCommonSources = true,
+            )
+        ) {
+            setupJvmAndJsTargets()
+
+            build(JVM_TASK, JS_TASK)
+            changeCommonSource()
+
+            build(JS_TASK) {
+                assertIncrementalCompilationInBuildReport()
+            }
+            build(JVM_TASK) {
+                assertNonIncrementalCompilationInBuildReport(BuildAttribute.UNSAFE_INCREMENTAL_CHANGE_KT_62686)
+            }
+        }
+    }
+
+    private fun TestProject.setupJvmAndJsTargets() = buildScriptInjection {
+        kotlinMultiplatform.js()
+        kotlinMultiplatform.jvm().compilations.all { compilation ->
+            compilation.compileTaskProvider.configure { task ->
+                // log level isn't properly used to set `verbose` in the default configuration, fix is WIP in KT-64698
+                task.compilerOptions.verbose.convention(true)
+            }
+        }
+    }
+
+    /** A change in a common source file that is safe to compile incrementally for every target. */
+    private fun TestProject.changeCommonSource() {
+        projectPath.resolve("src/commonMain/kotlin/dependedOnByRiskyCode.kt")
+            .writeText("val dependedOnByRiskyCode = 2\n")
+    }
+
+    private companion object {
+        const val JVM_TASK = ":compileKotlinJvm"
+        const val JS_TASK = ":compileKotlinJs"
+    }
+}

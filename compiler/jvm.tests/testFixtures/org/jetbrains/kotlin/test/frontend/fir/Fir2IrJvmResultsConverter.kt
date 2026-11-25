@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.compiler.plugin.getCompilerExtensions
 import org.jetbrains.kotlin.config.CompilerConfiguration
-import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.impl.ModuleDescriptorImpl
 import org.jetbrains.kotlin.diagnostics.impl.BaseDiagnosticsCollector
 import org.jetbrains.kotlin.diagnostics.impl.DiagnosticsCollectorImpl
@@ -23,18 +22,14 @@ import org.jetbrains.kotlin.fir.backend.Fir2IrComponents
 import org.jetbrains.kotlin.fir.backend.Fir2IrConfiguration
 import org.jetbrains.kotlin.fir.backend.jvm.*
 import org.jetbrains.kotlin.fir.backend.utils.extractFirDeclarations
-import org.jetbrains.kotlin.fir.descriptors.FirModuleDescriptor
-import org.jetbrains.kotlin.fir.pipeline.AllModulesFrontendOutput
-import org.jetbrains.kotlin.fir.pipeline.Fir2IrActualizedResult
-import org.jetbrains.kotlin.fir.pipeline.Fir2KlibMetadataSerializer
-import org.jetbrains.kotlin.fir.pipeline.SingleModuleFrontendOutput
-import org.jetbrains.kotlin.fir.pipeline.convertToIrAndActualize
+import org.jetbrains.kotlin.fir.pipeline.*
 import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmIrMangler
 import org.jetbrains.kotlin.library.KotlinLibrary
 import org.jetbrains.kotlin.library.isAnyPlatformStdlib
 import org.jetbrains.kotlin.library.metadata.DeserializedKlibModuleOrigin
 import org.jetbrains.kotlin.library.metadata.KlibModuleOrigin
 import org.jetbrains.kotlin.library.uniqueName
+import org.jetbrains.kotlin.load.kotlin.VirtualFileFinder
 import org.jetbrains.kotlin.name.Name.special
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
@@ -93,7 +88,7 @@ class Fir2IrJvmResultsConverter(testServices: TestServices) : Frontend2BackendCo
         val fir2IrExtensions = JvmFir2IrExtensions()
 
         val libraries: List<KotlinLibrary> = resolveLibraries(module)
-        val [dependencies: List<ModuleDescriptor>, builtIns: KotlinBuiltIns?] = loadModuleDescriptors(
+        val builtIns: KotlinBuiltIns? = loadModuleDescriptors(
             libraries,
             testServices.targetPlatformProvider.getTargetPlatform(module),
         )
@@ -116,9 +111,7 @@ class Fir2IrJvmResultsConverter(testServices: TestServices) : Frontend2BackendCo
             extraActualDeclarationExtractorsInitializer = { it: Fir2IrComponents ->
                 listOfNotNull(FirDirectJavaActualDeclarationExtractor.initializeIfNeeded(it))
             },
-        ).also {
-            (it.irModuleFragment.descriptor as? FirModuleDescriptor)?.let { it.allDependencyModules = dependencies }
-        }
+        )
 
         return createBackendInput(
             module,
@@ -165,7 +158,10 @@ class Fir2IrJvmResultsConverter(testServices: TestServices) : Frontend2BackendCo
 
         val project = testServices.compilerConfigurationProvider.getProject(module)
         val generationState = GenerationState(
-            project, fir2IrResult.irModuleFragment.descriptor, compilerConfiguration, ClassBuilderFactories.TEST,
+            VirtualFileFinder.getInstance(project),
+            fir2IrResult.irModuleFragment.descriptor,
+            compilerConfiguration,
+            ClassBuilderFactories.TEST,
             jvmBackendClassResolver = FirJvmBackendClassResolver(fir2IrResult.components),
             diagnosticReporter = diagnosticReporter,
         )
@@ -182,7 +178,7 @@ class Fir2IrJvmResultsConverter(testServices: TestServices) : Frontend2BackendCo
     private fun loadModuleDescriptors(
         libraries: List<KotlinLibrary>,
         targetPlatform: TargetPlatform,
-    ): Pair<List<ModuleDescriptor>, KotlinBuiltIns?> {
+    ): KotlinBuiltIns? {
         val stdlib: KotlinLibrary? = libraries.firstOrNull { it.isAnyPlatformStdlib }
 
         var builtIns: KotlinBuiltIns? = null
@@ -210,18 +206,15 @@ class Fir2IrJvmResultsConverter(testServices: TestServices) : Frontend2BackendCo
             return moduleDescriptor
         }
 
-        val moduleDescriptors = mutableListOf<ModuleDescriptorImpl>()
         if (stdlib != null) {
-            val stdlibModuleDescriptor = loadDescriptor(stdlib)
-            moduleDescriptors += stdlibModuleDescriptor
-            builtIns = stdlibModuleDescriptor.builtIns
+            builtIns = loadDescriptor(stdlib).builtIns
         }
 
         libraries.forEach { library ->
             if (library == stdlib) return@forEach
-            moduleDescriptors += loadDescriptor(library)
+            loadDescriptor(library)
         }
 
-        return moduleDescriptors to builtIns
+        return builtIns
     }
 }

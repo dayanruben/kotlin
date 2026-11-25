@@ -33,9 +33,10 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.parcelize.BuiltinParcelableTypes
 import org.jetbrains.kotlin.parcelize.ParcelizeNames
 import org.jetbrains.kotlin.parcelize.ParcelizeNames.CREATOR_NAME
-import org.jetbrains.kotlin.parcelize.ParcelizeNames.IGNORED_ON_PARCEL_FQ_NAMES
-import org.jetbrains.kotlin.parcelize.ParcelizeNames.PARCELER_ID
 import org.jetbrains.kotlin.parcelize.fir.dataClassPrimaryConstructorPropertiesOrNull
+import org.jetbrains.kotlin.parcelize.fir.findIgnoredOnParcel
+import org.jetbrains.kotlin.parcelize.fir.hasCustomParceler
+import org.jetbrains.kotlin.parcelize.fir.isParcelize
 
 object FirParcelizePropertyChecker : FirPropertyChecker(MppCheckerKind.Platform) {
     context(context: CheckerContext, reporter: DiagnosticReporter)
@@ -60,7 +61,7 @@ object FirParcelizePropertyChecker : FirPropertyChecker(MppCheckerKind.Platform)
 
         if (declaration.name == CREATOR_NAME && containingClassSymbol.isCompanion && declaration.hasJvmFieldAnnotation(session)) {
             val outerClass = context.containingDeclarations.asReversed().getOrNull(1) as? FirRegularClassSymbol
-            if (outerClass != null && outerClass.isParcelize(session)) {
+            if (outerClass.isParcelize(session)) {
                 reporter.reportOn(declaration.source, KtErrorsParcelize.CREATOR_DEFINITION_IS_NOT_ALLOWED)
             }
         }
@@ -329,19 +330,6 @@ object FirParcelizePropertyChecker : FirPropertyChecker(MppCheckerKind.Platform)
         customAnnotations.any { it.fqName(session) in fqNames }
 
     private fun FirProperty.hasIgnoredOnParcel(session: FirSession): Boolean {
-        return annotations.hasIgnoredOnParcel(session) || (getter?.annotations?.hasIgnoredOnParcel(session) ?: false)
-    }
-
-    private fun List<FirAnnotation>.hasIgnoredOnParcel(session: FirSession): Boolean {
-        return this.any {
-            it.fqName(session) in IGNORED_ON_PARCEL_FQ_NAMES
-        }
-    }
-
-    private fun FirRegularClassSymbol.hasCustomParceler(session: FirSession): Boolean {
-        val companionObjectSymbol = this.resolvedCompanionObjectSymbol ?: return false
-        return lookupSuperTypes(companionObjectSymbol, lookupInterfaces = true, deep = true, session).any {
-            it.classId == PARCELER_ID
-        }
+        return annotations.findIgnoredOnParcel(session) != null || getter?.annotations?.findIgnoredOnParcel(session) != null
     }
 }

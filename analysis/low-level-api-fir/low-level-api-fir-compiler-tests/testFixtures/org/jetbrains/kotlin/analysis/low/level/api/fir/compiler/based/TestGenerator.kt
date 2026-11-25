@@ -17,9 +17,6 @@ import org.jetbrains.kotlin.generators.tests.provider
 import org.jetbrains.kotlin.generators.util.TestGeneratorUtil
 import org.jetbrains.kotlin.generators.util.TestGeneratorUtil.KT_OR_KTS
 import org.jetbrains.kotlin.generators.util.TestGeneratorUtil.canFreezeIDE
-import org.jetbrains.kotlin.spec.utils.GeneralConfiguration
-import org.jetbrains.kotlin.spec.utils.tasks.detectDirsWithTestsMapFileOnly
-import org.jetbrains.kotlin.test.utils.CUSTOM_TEST_DATA_EXTENSION_PATTERN
 import org.jetbrains.kotlin.testFederation.MustRunOnChangesInCompilerPlugins
 
 fun main(args: Array<String>) {
@@ -58,7 +55,6 @@ fun main(args: Array<String>) {
                     model(
                         "diagnostics/scriptsWithCustomDefinitions",
                         pattern = TestGeneratorUtil.KTS,
-                        excludedPattern = CUSTOM_TEST_DATA_EXTENSION_PATTERN,
                     )
                 }
 
@@ -80,7 +76,6 @@ fun main(args: Array<String>) {
                 fun TestGroup.TestClass.scriptCustomDefBackBoxInit() {
                     model(
                         "codegen/scriptsWithCustomDefinitions",
-                        excludedPattern = CUSTOM_TEST_DATA_EXTENSION_PATTERN,
                         pattern = KT_OR_KTS,
                     )
                 }
@@ -116,7 +111,6 @@ fun main(args: Array<String>) {
                 fun TestGroup.TestClass.diagnosticsGeneralInit() {
                     model(
                         "diagnostics/general",
-                        excludedPattern = CUSTOM_TEST_DATA_EXTENSION_PATTERN,
                         pattern = KT_OR_KTS.canFreezeIDE,
                     )
                 }
@@ -137,13 +131,13 @@ fun main(args: Array<String>) {
 
         testGroup(generatedTestRoot, "compiler/testData/diagnostics") {
             fun TestGroup.TestClass.modelInitWasmJs() {
-                model("wasmTests", excludedPattern = CUSTOM_TEST_DATA_EXTENSION_PATTERN)
-                model("tests/defaultArguments", excludedPattern = CUSTOM_TEST_DATA_EXTENSION_PATTERN)
+                model("wasmTests")
+                model("tests/defaultArguments")
             }
 
             fun TestGroup.TestClass.modelInitWasmWasi() {
-                model("wasmWasiTests", excludedPattern = CUSTOM_TEST_DATA_EXTENSION_PATTERN)
-                model("tests/defaultArguments", excludedPattern = CUSTOM_TEST_DATA_EXTENSION_PATTERN)
+                model("wasmWasiTests")
+                model("tests/defaultArguments")
             }
 
             testClass<AbstractLLWasmJsDiagnosticsTest>(suiteTestClassName = "LLWasmJsDiagnosticsFe10TestGenerated") {
@@ -167,7 +161,6 @@ fun main(args: Array<String>) {
             fun TestGroup.TestClass.modelInit() {
                 model(
                     "diagnostics/testsWithJsStdLib",
-                    excludedPattern = CUSTOM_TEST_DATA_EXTENSION_PATTERN,
                     pattern = KT_OR_KTS,
                 )
             }
@@ -185,24 +178,20 @@ fun main(args: Array<String>) {
             fun TestGroup.TestClass.modelInit() {
                 model(
                     "diagnostics/tests",
-                    excludedPattern = CUSTOM_TEST_DATA_EXTENSION_PATTERN,
                     pattern = KT_OR_KTS.canFreezeIDE,
                     excludeDirs = listOf("headerMode", "jvm/duplicateJvmSignature", "jvm/exposedPrivate")
                 )
                 model(
                     "diagnostics/tests/jvm/duplicateJvmSignature/javaInterop",
-                    excludedPattern = CUSTOM_TEST_DATA_EXTENSION_PATTERN,
                     pattern = KT_OR_KTS.canFreezeIDE,
                 )
                 model(
                     "diagnostics/testsWithStdLib",
-                    excludedPattern = CUSTOM_TEST_DATA_EXTENSION_PATTERN,
                     excludeDirs = listOf("native"),
                     pattern = KT_OR_KTS.canFreezeIDE,
                 )
                 model(
                     "diagnostics/testsWithAnyBackend",
-                    excludedPattern = CUSTOM_TEST_DATA_EXTENSION_PATTERN,
                     pattern = KT_OR_KTS.canFreezeIDE,
                 )
             }
@@ -258,13 +247,12 @@ fun main(args: Array<String>) {
 
         testGroup(
             testsRoot = generatedTestRoot,
-            testDataRoot = GeneralConfiguration.SPEC_TESTDATA_PATH
+            testDataRoot = "compiler/tests-spec/testData"
         ) {
             fun TestGroup.TestClass.modelInit() {
                 model(
                     "diagnostics",
-                    excludeDirs = listOf("helpers") + detectDirsWithTestsMapFileOnly("diagnostics"),
-                    excludedPattern = CUSTOM_TEST_DATA_EXTENSION_PATTERN,
+                    excludeDirs = listOf("helpers"),
                 )
             }
 
@@ -282,19 +270,19 @@ fun main(args: Array<String>) {
             testDataRoot = "plugins/plugin-sandbox/testData"
         ) {
             testClass<AbstractLLSandboxBackBoxTest> {
-                model("box", excludedPattern = CUSTOM_TEST_DATA_EXTENSION_PATTERN)
+                model("box")
             }
 
             testClass<AbstractLLReversedSandboxBackBoxTest> {
-                model("box", excludedPattern = CUSTOM_TEST_DATA_EXTENSION_PATTERN)
+                model("box")
             }
 
             testClass<AbstractLLSandboxDiagnosticsTest> {
-                model("diagnostics", excludedPattern = CUSTOM_TEST_DATA_EXTENSION_PATTERN)
+                model("diagnostics")
             }
 
             testClass<AbstractLLReversedSandboxDiagnosticsTest> {
-                model("diagnostics", excludedPattern = CUSTOM_TEST_DATA_EXTENSION_PATTERN)
+                model("diagnostics")
             }
         }
     }

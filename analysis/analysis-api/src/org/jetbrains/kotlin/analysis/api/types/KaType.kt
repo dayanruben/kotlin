@@ -294,16 +294,9 @@ public abstract class KaFunctionType : KaClassType(), KaContextReceiversOwner {
     /**
      * The context receivers of the function type.
      */
-    @Deprecated("Context receivers in function types are deprecated. Use `contextParameterTypes` instead.")
+    @Deprecated("Context receivers in function types are deprecated. Use `contextParameterTypes` instead.", level = DeprecationLevel.ERROR)
     @KaExperimentalApi
     public abstract override val contextReceivers: List<KaContextReceiver>
-
-    /**
-     * Whether the function type has context receiver parameters.
-     */
-    @Deprecated("Use `hasContextParameters` instead.", ReplaceWith("hasContextParameters"))
-    @KaExperimentalApi
-    public abstract val hasContextReceivers: Boolean
 
     @KaExperimentalApi
     public abstract override fun createPointer(): KaTypePointer<KaFunctionType>

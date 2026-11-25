@@ -63,8 +63,6 @@ object JvmEnvironmentConfigurationDirectives : SimpleDirectivesContainer() {
         description = "Enable old mangling scheme for inline classes"
     )
 
-    val ENABLE_DEBUG_MODE by directive("Enable debug mode for compilation")
-
     val ENHANCED_COROUTINES_DEBUGGING by directive("Mark compiler generated code in coroutines")
 
     val DISABLE_OPTIMIZATION by directive("Disable optimization")
@@ -75,10 +73,6 @@ object JvmEnvironmentConfigurationDirectives : SimpleDirectivesContainer() {
     )
 
     val USE_LEGACY_REFLECTION_IMPLEMENTATION by directive("Use legacy reflection implementation based on K1 compiler code")
-    val LOAD_METADATA_DIRECTLY_IN_REFLECTION by directive(
-        "Read metadata in kotlin-reflect directly, without first wrapping it in descriptors, " +
-                "like how it eventually will work after the K1-based implementation is removed"
-    )
 
     val IGNORED_ANNOTATIONS_FOR_BRIDGES by stringDirective("Ignored annotations for bridges")
 

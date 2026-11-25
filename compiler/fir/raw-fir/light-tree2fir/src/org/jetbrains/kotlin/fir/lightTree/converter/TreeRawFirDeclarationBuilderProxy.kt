@@ -778,24 +778,9 @@ class TreeRawFirDeclarationBuilderProxy<Node : Any, Type : Any>(
                         }
 
                         if (calculatedModifiers.isEnum()) {
-                            generateValuesFunction(
-                                baseModuleData,
-                                context.packageFqName,
-                                context.className,
-                                classIsExpect
-                            )
-                            generateValueOfFunction(
-                                baseModuleData,
-                                context.packageFqName,
-                                context.className,
-                                classIsExpect
-                            )
-                            generateEntriesGetter(
-                                baseModuleData,
-                                context.packageFqName,
-                                context.className,
-                                classIsExpect
-                            )
+                            generateValuesFunction(baseModuleData, classIsExpect)
+                            generateValueOfFunction(baseModuleData, classIsExpect)
+                            generateEntriesGetter(baseModuleData, classIsExpect)
                         }
                         initCompanionObjectSymbolAttr()
 
@@ -1673,7 +1658,7 @@ class TreeRawFirDeclarationBuilderProxy<Node : Any, Type : Any>(
                 }
 
                 symbol = propertySymbol
-                this.isLocal = context.inLocalContext
+                this.isLocal = isLocal || context.inLocalContext
 
                 typeParameterList?.let { firTypeParameters += convertTypeParameters(it, typeConstraints, symbol) }
                 if (!isLocal) {

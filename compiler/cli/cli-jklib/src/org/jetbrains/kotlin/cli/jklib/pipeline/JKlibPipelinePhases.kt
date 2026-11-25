@@ -207,7 +207,6 @@ object JKlibFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifact,
     override fun executePhase(input: ConfigurationPipelineArtifact): JKlibFrontendPipelineArtifact? {
         val configuration = input.configuration
         val rootDisposable = input.rootDisposable
-        val diagnosticsReporter = configuration.diagnosticsCollector
 
         val projectEnvironment = JvmFrontendPipelinePhase.createProjectEnvironment(
             configuration,
@@ -233,7 +232,6 @@ object JKlibFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifact,
 
         val resolvedLibraries = klibLoadingResult.librariesStdlibFirst
         val extensionRegistrars = configuration.getCompilerExtensions(FirExtensionRegistrar)
-        val ltFiles = groupedSources.let { it.commonSources + it.platformSources }.toList()
 
         val moduleName = configuration.moduleName ?: JvmProtoBufUtil.DEFAULT_MODULE_NAME
 
@@ -250,29 +248,19 @@ object JKlibFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifact,
 
         val sessionsWithSources = prepareJKlibSessions(
             projectEnvironment,
-            ltFiles,
+            groupedSources,
             configuration,
             rootModuleName,
             resolvedLibraries,
             libraryList,
             extensionRegistrars,
             metadataCompilationMode = false,
-            isCommonSource = groupedSources.isCommonSourceForLt,
-            fileBelongsToModule = groupedSources.fileBelongsToModuleForLt,
             librariesClasspath = librariesClasspath,
         )
 
-        val outputs = sessionsWithSources.map { (session, files) ->
-            val firFiles = session.buildFirViaLightTree(
-                files,
-                diagnosticsReporter,
-                useMultiplatformParsing = false,
-                reportFilesAndLines = null
-            )
-            resolveAndCheckFir(session, firFiles, diagnosticsReporter)
-        }
+        val outputs = sessionsWithSources.map { (session, files) -> buildResolveAndCheckFir(session, files, configuration) }
 
-        outputs.runPlatformCheckers(diagnosticsReporter)
+        outputs.runPlatformCheckers(configuration.diagnosticsCollector)
 
         return JKlibFrontendPipelineArtifact(
             AllModulesFrontendOutput(outputs), configuration, resolvedLibraries, projectEnvironment,

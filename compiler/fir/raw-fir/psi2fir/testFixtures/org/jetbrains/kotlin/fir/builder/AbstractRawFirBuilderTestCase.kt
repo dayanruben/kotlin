@@ -17,8 +17,12 @@ import org.jetbrains.kotlin.codegen.forTestCompile.ForTestCompileRuntime
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.contracts.FirContractDescription
+import org.jetbrains.kotlin.fir.declarations.FirAnonymousFunction
+import org.jetbrains.kotlin.fir.declarations.FirBackingField
+import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirFile
+import org.jetbrains.kotlin.fir.declarations.FirPropertyAccessor
 import org.jetbrains.kotlin.fir.declarations.FirTypeParameter
 import org.jetbrains.kotlin.fir.declarations.FirValueParameter
 import org.jetbrains.kotlin.fir.declarations.builder.FirFileBuilder
@@ -42,6 +46,8 @@ import org.jetbrains.kotlin.fir.types.FirTypeRef
 import org.jetbrains.kotlin.fir.types.isExtensionFunctionAnnotationCall
 import org.jetbrains.kotlin.fir.visitors.FirTransformer
 import org.jetbrains.kotlin.fir.visitors.FirVisitorVoid
+import org.jetbrains.kotlin.name.ClassIdBasedLocality
+import org.jetbrains.kotlin.name.isLocal
 import org.jetbrains.kotlin.psi
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPropertyDelegate
@@ -71,6 +77,7 @@ abstract class AbstractRawFirBuilderTestCase : KtParsingTestCase("", "kt") {
         val expectedPath = expectedPath(absolutePath, ".txt")
         TestDataAssertions.assertEqualsToFile(File(expectedPath), firFileDump)
         checkAnnotationOwners(absolutePath, firFile)
+        checkCallableIdLocality(firFile)
     }
 
     /**
@@ -134,6 +141,34 @@ abstract class AbstractRawFirBuilderTestCase : KtParsingTestCase("", "kt") {
             }
 
         TestDataAssertions.assertEqualsToFile(expectedFile, actual)
+    }
+
+    /**
+     * Checks that a callable is local iff its callable id is local or absent. Anonymous functions, accessors and backing fields
+     * have special callable ids, so they are not checked.
+     */
+    @OptIn(ClassIdBasedLocality::class)
+    protected fun checkCallableIdLocality(firFile: FirFile) {
+        val inconsistentCallables = mutableListOf<String>()
+        firFile.accept(object : FirVisitorVoid() {
+            override fun visitElement(element: FirElement) {
+                if (element is FirCallableDeclaration &&
+                    element !is FirAnonymousFunction &&
+                    element !is FirPropertyAccessor &&
+                    element !is FirBackingField &&
+                    element.isLocal != element.symbol.callableId.isLocal
+                ) {
+                    inconsistentCallables += "isLocal = ${element.isLocal}, callable id = ${element.symbol.callableId}: " +
+                            element.render().lineSequence().first()
+                }
+
+                element.acceptChildren(this)
+            }
+        })
+
+        JUnit5Assertions.assertTrue(inconsistentCallables.isEmpty()) {
+            "Callables whose locality differs from their callable id:\n" + inconsistentCallables.joinToString("\n")
+        }
     }
 
     protected open fun createKtFile(filePath: String): KtFile {
