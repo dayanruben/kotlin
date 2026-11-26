@@ -23,8 +23,6 @@ import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.config.KotlinSourceRoot
 import org.jetbrains.kotlin.cli.common.modules.ModuleChunk
 import org.jetbrains.kotlin.cli.jvm.compiler.*
-import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreApplicationEnvironment
-import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment.Companion.configureProjectEnvironment
 import org.jetbrains.kotlin.cli.jvm.config.*
 import org.jetbrains.kotlin.cli.jvm.index.JavaRoot
 import org.jetbrains.kotlin.cli.jvm.index.JvmDependenciesDynamicCompoundIndex
@@ -486,10 +484,7 @@ object JvmFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifact, J
         @OptIn(CoreEnvironmentDeprecation::class)
         val appEnv = KotlinCoreApplicationEnvironment.getOrCreateApplicationEnvironment(parentDisposable)
         // TODO: get rid of projEnv too - seems that all needed components could be easily extracted
-        val projectEnvironment = KotlinCoreEnvironment.ProjectEnvironment(parentDisposable, appEnv, configuration)
-
-        @OptIn(CoreEnvironmentDeprecation::class)
-        projectEnvironment.configureProjectEnvironment(configuration)
+        val projectEnvironment = KotlinCoreProjectEnvironment(parentDisposable, appEnv, configuration)
 
         val project = projectEnvironment.project
         val localFileSystem = projectEnvironment.environment.localFileSystem
@@ -579,7 +574,7 @@ object JvmFrontendPipelinePhase : PipelinePhase<ConfigurationPipelineArtifact, J
         getPackagePartProviderFn: (JvmClasspath) -> PackagePartProvider,
         initialRoots: List<JavaRoot>,
         val configuration: CompilerConfiguration,
-        val projectEnvironment: KotlinCoreEnvironment.ProjectEnvironment,
+        val projectEnvironment: KotlinCoreProjectEnvironment,
         val classpathRootsResolver: ClasspathRootsResolver,
         val rootsIndex: JvmDependenciesDynamicCompoundIndex
     ) : VfsBasedProjectEnvironment(project, knownFileSystems, getPackagePartProviderFn) {

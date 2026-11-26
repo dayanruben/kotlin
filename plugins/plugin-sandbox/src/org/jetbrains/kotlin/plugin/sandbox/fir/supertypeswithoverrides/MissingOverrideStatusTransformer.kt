@@ -7,32 +7,23 @@ package org.jetbrains.kotlin.plugin.sandbox.fir.supertypeswithoverrides
 
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.fir.FirSession
-import org.jetbrains.kotlin.fir.resolve.getContainingClassSymbol
 import org.jetbrains.kotlin.fir.copy
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.expressions.FirClassReferenceExpression
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.FirGetClassCall
 import org.jetbrains.kotlin.fir.expressions.FirPropertyAccessExpression
-import org.jetbrains.kotlin.fir.extensions.FirDeclarationPredicateRegistrar
-import org.jetbrains.kotlin.fir.extensions.FirStatusTransformerExtension
-import org.jetbrains.kotlin.fir.extensions.FirSupertypeGenerationExtension
-import org.jetbrains.kotlin.fir.extensions.PluginTypeResolver
+import org.jetbrains.kotlin.fir.extensions.*
 import org.jetbrains.kotlin.fir.extensions.predicate.DeclarationPredicate
-import org.jetbrains.kotlin.fir.extensions.predicateBasedProvider
-import org.jetbrains.kotlin.fir.extensions.typeFromQualifierParts
 import org.jetbrains.kotlin.fir.references.impl.FirSimpleNamedReference
+import org.jetbrains.kotlin.fir.resolve.getContainingClassSymbol
 import org.jetbrains.kotlin.fir.resolve.getSuperTypes
 import org.jetbrains.kotlin.fir.resolve.toClassSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassLikeSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.fir.symbols.lazyDeclarationResolver
-import org.jetbrains.kotlin.fir.types.ConeKotlinType
-import org.jetbrains.kotlin.fir.types.FirResolvedTypeRef
-import org.jetbrains.kotlin.fir.types.coneTypeOrNull
-import org.jetbrains.kotlin.fir.types.isAny
-import org.jetbrains.kotlin.fir.types.hasResolvedType
+import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 
@@ -54,14 +45,16 @@ class MissingOverrideStatusTransformer(session: FirSession) : FirStatusTransform
         }
     }
 
+    // Keep the old function usage to test compatibility during deprecation period
+    @Suppress("OVERRIDE_DEPRECATION")
     override fun transformStatus(
         status: FirDeclarationStatus,
         function: FirNamedFunction,
         containingClass: FirClassLikeSymbol<*>?,
         isLocal: Boolean,
     ): FirDeclarationStatus {
-        containingClass ?: return status
-
+        if (containingClass == null) return status
+        require(status is FirCallableDeclarationStatus)
         // Already declared as an override
         if (status.isOverride) return status
 
@@ -83,7 +76,7 @@ class MissingOverrideStatusTransformer(session: FirSession) : FirStatusTransform
             }
         }
 
-        return super.transformStatus(status, function, containingClass, isLocal)
+        return super.transformFunctionStatus(status, function, containingClass, isLocal)
     }
 }
 

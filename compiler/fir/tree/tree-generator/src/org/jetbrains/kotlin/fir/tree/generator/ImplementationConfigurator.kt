@@ -41,6 +41,12 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
 
         noImpl(declarationStatus)
         noImpl(resolvedDeclarationStatus)
+        noImpl(declarationStatus)
+        noImpl(callableDeclarationStatus)
+        noImpl(classLikeDeclarationStatus)
+        noImpl(resolvedDeclarationStatus)
+        noImpl(resolvedCallableDeclarationStatus)
+        noImpl(resolvedClassLikeDeclarationStatus)
 
         impl(regularClass) {
             defaultFalse("hasLazyNestedClassifiers", withGetter = true)
@@ -749,8 +755,8 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
             "status",
             implementationPredicate = { it.typeName in implementationsWithoutStatusAndTypeParameters }
         ) {
-            default(it, "FirResolvedDeclarationStatusImpl.DEFAULT_STATUS_FOR_STATUSLESS_DECLARATIONS")
-            additionalImports(resolvedDeclarationStatusImplType)
+            default(it, "FirResolvedCallableDeclarationStatusImpl.DEFAULT_STATUS_FOR_STATUSLESS_DECLARATIONS")
+            additionalImports(resolvedCallableDeclarationStatusImplType)
         }
 
         configureFieldInAllImplementations(
@@ -758,7 +764,7 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
             implementationPredicate = { it.typeName in implementationsWithoutStatusAndTypeParameters }
         ) {
             defaultEmptyList(it, withGetter = true)
-            additionalImports(resolvedDeclarationStatusImplType)
+            additionalImports(resolvedCallableDeclarationStatusImplType)
         }
     }
 

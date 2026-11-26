@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.cli.common.extensions.ScriptEvaluationExtension
 import org.jetbrains.kotlin.cli.common.freeArgsForScript
 import org.jetbrains.kotlin.cli.common.scriptMode
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreApplicationEnvironment
-import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
+import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreProjectEnvironment
 import org.jetbrains.kotlin.cli.pipeline.ConfigurationPipelineArtifact
 import org.jetbrains.kotlin.cli.pipeline.PipelinePhase
 import org.jetbrains.kotlin.cli.report
@@ -31,14 +31,12 @@ object JvmScriptPipelinePhase : PipelinePhase<ConfigurationPipelineArtifact, Jvm
         }
 
         val projectEnvironment by lazy(LazyThreadSafetyMode.NONE) {
-            KotlinCoreEnvironment.ProjectEnvironment(
+            KotlinCoreProjectEnvironment(
                 rootDisposable,
                 @OptIn(CoreEnvironmentDeprecation::class)
                 KotlinCoreApplicationEnvironment.getOrCreateApplicationEnvironment(rootDisposable),
                 configuration
-            ).also {
-                it.registerExtensionsFromPlugins(configuration)
-            }
+            )
         }
 
         val result = if (configuration.scriptMode || configuration.expressionToEvaluate != null) {

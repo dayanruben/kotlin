@@ -110,6 +110,7 @@ object FirTree : AbstractFirTreeBuilder() {
                 """.trimIndent()
         parent(memberDeclaration)
 
+        +field("status", callableDeclarationStatus, withReplace = true, withTransform = true)
         +field("returnTypeRef", typeRef, withReplace = true, withTransform = true)
         +field("receiverParameter", receiverParameter, nullable = true, withReplace = true, withTransform = true)
         +field("deprecationsProvider", deprecationsProviderType, withReplace = true) {
@@ -185,7 +186,7 @@ object FirTree : AbstractFirTreeBuilder() {
         parent(declaration)
         parent(typeParameterRefsOwner)
 
-        +field("status", declarationStatus, withReplace = true, withTransform = true)
+        +field("status", declarationStatus, withTransform = true)
         +field("isLocal", boolean)
     }
 
@@ -503,6 +504,7 @@ object FirTree : AbstractFirTreeBuilder() {
         parent(typeParameterRefsOwner)
 
         +declaredSymbol(classLikeSymbolType.withArgs(classLikeDeclaration))
+        +field("status", classLikeDeclarationStatus, withReplace = true, withTransform = true)
         +field("deprecationsProvider", deprecationsProviderType, withReplace = true) {
             isMutable = true
         }
@@ -801,28 +803,91 @@ object FirTree : AbstractFirTreeBuilder() {
         +field("initializer", expression, nullable = true, withReplace = true, withTransform = true)
         +annotations
         +typeParameters
-        +field("status", declarationStatus, withReplace = true, withTransform = true)
+        +field("status", callableDeclarationStatus, withReplace = true, withTransform = true)
     }
 
     val declarationStatus: Element by element(Declaration) {
+        kind = ImplementationKind.Interface
+        kDoc = """
+            [FirDeclarationStatus] represents a storage of various modifers which are applicable to declarations.
+            It includes such information as visibility, modality, expect/actual flags and so on.
+            
+            This class has two inheritors, [FirCallableDeclarationStatus] and [FirClassLikeDeclarationStatus], which 
+            contain modifiers which are specific to callable declarations (e.g. `operator`) and class-like
+            declarations (e.g. `data`), respectively.
+            
+            [FirMemberDeclaration] has a property of type [FirDeclarationStatus], but its inheritors ([FirCallableDeclaration]
+            and [FirClassLikeDeclaration]) override it with more specific status type, so none of actual FIR declarations
+            exposes raw [FirDeclarationStatus].
+        """.trimIndent()
+
         +field(visibilityType)
         +field(modalityType, nullable = true)
         generateBooleanFields(
-            "expect", "actual", "override", "operator", "infix", "inline", "value", "tailRec",
-            "external", "const", "lateInit", "inner", "companion", "data", "suspend", "static",
-            "fromSealedClass", "fromEnumClass", "fun", "richError", "hasStableParameterNames"
+            "expect", "actual", "external", "fromSealedClass", "fromEnumClass"
         )
-        +field("returnValueStatus", returnValueStatusType, nullable = false)
         +field("defaultVisibility", visibilityType, nullable = false)
         +field("defaultModality", modalityType, nullable = false)
+    }
+
+    val callableDeclarationStatus: Element by element(Declaration) {
+        kind = ImplementationKind.Interface
+        kDoc = "@see [FirDeclarationStatus]"
+
+        parent(declarationStatus)
+
+        generateBooleanFields(
+            "override", "operator", "infix", "inline", "tailRec",
+            "const", "lateInit", "suspend", "static", "hasStableParameterNames"
+        )
+        +field("returnValueStatus", returnValueStatusType, nullable = false)
+    }
+
+    val classLikeDeclarationStatus: Element by element(Declaration) {
+        kind = ImplementationKind.Interface
+        kDoc = "@see [FirDeclarationStatus]"
+
+        parent(declarationStatus)
+
+        generateBooleanFields(
+            "inline", "value", "inner", "companion", "data", "fun", "richError"
+        )
 
         fields.find { it.name == "isRichError" }!!.kDoc = "A class or object with the `error` modifier."
     }
 
     val resolvedDeclarationStatus: Element by element(Declaration) {
         kind = ImplementationKind.Interface
+        kDoc = """
+            [FirResolvedDeclarationStatus] is a [FirDeclarationStatus] which was resolved during
+            status resolution phase. If unresolved status have flags set based on what was written
+            in the source code, in the resolved status some of them are reified (e.g. override function
+            could be an `operator`, if the overridden function is an `operator`).
+        """.trimIndent()
 
         parent(declarationStatus)
+
+        +field(modalityType, nullable = false)
+        +field("effectiveVisibility", effectiveVisibilityType)
+    }
+
+    val resolvedCallableDeclarationStatus: Element by element(Declaration) {
+        kind = ImplementationKind.Interface
+        kDoc = "@see [FirResolvedDeclarationStatus]"
+
+        parent(callableDeclarationStatus)
+        parent(resolvedDeclarationStatus)
+
+        +field(modalityType, nullable = false)
+        +field("effectiveVisibility", effectiveVisibilityType)
+    }
+
+    val resolvedClassLikeDeclarationStatus: Element by element(Declaration) {
+        kind = ImplementationKind.Interface
+        kDoc = "@see [FirResolvedDeclarationStatus]"
+
+        parent(classLikeDeclarationStatus)
+        parent(resolvedDeclarationStatus)
 
         +field(modalityType, nullable = false)
         +field("effectiveVisibility", effectiveVisibilityType)

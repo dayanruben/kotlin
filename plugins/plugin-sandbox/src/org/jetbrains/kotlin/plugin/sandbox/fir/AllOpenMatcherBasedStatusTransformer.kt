@@ -6,13 +6,9 @@
 package org.jetbrains.kotlin.plugin.sandbox.fir
 
 import org.jetbrains.kotlin.descriptors.ClassKind
-import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.copy
-import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
-import org.jetbrains.kotlin.fir.declarations.FirDeclaration
-import org.jetbrains.kotlin.fir.declarations.FirDeclarationStatus
-import org.jetbrains.kotlin.fir.declarations.FirRegularClass
+import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.isLocal
 import org.jetbrains.kotlin.fir.extensions.FirStatusTransformerExtension
 import org.jetbrains.kotlin.fir.extensions.predicate.DeclarationPredicate
@@ -34,12 +30,20 @@ class AllOpenMatcherBasedStatusTransformer(session: FirSession) : FirStatusTrans
         }
     }
 
-    override fun transformStatus(status: FirDeclarationStatus, declaration: FirDeclaration): FirDeclarationStatus {
-        return if (status.modality == null) {
-            status.copy(modality = Modality.OPEN)
-        } else {
-            status
-        }
+    override fun transformCallableStatus(
+        status: FirCallableDeclarationStatus,
+        declaration: FirCallableDeclaration,
+    ): FirCallableDeclarationStatus {
+        if (status.modality != null) return status
+        return status.copy(modality = OPEN)
+    }
+
+    override fun transformClassLikeStatus(
+        status: FirClassLikeDeclarationStatus,
+        declaration: FirClassLikeDeclaration,
+    ): FirClassLikeDeclarationStatus {
+        if (status.modality != null) return status
+        return status.copy(modality = OPEN)
     }
 }
 

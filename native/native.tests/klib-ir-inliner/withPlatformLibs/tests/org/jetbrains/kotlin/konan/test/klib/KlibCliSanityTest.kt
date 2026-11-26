@@ -774,6 +774,25 @@ class KlibCliSanityTest : AbstractNativeSimpleTest() {
     }
 
     @Test
+    fun `Missing header file doesn't break the compilation`() {
+        newSourceModules {
+            addRegularModule(name = "lib") {
+                sourceFileAddend(""" fun foo() = "42" """)
+            }
+            addRegularModule("main") {
+                dependsOn("lib")
+                sourceFileAddend(""" fun main() = println(lib.foo()) """)
+            }
+        }.compileToKlibsViaCli { _, successKlib ->
+            val generatedKlibPath = successKlib.resultingArtifact.klibFile
+            generatedKlibPath.resolve("default/linkdata/module").delete()
+
+            val generatedKlib = KlibLoader { libraryPaths(generatedKlibPath) }.load().librariesStdlibFirst.single()
+            assumeTrue(generatedKlib.metadata.moduleHeaderData == null)
+        }
+    }
+
+    @Test
     fun `Compiler does not generate signature index for metadata Klibs`() {
         newSourceModules {
             addRegularModule("r") { sourceFileAddend("fun main() = Unit") }

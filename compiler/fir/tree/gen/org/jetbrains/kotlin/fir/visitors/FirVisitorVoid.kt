@@ -571,12 +571,44 @@ abstract class FirVisitorVoid : FirVisitor<Unit, Nothing?>() {
         visitElement(declarationStatus)
     }
 
+    final override fun visitCallableDeclarationStatus(callableDeclarationStatus: FirCallableDeclarationStatus, data: Nothing?) {
+        visitCallableDeclarationStatus(callableDeclarationStatus)
+    }
+
+    open fun visitCallableDeclarationStatus(callableDeclarationStatus: FirCallableDeclarationStatus) {
+        visitElement(callableDeclarationStatus)
+    }
+
+    final override fun visitClassLikeDeclarationStatus(classLikeDeclarationStatus: FirClassLikeDeclarationStatus, data: Nothing?) {
+        visitClassLikeDeclarationStatus(classLikeDeclarationStatus)
+    }
+
+    open fun visitClassLikeDeclarationStatus(classLikeDeclarationStatus: FirClassLikeDeclarationStatus) {
+        visitElement(classLikeDeclarationStatus)
+    }
+
     final override fun visitResolvedDeclarationStatus(resolvedDeclarationStatus: FirResolvedDeclarationStatus, data: Nothing?) {
         visitResolvedDeclarationStatus(resolvedDeclarationStatus)
     }
 
     open fun visitResolvedDeclarationStatus(resolvedDeclarationStatus: FirResolvedDeclarationStatus) {
         visitElement(resolvedDeclarationStatus)
+    }
+
+    final override fun visitResolvedCallableDeclarationStatus(resolvedCallableDeclarationStatus: FirResolvedCallableDeclarationStatus, data: Nothing?) {
+        visitResolvedCallableDeclarationStatus(resolvedCallableDeclarationStatus)
+    }
+
+    open fun visitResolvedCallableDeclarationStatus(resolvedCallableDeclarationStatus: FirResolvedCallableDeclarationStatus) {
+        visitElement(resolvedCallableDeclarationStatus)
+    }
+
+    final override fun visitResolvedClassLikeDeclarationStatus(resolvedClassLikeDeclarationStatus: FirResolvedClassLikeDeclarationStatus, data: Nothing?) {
+        visitResolvedClassLikeDeclarationStatus(resolvedClassLikeDeclarationStatus)
+    }
+
+    open fun visitResolvedClassLikeDeclarationStatus(resolvedClassLikeDeclarationStatus: FirResolvedClassLikeDeclarationStatus) {
+        visitElement(resolvedClassLikeDeclarationStatus)
     }
 
     final override fun visitImplicitInvokeCall(implicitInvokeCall: FirImplicitInvokeCall, data: Nothing?) {

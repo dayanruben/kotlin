@@ -10,24 +10,21 @@ import org.jetbrains.kotlin.KtIoFileSourceFile
 import org.jetbrains.kotlin.KtPsiSourceFile
 import org.jetbrains.kotlin.KtSourceFile
 import org.jetbrains.kotlin.KtVirtualFileSourceFile
+import org.jetbrains.kotlin.backend.common.deserializeSignaturesIndex
 import org.jetbrains.kotlin.backend.common.serialization.metadata.KlibSingleFileMetadataSerializer
+import org.jetbrains.kotlin.backend.common.serializeSignaturesIndex
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.ir.IrDiagnosticReporter
-import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
-import org.jetbrains.kotlin.ir.util.callableId
-import org.jetbrains.kotlin.ir.util.file
-import org.jetbrains.kotlin.ir.util.originalOfPreparedInlineFunctionCopy
-import org.jetbrains.kotlin.ir.util.preparedInlineFunctionCopies
+import org.jetbrains.kotlin.ir.util.IdSignature
 import org.jetbrains.kotlin.library.*
 import org.jetbrains.kotlin.library.metadata.KlibMetadataProtoBuf
 import org.jetbrains.kotlin.library.metadata.addMetadataFlagsToHeader
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.util.toMetadataVersion
+import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import java.io.File
 import java.util.*
-import kotlin.io.path.Path
-import kotlin.io.path.pathString
 
 /**
  * Holds the binary data for a single Kotlin file to be written to a KLIB, i.e., its metadata and IR (unless it's a metadata-only KLIB).
@@ -36,6 +33,7 @@ import kotlin.io.path.pathString
  * @property irData Serialized IR for this file, or `null` if this is a metadata-only KLIB.
  * @property irInlineData Serialized IR for preprocessed inline functions.
  * It is `null` if this is a metadata-only KLIB or there were no inline functions in this file.
+ * @property signatureIndex Serialized value of [SerializedSignatureIndex].
  * @property path The path to the corresponding source file, or `null` if that source file didn't have a path.
  * @property fqName The fully qualified name of the package containing the serialized file.
  */
@@ -43,6 +41,7 @@ class KotlinFileSerializedData private constructor(
     val metadata: ByteArray,
     val irData: SerializedIrFile?,
     val irInlineData: SerializedIrFile?,
+    val signatureIndex: ByteArray?,
     val path: String?,
     val fqName: String,
 ) {
@@ -53,10 +52,13 @@ class KotlinFileSerializedData private constructor(
      * @param metadata Serialized metadata of the corresponding source file.
      * @param irData Serialized IR for this file.
      * @param irInlineData Serialized IR for preprocessed inline functions that were present in this file.
+     * @param signatureIndex Serialized value of [SerializedSignatureIndex]
      */
     constructor(
-        metadata: ByteArray, irData: SerializedIrFile, irInlineData: SerializedIrFile?
-    ) : this(metadata, irData, irInlineData, irData.path, irData.fqName) {
+        metadata: ByteArray, irData: SerializedIrFile, irInlineData: SerializedIrFile?, signatureIndex: ByteArray?
+    ) : this(
+        metadata, irData, irInlineData, signatureIndex, irData.path, irData.fqName
+    ) {
         if (irInlineData != null) {
             require(irData.path == irInlineData.path && irData.fqName == irInlineData.fqName)
         }
@@ -69,7 +71,9 @@ class KotlinFileSerializedData private constructor(
      * @param path The path of the serialized file.
      * @param fqName The fully qualified name of the package containing the serialized file.
      */
-    constructor(metadata: ByteArray, path: String?, fqName: String) : this(metadata, irData = null, irInlineData = null, path, fqName)
+    constructor(metadata: ByteArray, path: String?, fqName: String) : this(
+        metadata, irData = null, irInlineData = null, signatureIndex = null, path, fqName
+    )
 }
 
 class SerializerOutput(
@@ -120,35 +124,38 @@ fun <SourceFile> serializeModuleIntoKlib(
         ).serializedIrModule(it)
     }
 
-    val serializedDirtyFiles = serializedIrFromDirtySources?.files?.toList()
-    val serializedDirtyInlineFiles = serializedIrFromDirtySources?.filesWithPreparedInlinableFunctions?.toList()
-
-    val callableIdsOfInlineFunByFile: Map<IrFile, List<CallableId>> = extractCallableIdsFromInlineFuns(irModuleFragment)
+    val globalImportedSignatures: MutableSet<IdSignature> =
+        serializedIrFromDirtySources.orEmpty().flatMapTo(mutableSetOf()) { it.importedSignatures }
+    val globalExportedSignatures: MutableSet<IdSignature> =
+        serializedIrFromDirtySources.orEmpty().flatMapTo(mutableSetOf()) { it.exportedSignatures }
 
     val compiledKotlinFiles = buildList {
         addAll(cleanFiles)
         metadataSerializer.forEachFile { i, ioFile, sourceFile, ktSourceFile, packageFqName ->
-            val binaryFile = serializedDirtyFiles?.get(i)?.also {
-                assert(ktSourceFile == null || ktSourceFile.path == it.path) {
-                    """The Kt and Ir files are put in different order
-                    Kt: ${ktSourceFile?.path}
-                    Ir: ${it.path}
-                    """.trimMargin()
-                }
-            }
-
-            val inlineBinaryFile = serializedDirtyInlineFiles?.firstOrNull { it.path == binaryFile?.path && it.fqName == binaryFile.fqName }
-
             val protoBuf = metadataSerializer.serializeSingleFileMetadata(sourceFile)
             val metadata = protoBuf.toByteArray()
-            val compiledKotlinFile = if (binaryFile == null)
+
+            val serializedIr = serializedIrFromDirtySources?.get(i)
+            val compiledKotlinFile = if (serializedIr == null) {
                 KotlinFileSerializedData(metadata, ktSourceFile?.path, packageFqName.asString())
-            else
-                KotlinFileSerializedData(metadata, binaryFile, inlineBinaryFile)
+            } else {
+                require(ktSourceFile == null || ktSourceFile.path == serializedIr.irData.path) {
+                    """The Kt and Ir files are put in different order
+                    Kt: ${ktSourceFile?.path}
+                    Ir: ${serializedIr.irData.path}
+                    """.trimMargin()
+                }
+
+                val serializedSignatureIndex = serializeSignaturesIndex(
+                    exportedSignatures = serializedIr.exportedSignatures,
+                    importedSignatures = serializedIr.importedSignatures,
+                )
+
+                KotlinFileSerializedData(metadata, serializedIr.irData, serializedIr.irInlineData, serializedSignatureIndex)
+            }
 
             if (processCompiledFileData != null) {
-                val callableIds = callableIdsOfInlineFunByFile.entries
-                    .firstOrNull { Path(it.key.fileEntry.name).pathString == ioFile.path }?.value ?: emptyList()
+                val callableIds = serializedIr?.callableIdsOfInlineFuns.orEmpty()
                 processCompiledFileData(ioFile, compiledKotlinFile, callableIds)
             }
 
@@ -180,30 +187,30 @@ fun <SourceFile> serializeModuleIntoKlib(
         metadataVersion = metadataVersion,
     )
 
+    val signatureIndex: SerializedSignatureIndex? = runIf(serializedIrFromDirtySources != null) {
+        for (file in cleanFiles) {
+            val [export, import] = deserializeSignaturesIndex(file.signatureIndex ?: continue)
+            globalExportedSignatures.addAll(export)
+            globalImportedSignatures.addAll(import)
+        }
+
+        serializeSignaturesIndex(
+            exportedSignatures = globalExportedSignatures,
+            // Subtract to remove declarations referenced from other files in the same module
+            importedSignatures = globalImportedSignatures - globalExportedSignatures,
+        ).let(::SerializedSignatureIndex)
+    }
+
     return SerializerOutput(
         serializedMetadata = serializedMetadata,
         serializedIr = if (serializedIrFromDirtySources == null) null
         else SerializedIrModule(
-            signatureIndex = if (processCompiledFileData != null) {
-                // TODO(KT-89836): We need to start computing indices for IC too.
-                null
-            } else serializedIrFromDirtySources.signatureIndex,
+            signatureIndex = signatureIndex,
             compiledKotlinFiles.mapNotNull { it.irData },
             compiledKotlinFiles.mapNotNull { it.irInlineData },
         ),
         neededLibraries = dependencies,
     )
-}
-
-private fun extractCallableIdsFromInlineFuns(irModuleFragment: IrModuleFragment?): Map<IrFile, List<CallableId>> {
-    return irModuleFragment?.preparedInlineFunctionCopies
-        ?.groupBy { it.file }
-        ?.mapValues {
-            it.value.map { func ->
-                val original = func.originalOfPreparedInlineFunctionCopy!!
-                original.correspondingPropertySymbol?.owner?.callableId ?: original.callableId
-            }
-        } ?: emptyMap()
 }
 
 private fun serializeKlibHeader(

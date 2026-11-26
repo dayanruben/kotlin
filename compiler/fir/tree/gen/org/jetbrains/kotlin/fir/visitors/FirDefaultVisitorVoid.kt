@@ -135,6 +135,14 @@ abstract class FirDefaultVisitorVoid : FirVisitorVoid() {
         visitTypeParameterRef(outerClassTypeParameterRef)
     }
 
+    override fun visitCallableDeclarationStatus(callableDeclarationStatus: FirCallableDeclarationStatus) {
+        visitDeclarationStatus(callableDeclarationStatus)
+    }
+
+    override fun visitClassLikeDeclarationStatus(classLikeDeclarationStatus: FirClassLikeDeclarationStatus) {
+        visitDeclarationStatus(classLikeDeclarationStatus)
+    }
+
     override fun visitResolvedDeclarationStatus(resolvedDeclarationStatus: FirResolvedDeclarationStatus) {
         visitDeclarationStatus(resolvedDeclarationStatus)
     }

@@ -19,6 +19,7 @@ package org.jetbrains.kotlin.codegen.optimization
 import org.jetbrains.kotlin.codegen.TransformationMethodVisitor
 import org.jetbrains.kotlin.codegen.coroutines.UninitializedStoresProcessor
 import org.jetbrains.kotlin.codegen.inline.InplaceArgumentsMethodTransformer
+import org.jetbrains.kotlin.codegen.inline.coroutines.FOR_INLINE_SUFFIX
 import org.jetbrains.kotlin.codegen.optimization.boxing.PopBackwardPropagationTransformer
 import org.jetbrains.kotlin.codegen.optimization.boxing.RedundantBoxingMethodTransformer
 import org.jetbrains.kotlin.codegen.optimization.boxing.StackPeepholeOptimizationsTransformer
@@ -35,7 +36,6 @@ import org.jetbrains.org.objectweb.asm.tree.MethodNode
 
 class OptimizationMethodVisitor(
     delegate: MethodVisitor,
-    private val mandatoryTransformationsOnly: Boolean,
     private val generationState: GenerationState,
     access: Int,
     name: String,
@@ -46,15 +46,15 @@ class OptimizationMethodVisitor(
     val normalizationMethodTransformer = CompositeMethodTransformer(
         InplaceArgumentsMethodTransformer(),
         FixStackWithLabelNormalizationMethodTransformer(),
-        MethodVerifier("AFTER mandatory stack transformations", generationState)
+        MethodVerifier("AFTER mandatory stack transformations", generationState.config)
     )
 
     val optimizationTransformer = CompositeMethodTransformer(
         CapturedVarsOptimizationMethodTransformer(),
-        RedundantNullCheckMethodTransformer(generationState),
+        RedundantNullCheckMethodTransformer(generationState.inlineClassUnboxer),
         RedundantCheckCastEliminationMethodTransformer(),
         ConstantConditionEliminationMethodTransformer(),
-        RedundantBoxingMethodTransformer(generationState),
+        RedundantBoxingMethodTransformer(generationState.inlineClassUnboxer),
         TemporaryVariablesEliminationTransformer(),
         StackPeepholeOptimizationsTransformer(),
         PopBackwardPropagationTransformer(),
@@ -63,14 +63,14 @@ class OptimizationMethodVisitor(
         RedundantNopsCleanupMethodTransformer(),
         NegatedJumpsMethodTransformer(),
         RedundantCheckcastsBeforeAastoreMethodTransformer,
-        MethodVerifier("AFTER optimizations", generationState)
+        MethodVerifier("AFTER optimizations", generationState.config)
     )
 
     override fun performTransformations(methodNode: MethodNode) {
         normalizationMethodTransformer.transform("fake", methodNode)
         UninitializedStoresProcessor(methodNode).run()
 
-        if (!mandatoryTransformationsOnly && canBeOptimized(methodNode) && !generationState.config.disableOptimization) {
+        if (!methodNode.name.endsWith(FOR_INLINE_SUFFIX) && canBeOptimized(methodNode) && !generationState.config.disableOptimization) {
             optimizationTransformer.transform("fake", methodNode)
         }
 

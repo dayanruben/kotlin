@@ -92,7 +92,7 @@ object StandaloneProjectFactory {
     fun createProjectEnvironment(
         projectDisposable: Disposable,
         unitTestMode: Boolean,
-    ): KotlinCoreProjectEnvironment {
+    ): KotlinCoreProjectEnvironmentBase {
         val environmentFactory = when (unitTestMode) {
             false -> KotlinCoreApplicationEnvironment.environmentFactoryForProduction
             true -> ::KotlinCoreApplicationEnvironmentForAnalysisApiTests
@@ -116,7 +116,7 @@ object StandaloneProjectFactory {
 
         registerApplicationServices(applicationEnvironment)
 
-        return object : KotlinCoreProjectEnvironment(projectDisposable, applicationEnvironment) {
+        return object : KotlinCoreProjectEnvironmentBase(projectDisposable, applicationEnvironment) {
             init {
                 registerProjectServices(project)
                 registerJavaPsiFacade(project)
@@ -206,7 +206,7 @@ object StandaloneProjectFactory {
     }
 
     fun registerServicesForProjectEnvironment(
-        environment: KotlinCoreProjectEnvironment,
+        environment: KotlinCoreProjectEnvironmentBase,
         projectStructureProvider: KotlinStaticProjectStructureProvider,
         languageVersionSettings: LanguageVersionSettings = latestLanguageVersionSettings,
         jdkHome: Path? = null,
@@ -214,7 +214,7 @@ object StandaloneProjectFactory {
         val project = environment.project
 
         @OptIn(CoreEnvironmentDeprecation::class)
-        KotlinCoreEnvironment.registerProjectExtensionPoints(project.extensionArea)
+        KotlinCoreProjectEnvironment.registerProjectExtensionPoints(project.extensionArea)
 
         project.registerService(SmartTypePointerManager::class.java, SmartTypePointerManagerImpl::class.java)
         project.registerService(SmartPointerManager::class.java, SmartPointerManagerImpl::class.java)
@@ -233,7 +233,7 @@ object StandaloneProjectFactory {
     }
 
     private fun initialiseVirtualFileFinderServices(
-        environment: KotlinCoreProjectEnvironment,
+        environment: KotlinCoreProjectEnvironmentBase,
         modules: List<KaModule>,
         sourceFiles: List<PsiFileSystemItem>,
         languageVersionSettings: LanguageVersionSettings,
