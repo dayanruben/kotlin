@@ -6,21 +6,28 @@
 package org.jetbrains.kotlin.fir.syntax
 
 import org.jetbrains.kotlin.KtSourceElement
-import org.jetbrains.kotlin.config.ParserMode
 import org.jetbrains.kotlin.fir.NoMutableState
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.syntax.KmpParseTreeKind
+import org.jetbrains.kotlin.syntax.ParseTreeKind
+import org.jetbrains.kotlin.syntax.SyntaxId
 
 /**
  * Must not depend on the IntelliJ platform.
  */
 @NoMutableState
 object FirKmpSyntaxComponent : FirSyntaxComponent<Any>() {
-    override val parserMode: ParserMode
-        get() = KmpTree
+    override val parseTreeKind: ParseTreeKind
+        get() = KmpParseTreeKind
 
     override fun KtSourceElement.unwrap(): Any {
         notYetImplemented()
     }
+
+    override val SyntaxId.name: String
+        get() {
+            notYetImplemented()
+        }
 
     override fun KtSourceElement.forEachChildMatching(
         depth: Int,
@@ -28,6 +35,10 @@ object FirKmpSyntaxComponent : FirSyntaxComponent<Any>() {
         isTargetType: SyntaxIdPredicate,
         processChild: (KtSourceElement) -> Boolean,
     ) {
+        notYetImplemented()
+    }
+
+    override fun KtSourceElement.extractModifierList(): FirModifierList? {
         notYetImplemented()
     }
 

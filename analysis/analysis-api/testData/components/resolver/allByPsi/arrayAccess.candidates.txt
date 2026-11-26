@@ -118,7 +118,7 @@ KtBinaryExpression(40,49): 'list += 1'
           contextParameters = []
           callableId = null)
       }
-    diagnostic = ERROR<ARGUMENT_TYPE_MISMATCH: Argument type mismatch: actual type is 'Int', but 'Array<Int>' was expected.>
+    diagnostic = ERROR<ARGUMENT_TYPE_MISMATCH: Expression '1' of type 'Int' does not conform to value parameter 'elements' of type 'Array<Int>'.>
     isInBestCandidates = false
 
   KaInapplicableCallCandidate:
@@ -157,7 +157,7 @@ KtBinaryExpression(40,49): 'list += 1'
           contextParameters = []
           callableId = null)
       }
-    diagnostic = ERROR<ARGUMENT_TYPE_MISMATCH: Argument type mismatch: actual type is 'Int', but 'Iterable<Int>' was expected.>
+    diagnostic = ERROR<ARGUMENT_TYPE_MISMATCH: Expression '1' of type 'Int' does not conform to value parameter 'elements' of type 'Iterable<Int>'.>
     isInBestCandidates = false
 
   KaInapplicableCallCandidate:
@@ -196,7 +196,7 @@ KtBinaryExpression(40,49): 'list += 1'
           contextParameters = []
           callableId = null)
       }
-    diagnostic = ERROR<ARGUMENT_TYPE_MISMATCH: Argument type mismatch: actual type is 'Int', but 'Sequence<Int>' was expected.>
+    diagnostic = ERROR<ARGUMENT_TYPE_MISMATCH: Expression '1' of type 'Int' does not conform to value parameter 'elements' of type 'Sequence<Int>'.>
     isInBestCandidates = false
 
 KtNameReferenceExpression(40,44): 'list'
@@ -292,7 +292,7 @@ KtOperationReferenceExpression(45,47): '+='
           contextParameters = []
           callableId = null)
       }
-    diagnostic = ERROR<ARGUMENT_TYPE_MISMATCH: Argument type mismatch: actual type is 'Int', but 'Array<Int>' was expected.>
+    diagnostic = ERROR<ARGUMENT_TYPE_MISMATCH: Expression '1' of type 'Int' does not conform to value parameter 'elements' of type 'Array<Int>'.>
     isInBestCandidates = false
 
   KaInapplicableCallCandidate:
@@ -331,7 +331,7 @@ KtOperationReferenceExpression(45,47): '+='
           contextParameters = []
           callableId = null)
       }
-    diagnostic = ERROR<ARGUMENT_TYPE_MISMATCH: Argument type mismatch: actual type is 'Int', but 'Iterable<Int>' was expected.>
+    diagnostic = ERROR<ARGUMENT_TYPE_MISMATCH: Expression '1' of type 'Int' does not conform to value parameter 'elements' of type 'Iterable<Int>'.>
     isInBestCandidates = false
 
   KaInapplicableCallCandidate:
@@ -370,7 +370,7 @@ KtOperationReferenceExpression(45,47): '+='
           contextParameters = []
           callableId = null)
       }
-    diagnostic = ERROR<ARGUMENT_TYPE_MISMATCH: Argument type mismatch: actual type is 'Int', but 'Sequence<Int>' was expected.>
+    diagnostic = ERROR<ARGUMENT_TYPE_MISMATCH: Expression '1' of type 'Int' does not conform to value parameter 'elements' of type 'Sequence<Int>'.>
     isInBestCandidates = false
 
 KtConstantExpression(48,49): '1'
@@ -627,7 +627,7 @@ KtBinaryExpression(134,172): '(@Suppress("SOME_ERROR") list[1]) += 2'
             callableId = kotlin/Int.plus
           typeArgumentsMapping = {}
           valueArgumentMapping = {
-            list[1] -> (KaVariableSignature:
+            2 -> (KaVariableSignature:
               name = other
               receiverType = null
               returnType = kotlin.Int
@@ -704,10 +704,10 @@ KtBinaryExpression(134,172): '(@Suppress("SOME_ERROR") list[1]) += 2'
         typeArgumentsMapping = {}
         valueArgumentMapping = {
           1 -> (KaVariableSignature:
-            name = element
+            name = index
             receiverType = null
             returnType = kotlin.Int
-            symbol = element: E
+            symbol = index: kotlin.Int
             contextParameters = []
             callableId = null)
         }
@@ -931,7 +931,7 @@ KtOperationReferenceExpression(168,170): '+='
             callableId = kotlin/Int.plus
           typeArgumentsMapping = {}
           valueArgumentMapping = {
-            list[1] -> (KaVariableSignature:
+            2 -> (KaVariableSignature:
               name = other
               receiverType = null
               returnType = kotlin.Int
@@ -1008,10 +1008,10 @@ KtOperationReferenceExpression(168,170): '+='
         typeArgumentsMapping = {}
         valueArgumentMapping = {
           1 -> (KaVariableSignature:
-            name = element
+            name = index
             receiverType = null
             returnType = kotlin.Int
-            symbol = element: E
+            symbol = index: kotlin.Int
             contextParameters = []
             callableId = null)
         }
@@ -1051,7 +1051,7 @@ KtBinaryExpression(177,191): '(list[2]) += 3'
             callableId = kotlin/Int.plus
           typeArgumentsMapping = {}
           valueArgumentMapping = {
-            list[2] -> (KaVariableSignature:
+            3 -> (KaVariableSignature:
               name = other
               receiverType = null
               returnType = kotlin.Int
@@ -1128,10 +1128,10 @@ KtBinaryExpression(177,191): '(list[2]) += 3'
         typeArgumentsMapping = {}
         valueArgumentMapping = {
           2 -> (KaVariableSignature:
-            name = element
+            name = index
             receiverType = null
             returnType = kotlin.Int
-            symbol = element: E
+            symbol = index: kotlin.Int
             contextParameters = []
             callableId = null)
         }
@@ -1232,7 +1232,7 @@ KtOperationReferenceExpression(187,189): '+='
             callableId = kotlin/Int.plus
           typeArgumentsMapping = {}
           valueArgumentMapping = {
-            list[2] -> (KaVariableSignature:
+            3 -> (KaVariableSignature:
               name = other
               receiverType = null
               returnType = kotlin.Int
@@ -1309,10 +1309,10 @@ KtOperationReferenceExpression(187,189): '+='
         typeArgumentsMapping = {}
         valueArgumentMapping = {
           2 -> (KaVariableSignature:
-            name = element
+            name = index
             receiverType = null
             returnType = kotlin.Int
-            symbol = element: E
+            symbol = index: kotlin.Int
             contextParameters = []
             callableId = null)
         }
@@ -1563,10 +1563,10 @@ KtPrefixExpression(245,254): '--list[i]'
         typeArgumentsMapping = {}
         valueArgumentMapping = {
           i -> (KaVariableSignature:
-            name = element
+            name = index
             receiverType = null
             returnType = kotlin.Int
-            symbol = element: E
+            symbol = index: kotlin.Int
             contextParameters = []
             callableId = null)
         }
@@ -1664,10 +1664,10 @@ KtOperationReferenceExpression(245,247): '--'
         typeArgumentsMapping = {}
         valueArgumentMapping = {
           i -> (KaVariableSignature:
-            name = element
+            name = index
             receiverType = null
             returnType = kotlin.Int
-            symbol = element: E
+            symbol = index: kotlin.Int
             contextParameters = []
             callableId = null)
         }
@@ -1862,10 +1862,10 @@ KtPrefixExpression(266,277): '++(list[2])'
         typeArgumentsMapping = {}
         valueArgumentMapping = {
           2 -> (KaVariableSignature:
-            name = element
+            name = index
             receiverType = null
             returnType = kotlin.Int
-            symbol = element: E
+            symbol = index: kotlin.Int
             contextParameters = []
             callableId = null)
         }
@@ -1963,10 +1963,10 @@ KtOperationReferenceExpression(266,268): '++'
         typeArgumentsMapping = {}
         valueArgumentMapping = {
           2 -> (KaVariableSignature:
-            name = element
+            name = index
             receiverType = null
             returnType = kotlin.Int
-            symbol = element: E
+            symbol = index: kotlin.Int
             contextParameters = []
             callableId = null)
         }

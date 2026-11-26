@@ -50,6 +50,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
+import org.jetbrains.kotlin.syntax.NoParseTreeKind
 import org.jetbrains.kotlin.types.Variance
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
@@ -70,7 +71,8 @@ class IrValidatorTest {
         diagnosticReporter = DiagnosticsCollectorImpl()
         irDiagnosticReporter = KtDiagnosticReporterWithImplicitIrBasedContext(
             diagnosticReporter,
-            LanguageVersionSettingsImpl(LanguageVersion.LATEST_STABLE, ApiVersion.LATEST_STABLE)
+            LanguageVersionSettingsImpl(LanguageVersion.LATEST_STABLE, ApiVersion.LATEST_STABLE),
+            NoParseTreeKind, // The IR in this test has no source elements, so it isn't linked to a parse tree
         )
 
         val moduleDescriptor = ModuleDescriptorImpl(

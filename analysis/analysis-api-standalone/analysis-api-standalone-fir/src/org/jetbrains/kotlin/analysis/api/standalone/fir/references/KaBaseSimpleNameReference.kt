@@ -9,9 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleOrMultiCall
-import org.jetbrains.kotlin.analysis.api.resolution.calls
-import org.jetbrains.kotlin.analysis.api.resolution.symbols
+import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.idea.references.readWriteAccess
@@ -28,7 +26,10 @@ internal class KaBaseSimpleNameReference(
         return super<KaBaseReference>.isReferenceToImportAlias(alias)
     }
 
-    override fun KaSession.resolveToSymbols(): Collection<KaSymbol> {
+    override fun KaSession.resolveToSymbols(): Collection<KaSymbol> = resolveToSymbolsInContext()
+
+    context(session: KaSession)
+    private fun resolveToSymbolsInContext(): Collection<KaSymbol> {
         // Resolved calls are preferable for navigation since they provide a more precise location.
         // For instance, it is the case for constructor calls
         val symbolsFromCall = (element as? KtResolvableCall)?.tryResolveCall()
@@ -39,7 +40,8 @@ internal class KaBaseSimpleNameReference(
         return symbolsFromCall ?: element.tryResolveSymbols()?.symbols.orEmpty()
     }
 
-    override fun getResolvedToPsi(analysisSession: KaSession): Collection<PsiElement> = with(analysisSession) {
+    context(session: KaSession)
+    override fun getResolvedToPsi(): Collection<PsiElement> {
         if (expression is KtLabelReferenceExpression) {
             when (val loopJumpExpression = expression.parent?.parent) {
                 // continue/break expressions might reference only loops,
@@ -52,10 +54,10 @@ internal class KaBaseSimpleNameReference(
             }
         }
 
-        val referenceTargetSymbols = resolveToSymbols()
-        val psiOfReferenceTarget = super.getResolvedToPsi(analysisSession, referenceTargetSymbols)
+        val referenceTargetSymbols = with(session) { resolveToSymbols() }
+        val psiOfReferenceTarget = super.getResolvedToPsi(referenceTargetSymbols)
         if (psiOfReferenceTarget.isNotEmpty()) return psiOfReferenceTarget
-        referenceTargetSymbols.flatMap { symbol ->
+        return referenceTargetSymbols.flatMap { symbol ->
             when (symbol) {
                 is KaSyntheticJavaPropertySymbol ->
                     if (isRead) {

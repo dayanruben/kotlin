@@ -7,7 +7,7 @@ package org.jetbrains.kotlin.fir.analysis.diagnostics
 
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.diagnostics.DiagnosticBaseContext
+import org.jetbrains.kotlin.diagnostics.DiagnosticContext
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactoryToRendererMap
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticRenderers.CLASS_ID
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticRenderers.CLASS_ID_RELATIVE_NAME_ONLY
@@ -45,11 +45,14 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.OPTI
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.OPTIONAL_FOR_EXPRESSION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.OPTIONAL_OF_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.OPTIONAL_SENTENCE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.OPTIONAL_SYMBOL_NAME_OF
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.RENDER_CLASS_OR_OBJECT_NAME_QUOTED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.RENDER_CLASS_OR_OBJECT_QUOTED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.RENDER_COLLECTION_OF_TYPES
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.RENDER_ENUM_ENTRY_QUOTED
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.RENDER_OPTIONAL_EXPRESSION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.RENDER_FQ_NAME_WITH_PREFIX
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.RENDER_OPTIONAL_EXPRESSION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.RENDER_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.REQUIRE_KOTLIN_VERSION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.STAR_PROJECTED_CLASS
@@ -438,6 +441,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ILLEGAL_DECLARATI
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ILLEGAL_ESCAPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ILLEGAL_INLINE_PARAMETER_MODIFIER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ILLEGAL_KOTLIN_VERSION_STRING_VALUE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ILLEGAL_PROJECTION_IN_TYPEALIAS_EXPANSION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ILLEGAL_PROJECTION_USAGE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ILLEGAL_RESTRICTED_SUSPENDING_FUNCTION_CALL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ILLEGAL_SELECTOR
@@ -1002,7 +1006,9 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WILL_BECOME_VALUE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WILL_BECOME_VALUE_CLASS_CANNOT_IMPLEMENT_INTERFACE_BY_DELEGATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WILL_BECOME_VALUE_CLASS_CONSTRUCTOR_NOT_FINAL_READ_ONLY_PARAMETER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WILL_BECOME_VALUE_CLASS_EMPTY_CONSTRUCTOR
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WILL_BECOME_VALUE_CLASS_HAS_INAPPLICABLE_PARAMETER_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WILL_BECOME_VALUE_CLASS_NOT_TOP_LEVEL
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WILL_BECOME_VALUE_CLASS_OPEN
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WILL_BECOME_VALUE_NOT_APPLICABLE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRAPPED_LHS_IN_ASSIGNMENT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_ANNOTATION_TARGET
@@ -1091,10 +1097,10 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         )
         map.put(DIVISION_BY_ZERO, "Division by zero.")
         map.put(TRIM_MARGIN_BLANK_PREFIX, "Prefix for trimMargin cannot be blank.")
-        map.put(VAL_OR_VAR_ON_LOOP_PARAMETER, "''{0}'' on loop parameter is prohibited.", TO_STRING)
-        map.put(VAL_OR_VAR_ON_FUN_PARAMETER, "''{0}'' on function parameter is prohibited.", TO_STRING)
-        map.put(VAL_OR_VAR_ON_CATCH_PARAMETER, "''{0}'' on catch parameter is prohibited.", TO_STRING)
-        map.put(VAL_OR_VAR_ON_SECONDARY_CONSTRUCTOR_PARAMETER, "''{0}'' on secondary constructor parameter is prohibited.", TO_STRING)
+        map.put(VAL_OR_VAR_ON_LOOP_PARAMETER, "''{0}'' on loop parameter is prohibited.", STRING)
+        map.put(VAL_OR_VAR_ON_FUN_PARAMETER, "''{0}'' on function parameter is prohibited.", STRING)
+        map.put(VAL_OR_VAR_ON_CATCH_PARAMETER, "''{0}'' on catch parameter is prohibited.", STRING)
+        map.put(VAL_OR_VAR_ON_SECONDARY_CONSTRUCTOR_PARAMETER, "''{0}'' on secondary constructor parameter is prohibited.", STRING)
         map.put(INNER_ON_TOP_LEVEL_SCRIPT_CLASS, "Top-level script class cannot be inner.")
         map.put(
             ERROR_SUPPRESSION,
@@ -1811,16 +1817,16 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         )
 
         // Modifiers
-        map.put(REPEATED_MODIFIER, "Repeated ''{0}''.", TO_STRING)
-        map.put(WRONG_MODIFIER_TARGET, "Modifier ''{0}'' is not applicable to ''{1}''.", TO_STRING, STRING)
-        map.put(WRONG_MODIFIER_CONTAINING_DECLARATION, "Modifier ''{0}'' is not applicable inside ''{1}''.", TO_STRING, STRING)
-        map.put(DEPRECATED_MODIFIER, "Modifier ''{0}'' is deprecated; use ''{1}'' instead.", TO_STRING, TO_STRING)
-        map.put(DEPRECATED_MODIFIER_FOR_TARGET, "Modifier ''{0}'' is deprecated for ''{1}''.", TO_STRING, STRING)
-        map.put(DEPRECATED_MODIFIER_CONTAINING_DECLARATION, "Modifier ''{0}'' is deprecated inside ''{1}''.", TO_STRING, STRING)
-        map.put(INCOMPATIBLE_MODIFIERS, "Modifier ''{0}'' is incompatible with ''{1}''.", TO_STRING, TO_STRING)
-        map.put(DEPRECATED_MODIFIER_PAIR, "Modifier ''{0}'' is deprecated in presence of ''{1}''.", TO_STRING, TO_STRING)
-        map.put(REDUNDANT_MODIFIER, "Modifier ''{0}'' is redundant in presence of ''{1}''.", TO_STRING, TO_STRING)
-        map.put(REDUNDANT_MODIFIER_FOR_TARGET, "Modifier ''{0}'' is redundant for ''{1}''.", TO_STRING, STRING)
+        map.put(REPEATED_MODIFIER, "Repeated ''{0}''.", STRING)
+        map.put(WRONG_MODIFIER_TARGET, "Modifier ''{0}'' is not applicable to ''{1}''.", STRING, STRING)
+        map.put(WRONG_MODIFIER_CONTAINING_DECLARATION, "Modifier ''{0}'' is not applicable inside ''{1}''.", STRING, STRING)
+        map.put(DEPRECATED_MODIFIER, "Modifier ''{0}'' is deprecated; use ''{1}'' instead.", STRING, STRING)
+        map.put(DEPRECATED_MODIFIER_FOR_TARGET, "Modifier ''{0}'' is deprecated for ''{1}''.", STRING, STRING)
+        map.put(DEPRECATED_MODIFIER_CONTAINING_DECLARATION, "Modifier ''{0}'' is deprecated inside ''{1}''.", STRING, STRING)
+        map.put(INCOMPATIBLE_MODIFIERS, "Modifier ''{0}'' is incompatible with ''{1}''.", STRING, STRING)
+        map.put(DEPRECATED_MODIFIER_PAIR, "Modifier ''{0}'' is deprecated in presence of ''{1}''.", STRING, STRING)
+        map.put(REDUNDANT_MODIFIER, "Modifier ''{0}'' is redundant in presence of ''{1}''.", STRING, STRING)
+        map.put(REDUNDANT_MODIFIER_FOR_TARGET, "Modifier ''{0}'' is redundant for ''{1}''.", STRING, STRING)
         map.put(INFIX_MODIFIER_REQUIRED, "''infix'' modifier is required on ''{0}''.", SYMBOL)
         map.put(OPERATOR_MODIFIER_REQUIRED, "''operator'' modifier is required on {0}.", SYMBOL_WITH_CONTAINING_DECLARATION)
         map.put(INAPPLICABLE_INFIX_MODIFIER, "'infix' modifier is inapplicable to this function.")
@@ -2026,10 +2032,12 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         )
         map.put(
             ARGUMENT_TYPE_MISMATCH,
-            "Argument type mismatch: actual type is ''{0}'', but ''{1}'' was expected.",
+            "Expression{4} of type ''{0}'' does not conform to{3} type ''{1}''.",
             RENDER_TYPE,
             RENDER_TYPE,
             NOT_RENDERED,
+            OPTIONAL_SYMBOL_NAME_OF,
+            RENDER_OPTIONAL_EXPRESSION,
         )
         map.put(
             RETURN_TYPE_MISMATCH,
@@ -2287,6 +2295,10 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             CONFLICTING_PROJECTION_IN_TYPEALIAS_EXPANSION,
             "Conflicting projection in type alias expansion in intermediate type ''{0}''.",
             RENDER_TYPE,
+        )
+        map.put(
+            ILLEGAL_PROJECTION_IN_TYPEALIAS_EXPANSION,
+            "Projection in type alias arguments leads to malformed type expansion.",
         )
         map.put(
             CONFLICTING_PROJECTION_IN_CALLABLE_REFERENCE_WARNING,
@@ -2559,7 +2571,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
 
         // Value classes
         map.put(VALUE_CLASS_NOT_TOP_LEVEL, "Value class cannot be local or inner.")
-        map.put(VALUE_CLASS_NOT_FINAL, "{0} class can only be final.", STRING)
+        map.put(VALUE_CLASS_NOT_FINAL, "Inline value class can only be final.")
         map.put(VALUE_CLASS_OPEN, "Value class cannot be open.")
         map.put(ABSENCE_OF_PRIMARY_CONSTRUCTOR_FOR_VALUE_CLASS, "Primary constructor is required for {0} classes.", STRING)
         map.put(
@@ -2584,13 +2596,14 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         )
         map.put(PROPERTY_WITH_BACKING_FIELD_INSIDE_VALUE_CLASS, "Value class cannot have properties with backing fields outside the primary constructor.")
         map.put(DELEGATED_PROPERTY_INSIDE_VALUE_CLASS, "Value class cannot have delegated properties.")
-        map.put(VALUE_CLASS_HAS_INAPPLICABLE_PARAMETER_TYPE, "{1} class cannot have value parameter of type ''{0}''.", RENDER_TYPE, STRING)
+        map.put(VALUE_CLASS_HAS_INAPPLICABLE_PARAMETER_TYPE, "{0} class cannot have value parameter of type ''{1}''.", STRING, RENDER_TYPE)
         map.put(VALUE_CLASS_CANNOT_IMPLEMENT_INTERFACE_BY_DELEGATION, "Value class cannot implement an interface by delegation.")
         map.put(VALUE_CLASS_CANNOT_EXTEND_CLASSES, "{0} class cannot extend classes.", STRING)
         map.put(VALUE_CLASS_CANNOT_EXTEND_IDENTITY_CLASSES, "Value class cannot extend identity classes.")
         map.put(VALUE_CLASS_CANNOT_BE_RECURSIVE, "Value class cannot be recursive.")
         map.put(VALUE_CLASS_CANNOT_BE_RECURSIVE_VIA_TYPE_PARAMETERS, "Value class cannot be recursive.")
         map.put(WILL_BECOME_VALUE_NOT_APPLICABLE, "''@WillBecomeValue'' is not applicable to {0}.", STRING)
+        map.put(WILL_BECOME_VALUE_CLASS_OPEN, "Class annotated with '@WillBecomeValue' cannot be open.")
         map.put(
             IDENTITY_BASED_MEMBER_IN_WILL_BECOME_VALUE_CLASS,
             "Class annotated with ''@WillBecomeValue'' must override ''{0}''. The identity-based implementation inherited from ''Any'' will not be used once the class becomes a ''value'' class.",
@@ -2630,6 +2643,10 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(
             SEALED_WILL_BECOME_VALUE_CLASS_CONSTRUCTOR_PROPERTY_PARAMETER,
             "Primary constructor of a sealed class annotated with '@WillBecomeValue' cannot have property parameters."
+        )
+        map.put(
+            WILL_BECOME_VALUE_CLASS_HAS_INAPPLICABLE_PARAMETER_TYPE,
+            "Class annotated with ''@WillBecomeValue'' cannot have property parameter of type ''{0}''.", RENDER_TYPE
         )
         map.put(
             PROPERTY_WITH_BACKING_FIELD_INSIDE_WILL_BECOME_VALUE_CLASS,
@@ -3716,8 +3733,8 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(CONTRACT_NOT_ALLOWED, "{0}", TO_STRING)
 
         // Conventions
-        map.put(NO_GET_METHOD, "No 'get' operator method providing array access.")
-        map.put(NO_SET_METHOD, "No 'set' operator method providing array access.")
+        map.put(NO_GET_METHOD, "No ''get'' operator method found for receiver{0} of type ''{1}''.", RENDER_OPTIONAL_EXPRESSION, RENDER_TYPE)
+        map.put(NO_SET_METHOD, "No ''set'' operator method found for receiver{0} of type ''{1}''.", RENDER_OPTIONAL_EXPRESSION, RENDER_TYPE)
         map.put(ITERATOR_MISSING, "For-loop range must have an 'iterator()' method.")
         map.put(HAS_NEXT_MISSING, "'hasNext()' cannot be called on 'iterator()'.")
         map.put(NEXT_MISSING, "Method 'next()' cannot be called on 'iterator()'.")
@@ -3856,7 +3873,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             object : DiagnosticParameterRenderer<Boolean> {
                 val contextParametersKey: RenderingContext.Key<List<String>> =
                     object : RenderingContext.Key<List<String>>("contextParameters") {
-                        override fun compute(objectsToRender: Collection<Any?>, diagnosticContext: DiagnosticBaseContext): List<String> {
+                        override fun compute(objectsToRender: Collection<Any?>, diagnosticContext: DiagnosticContext): List<String> {
                             @Suppress("UNCHECKED_CAST")
                             val symbols = objectsToRender.last() as? List<FirValueParameterSymbol> ?: return emptyList()
 

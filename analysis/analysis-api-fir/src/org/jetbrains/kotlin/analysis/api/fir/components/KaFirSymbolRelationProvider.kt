@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.analysis.api.fir.utils.withSymbolAttachment
 import org.jetbrains.kotlin.analysis.api.internals.KaInternalsSymbolRelationProvider
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.analysis.api.scopes.combinedDeclaredMemberScope
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.fir.analysis.checkers.getImplementationStatus
@@ -33,7 +34,6 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
 import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
 import org.jetbrains.kotlin.fir.types.classLikeLookupTagIfAny
-import org.jetbrains.kotlin.fir.types.coneType
 import org.jetbrains.kotlin.fir.unwrapFakeOverridesOrDelegated
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.isJvm
@@ -81,15 +81,15 @@ internal class KaFirSymbolRelationProvider(
         symbol.firSymbol.resolvedReturnType.classLikeLookupTagIfAny?.let {
             analysisSession.firSymbolBuilder.classifierBuilder.buildClassLikeSymbolByLookupTag(it)
         } ?: errorWithAttachment("Cannot retrieve functional interface for KaSamConstructorSymbol") {
-            withSymbolAttachment("KaSamConstructorSymbol", analysisSession, symbol)
+            withSymbolAttachment("KaSamConstructorSymbol", symbol)
         }
     }
 
     override fun functionalInterfaceFunction(symbol: KaSamConstructorSymbol): KaNamedFunctionSymbol = withValidityAssertion {
         functionalInterfaceFunction(functionalInterface(symbol))
             ?: errorWithAttachment("SAM constructor should have a corresponding function in its functional interface") {
-                withSymbolAttachment("KaSamConstructorSymbol", analysisSession, symbol)
-                withSymbolAttachment("functionalInterface", analysisSession, functionalInterface(symbol))
+                withSymbolAttachment("KaSamConstructorSymbol", symbol)
+                withSymbolAttachment("functionalInterface", functionalInterface(symbol))
             }
     }
 
@@ -159,7 +159,7 @@ internal class KaFirSymbolRelationProvider(
         val origin = functionSymbol.origin
         if (!origin.isFromJava) return null
 
-        return with(analysisSession) {
+        return context(analysisSession) {
             val containingClass = functionSymbol.containingDeclaration as? KaClassSymbol ?: return null
             containingClass.combinedDeclaredMemberScope
                 .findSyntheticJavaPropertyAccessor(functionSymbol.name) { propertySymbol, accessorKind, _ ->
@@ -267,8 +267,8 @@ internal class KaFirSymbolRelationProvider(
 
         val inheritorClassIds = symbol.firSymbol.fir.getSealedClassInheritors(analysisSession.firSession)
 
-        return with(analysisSession) {
-            inheritorClassIds.mapNotNull { findClass(it) as? KaNamedClassSymbol }
+        return context(analysisSession) {
+            inheritorClassIds.mapNotNull { findClass(it) }
         }
     }
 

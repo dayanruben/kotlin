@@ -14,6 +14,8 @@ import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.diagnostics.KtDiagnostic
 import org.jetbrains.kotlin.diagnostics.KtSourcelessDiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.report
+import org.jetbrains.kotlin.syntax.NoParseTreeKind
+import org.jetbrains.kotlin.syntax.ParseTreeKind
 import java.io.File
 
 internal class TypeScriptExportContext(
@@ -22,6 +24,9 @@ internal class TypeScriptExportContext(
 ) : DiagnosticContext {
     override var containingFile: KtSourceFile? = null
     override val languageVersionSettings: LanguageVersionSettings get() = LanguageVersionSettingsImpl.DEFAULT
+
+    override val parseTreeKind: ParseTreeKind
+        get() = NoParseTreeKind
 
     override fun isDiagnosticSuppressed(diagnostic: KtDiagnostic): Boolean = false
 

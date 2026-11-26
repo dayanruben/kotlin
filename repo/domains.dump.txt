@@ -229,6 +229,7 @@ Gradle:
  - libraries/tools/kotlin-gradle-plugin-test-utils-embeddable
  - libraries/tools/kotlin-gradle-plugins-bom
  - libraries/tools/kotlin-gradle-statistics
+ - libraries/tools/kotlin-import-models
 
 Maven:
  - libraries/tools/kotlin-maven-allopen
@@ -302,7 +303,6 @@ Unknown:
  - libraries/tools/kotlin-noarg
  - libraries/tools/kotlin-osgi-bundle
  - libraries/tools/kotlin-power-assert
- - libraries/tools/kotlin-prepush-hook
  - libraries/tools/kotlin-privacy-manifests-plugin
  - libraries/tools/kotlin-sam-with-receiver
  - libraries/tools/kotlin-serialization

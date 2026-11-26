@@ -8,10 +8,7 @@ package org.jetbrains.kotlin.analysis.api.standalone.fir.references
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaResolvableReferenceBridge
-import org.jetbrains.kotlin.analysis.api.symbols.KaBackingFieldSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.isConstructorOf
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -22,17 +19,15 @@ import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 internal sealed interface KaBaseReference : KtReference, KaResolvableReferenceBridge {
     override fun KaSession.resolveToSymbols(): Collection<KaSymbol>
 
-    fun getResolvedToPsi(analysisSession: KaSession, referenceTargetSymbols: Collection<KaSymbol>): Collection<PsiElement> =
-        with(analysisSession) {
-            referenceTargetSymbols.flatMap { symbol ->
-                getPsiDeclarations(symbol)
-            }
+    context(session: KaSession)
+    fun getResolvedToPsi(referenceTargetSymbols: Collection<KaSymbol>): Collection<PsiElement> =
+        referenceTargetSymbols.flatMap { symbol ->
+            getPsiDeclarations(symbol)
         }
 
-    fun getResolvedToPsi(analysisSession: KaSession): Collection<PsiElement> =
-        with(analysisSession) {
-            getResolvedToPsi(analysisSession, resolveToSymbols())
-        }
+    context(session: KaSession)
+    fun getResolvedToPsi(): Collection<PsiElement> =
+        getResolvedToPsi(with(session) { resolveToSymbols() })
 
     override val resolver get() = KaBaseReferenceResolver
 
@@ -64,7 +59,8 @@ internal sealed interface KaBaseReference : KtReference, KaResolvableReferenceBr
     }
 }
 
-internal fun KaSession.getPsiDeclarations(symbol: KaSymbol): Collection<PsiElement> {
+context(session: KaSession)
+internal fun getPsiDeclarations(symbol: KaSymbol): Collection<PsiElement> {
     val intersectionOverriddenSymbolsOrSingle = when {
         symbol.origin == KaSymbolOrigin.INTERSECTION_OVERRIDE && symbol is KaCallableSymbol -> symbol.intersectionOverriddenSymbols
         else -> listOf(symbol)

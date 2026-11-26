@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.backend.konan.serialization
 
+import org.jetbrains.kotlin.backend.common.serialization.IrLinkerInternalApi
 import org.jetbrains.kotlin.backend.common.serialization.IrModuleDeserializer
 import org.jetbrains.kotlin.backend.common.serialization.TopLevelCallableIdAndKind
 import org.jetbrains.kotlin.backend.common.serialization.encodings.BinarySymbolData
@@ -36,7 +37,7 @@ import org.jetbrains.kotlin.name.NativeForwardDeclarationKind
 internal class KonanForwardDeclarationModuleDeserializer(
     moduleFragment: IrModuleFragment,
     private val linker: KonanIrLinker,
-) : IrModuleDeserializer(moduleFragment, KotlinAbiVersion.Companion.CURRENT) {
+) : IrModuleDeserializer(moduleFragment, KotlinAbiVersion.CURRENT) {
     init {
         require(moduleFragment.name == FORWARD_DECLARATIONS_MODULE_NAME)
     }
@@ -91,6 +92,8 @@ internal class KonanForwardDeclarationModuleDeserializer(
             kind.superClassId.relativeClassName.asString(),
             null, 0, null
         )
+
+        @OptIn(IrLinkerInternalApi::class)
         val superClassSymbol = linker.deserializeOrReturnUnboundIrSymbolIfPartialLinkageEnabled(
             superClassSignature, BinarySymbolData.SymbolKind.CLASS_SYMBOL, this
         ) as IrClassSymbol
@@ -112,6 +115,7 @@ internal class KonanForwardDeclarationModuleDeserializer(
 
     override fun deserializedSymbolNotFound(idSig: IdSignature): Nothing = error("No forward declaration found for $idSig")
 
+    @IrLinkerInternalApi
     override fun collectAllMatchingSignatures(
         topLevelCallableId: TopLevelCallableIdAndKind,
         output: MutableCollection<IdSignature>,

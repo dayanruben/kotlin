@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2026 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -27,7 +27,7 @@ fun DiagnosticReporter.reportOn(
     source: AbstractKtSourceElement?,
     factory: KtDiagnosticFactory0,
     context: DiagnosticContext,
-    positioningStrategy: AbstractSourceElementPositioningStrategy? = null
+    positioningStrategy: SourceElementPositioningStrategy? = null
 ) {
     report(factory.onOrFallback(source, positioningStrategy, context), context)
 }
@@ -36,7 +36,7 @@ context(context: DiagnosticContext)
 fun DiagnosticReporter.reportOn(
     source: AbstractKtSourceElement?,
     factory: KtDiagnosticFactory0,
-    positioningStrategy: AbstractSourceElementPositioningStrategy? = null
+    positioningStrategy: SourceElementPositioningStrategy? = null
 ) {
     report(factory.onOrFallback(source, positioningStrategy, context), context)
 }
@@ -48,7 +48,7 @@ fun <A> DiagnosticReporter.reportOn(
     factory: KtDiagnosticFactory1<A>,
     a: A,
     context: DiagnosticContext,
-    positioningStrategy: AbstractSourceElementPositioningStrategy? = null
+    positioningStrategy: SourceElementPositioningStrategy? = null
 ) {
     report(factory.onOrFallback(source, a, positioningStrategy, context), context)
 }
@@ -58,7 +58,7 @@ fun <A> DiagnosticReporter.reportOn(
     source: AbstractKtSourceElement?,
     factory: KtDiagnosticFactory1<A>,
     a: A,
-    positioningStrategy: AbstractSourceElementPositioningStrategy? = null
+    positioningStrategy: SourceElementPositioningStrategy? = null
 ) {
     report(factory.onOrFallback(source, a, positioningStrategy, context), context)
 }
@@ -71,7 +71,7 @@ fun <A, B> DiagnosticReporter.reportOn(
     a: A,
     b: B,
     context: DiagnosticContext,
-    positioningStrategy: AbstractSourceElementPositioningStrategy? = null
+    positioningStrategy: SourceElementPositioningStrategy? = null
 ) {
     report(factory.onOrFallback(source, a, b, positioningStrategy, context), context)
 }
@@ -82,7 +82,7 @@ fun <A, B> DiagnosticReporter.reportOn(
     factory: KtDiagnosticFactory2<A, B>,
     a: A,
     b: B,
-    positioningStrategy: AbstractSourceElementPositioningStrategy? = null
+    positioningStrategy: SourceElementPositioningStrategy? = null
 ) {
     report(factory.onOrFallback(source, a, b, positioningStrategy, context), context)
 }
@@ -96,7 +96,7 @@ fun <A, B, C> DiagnosticReporter.reportOn(
     b: B,
     c: C,
     context: DiagnosticContext,
-    positioningStrategy: AbstractSourceElementPositioningStrategy? = null
+    positioningStrategy: SourceElementPositioningStrategy? = null
 ) {
     report(factory.onOrFallback(source, a, b, c, positioningStrategy, context), context)
 }
@@ -108,7 +108,7 @@ fun <A, B, C> DiagnosticReporter.reportOn(
     a: A,
     b: B,
     c: C,
-    positioningStrategy: AbstractSourceElementPositioningStrategy? = null
+    positioningStrategy: SourceElementPositioningStrategy? = null
 ) {
     report(factory.onOrFallback(source, a, b, c, positioningStrategy, context), context)
 }
@@ -123,7 +123,7 @@ fun <A, B, C, D> DiagnosticReporter.reportOn(
     c: C,
     d: D,
     context: DiagnosticContext,
-    positioningStrategy: AbstractSourceElementPositioningStrategy? = null
+    positioningStrategy: SourceElementPositioningStrategy? = null
 ) {
     report(factory.onOrFallback(source, a, b, c, d, positioningStrategy, context), context)
 }
@@ -136,9 +136,39 @@ fun <A, B, C, D> DiagnosticReporter.reportOn(
     b: B,
     c: C,
     d: D,
-    positioningStrategy: AbstractSourceElementPositioningStrategy? = null
+    positioningStrategy: SourceElementPositioningStrategy? = null
 ) {
     report(factory.onOrFallback(source, a, b, c, d, positioningStrategy, context), context)
+}
+
+// #### KtDiagnosticFactory5 ####
+
+fun <A, B, C, D, E> DiagnosticReporter.reportOn(
+    source: AbstractKtSourceElement?,
+    factory: KtDiagnosticFactory5<A, B, C, D, E>,
+    a: A,
+    b: B,
+    c: C,
+    d: D,
+    e: E,
+    context: DiagnosticContext,
+    positioningStrategy: SourceElementPositioningStrategy? = null
+) {
+    report(factory.onOrFallback(source, a, b, c, d, e, positioningStrategy, context), context)
+}
+
+context(context: DiagnosticContext)
+fun <A, B, C, D, E> DiagnosticReporter.reportOn(
+    source: AbstractKtSourceElement?,
+    factory: KtDiagnosticFactory5<A, B, C, D, E>,
+    a: A,
+    b: B,
+    c: C,
+    d: D,
+    e: E,
+    positioningStrategy: SourceElementPositioningStrategy? = null
+) {
+    report(factory.onOrFallback(source, a, b, c, d, e, positioningStrategy, context), context)
 }
 
 // #### KtDiagnosticFactoryForDeprecation0 ####
@@ -147,7 +177,7 @@ fun DiagnosticReporter.reportOn(
     source: AbstractKtSourceElement?,
     factory: KtDiagnosticFactoryForDeprecation0,
     context: DiagnosticContext,
-    positioningStrategy: AbstractSourceElementPositioningStrategy? = null
+    positioningStrategy: SourceElementPositioningStrategy? = null
 ) {
     with(context) { reportOn(source, factory.chooseFactory(), positioningStrategy) }
 }
@@ -156,7 +186,7 @@ context(context: DiagnosticContext)
 fun DiagnosticReporter.reportOn(
     source: AbstractKtSourceElement?,
     factory: KtDiagnosticFactoryForDeprecation0,
-    positioningStrategy: AbstractSourceElementPositioningStrategy? = null
+    positioningStrategy: SourceElementPositioningStrategy? = null
 ) {
     reportOn(source, factory.chooseFactory(), positioningStrategy)
 }
@@ -168,7 +198,7 @@ fun <A> DiagnosticReporter.reportOn(
     factory: KtDiagnosticFactoryForDeprecation1<A>,
     a: A,
     context: DiagnosticContext,
-    positioningStrategy: AbstractSourceElementPositioningStrategy? = null
+    positioningStrategy: SourceElementPositioningStrategy? = null
 ) {
     with(context) { reportOn(source, factory.chooseFactory(), a, positioningStrategy) }
 }
@@ -178,7 +208,7 @@ fun <A> DiagnosticReporter.reportOn(
     source: AbstractKtSourceElement?,
     factory: KtDiagnosticFactoryForDeprecation1<A>,
     a: A,
-    positioningStrategy: AbstractSourceElementPositioningStrategy? = null
+    positioningStrategy: SourceElementPositioningStrategy? = null
 ) {
     reportOn(source, factory.chooseFactory(), a, positioningStrategy)
 }
@@ -191,7 +221,7 @@ fun <A, B> DiagnosticReporter.reportOn(
     a: A,
     b: B,
     context: DiagnosticContext,
-    positioningStrategy: AbstractSourceElementPositioningStrategy? = null
+    positioningStrategy: SourceElementPositioningStrategy? = null
 ) {
     with(context) { reportOn(source, factory.chooseFactory(), a, b, positioningStrategy) }
 }
@@ -202,7 +232,7 @@ fun <A, B> DiagnosticReporter.reportOn(
     factory: KtDiagnosticFactoryForDeprecation2<A, B>,
     a: A,
     b: B,
-    positioningStrategy: AbstractSourceElementPositioningStrategy? = null
+    positioningStrategy: SourceElementPositioningStrategy? = null
 ) {
     reportOn(source, factory.chooseFactory(), a, b, positioningStrategy)
 }
@@ -216,7 +246,7 @@ fun <A, B, C> DiagnosticReporter.reportOn(
     b: B,
     c: C,
     context: DiagnosticContext,
-    positioningStrategy: AbstractSourceElementPositioningStrategy? = null
+    positioningStrategy: SourceElementPositioningStrategy? = null
 ) {
     with(context) { reportOn(source, factory.chooseFactory(), a, b, c, positioningStrategy) }
 }
@@ -228,7 +258,7 @@ fun <A, B, C> DiagnosticReporter.reportOn(
     a: A,
     b: B,
     c: C,
-    positioningStrategy: AbstractSourceElementPositioningStrategy? = null
+    positioningStrategy: SourceElementPositioningStrategy? = null
 ) {
     reportOn(source, factory.chooseFactory(), a, b, c, positioningStrategy)
 }
@@ -243,7 +273,7 @@ fun <A, B, C, D> DiagnosticReporter.reportOn(
     c: C,
     d: D,
     context: DiagnosticContext,
-    positioningStrategy: AbstractSourceElementPositioningStrategy? = null
+    positioningStrategy: SourceElementPositioningStrategy? = null
 ) {
     with(context) { reportOn(source, factory.chooseFactory(), a, b, c, d, positioningStrategy) }
 }
@@ -256,9 +286,39 @@ fun <A, B, C, D> DiagnosticReporter.reportOn(
     b: B,
     c: C,
     d: D,
-    positioningStrategy: AbstractSourceElementPositioningStrategy? = null
+    positioningStrategy: SourceElementPositioningStrategy? = null
 ) {
     reportOn(source, factory.chooseFactory(), a, b, c, d, positioningStrategy)
+}
+
+// #### KtDiagnosticFactoryForDeprecation5 ####
+
+fun <A, B, C, D, E> DiagnosticReporter.reportOn(
+    source: AbstractKtSourceElement?,
+    factory: KtDiagnosticFactoryForDeprecation5<A, B, C, D, E>,
+    a: A,
+    b: B,
+    c: C,
+    d: D,
+    e: E,
+    context: DiagnosticContext,
+    positioningStrategy: SourceElementPositioningStrategy? = null
+) {
+    with(context) { reportOn(source, factory.chooseFactory(), a, b, c, d, e, positioningStrategy) }
+}
+
+context(context: DiagnosticContext)
+fun <A, B, C, D, E> DiagnosticReporter.reportOn(
+    source: AbstractKtSourceElement?,
+    factory: KtDiagnosticFactoryForDeprecation5<A, B, C, D, E>,
+    a: A,
+    b: B,
+    c: C,
+    d: D,
+    e: E,
+    positioningStrategy: SourceElementPositioningStrategy? = null
+) {
+    reportOn(source, factory.chooseFactory(), a, b, c, d, e, positioningStrategy)
 }
 
 context(context: DiagnosticContext)

@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.analysis.api.fir.unwrapSafeCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleSymbolResolutionError
 import org.jetbrains.kotlin.analysis.api.resolution.KaSymbolResolutionAttempt
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFir
 import org.jetbrains.kotlin.fir.FirElement
@@ -133,13 +134,14 @@ private fun resolveKDocName(psi: KDocName): KaSymbolResolutionAttempt? {
     val selectedFqName = psi.getQualifiedNameAsFqName()
     val containedTagSectionIfSubject = psi.getTagIfSubject()?.knownTag
 
-    val symbols = KDocReferenceResolver.resolveKdocFqName(
-        analysisSession = analysisSession,
-        selectedFqName = selectedFqName,
-        fullFqName = fullFqName,
-        contextElement = psi,
-        containedTagSectionIfSubject = containedTagSectionIfSubject,
-    )
+    val symbols = context(analysisSession) {
+        KDocReferenceResolver.resolveKdocFqName(
+            selectedFqName = selectedFqName,
+            fullFqName = fullFqName,
+            contextElement = psi,
+            containedTagSectionIfSubject = containedTagSectionIfSubject,
+        )
+    }
 
     if (symbols.isEmpty()) return null
     return KaFirSimpleSymbolResolutionSuccess(backingSymbols = symbols.toList())
@@ -224,7 +226,7 @@ private fun FirReference.toKaSymbolResolutionAttempt(psi: KtElement): KaSymbolRe
     }
 
     val symbol = when (val symbol = firSymbolToBuild?.buildSymbol(firSymbolBuilder)) {
-        is KaConstructorSymbol if (psi is KtNameReferenceExpression || psi is KtEnumEntrySuperclassReferenceExpression) -> with(analysisSession) {
+        is KaConstructorSymbol if (psi is KtNameReferenceExpression || psi is KtEnumEntrySuperclassReferenceExpression) -> context(analysisSession) {
             // Callee reference for a constructor call is supposed to refer to the class
             // while the entire call refers to the constructor.
             // `KaSymbol` instead of `FirSymbol` is checked intentionally to properly support

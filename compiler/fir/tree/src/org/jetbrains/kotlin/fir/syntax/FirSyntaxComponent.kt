@@ -6,13 +6,13 @@
 package org.jetbrains.kotlin.fir.syntax
 
 import org.jetbrains.kotlin.KtSourceElement
-import org.jetbrains.kotlin.config.ParserMode
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.FirSessionComponent
 import org.jetbrains.kotlin.fir.NoMutableState
 import org.jetbrains.kotlin.fir.SessionHolder
 import org.jetbrains.kotlin.fir.utils.exceptions.withSourceEntry
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.syntax.ParseTreeKind
 import org.jetbrains.kotlin.syntax.SyntaxId
 import org.jetbrains.kotlin.utils.addToStdlib.butIf
 import org.jetbrains.kotlin.utils.addToStdlib.popLast
@@ -29,26 +29,34 @@ fun interface SyntaxIdPredicate {
 /**
  * Provides syntax-specific services for the source elements of a [org.jetbrains.kotlin.fir.FirSession].
  *
- * There is one implementation per [ParserMode]; it must match the kind of source elements produced by the raw FIR builder
+ * There is one implementation per [ParseTreeKind]; it must match the kind of source elements produced by the raw FIR builder
  * used for the session's sources.
- * The implementation is registered only for source sessions (in the CLI, it's selected by [org.jetbrains.kotlin.config.parserMode]);
+ * The implementation is registered only for source sessions (in the CLI, it's selected by [org.jetbrains.kotlin.cli.parseTreeKind]);
  * the Analysis API always uses the PSI-based implementation.
  */
 @NoMutableState
 abstract class FirSyntaxComponent<T> : FirSessionComponent {
-    abstract val parserMode: ParserMode
+    abstract val parseTreeKind: ParseTreeKind
 
     abstract fun KtSourceElement.unwrap(): T
 
     protected fun unwrapError(actualSourceElement: KtSourceElement): Nothing {
         errorWithAttachment(
-            "${this::class.simpleName} (parser mode $parserMode) can't process ${actualSourceElement::class.simpleName}. " +
-                    "The session's parser mode must match the raw FIR builder that produced its sources."
+            "${this::class.simpleName} can't process ${actualSourceElement::class.simpleName}. " +
+                    "The session's parse tree kind must match the raw FIR builder that produced its sources."
         ) {
             withSourceEntry("source", actualSourceElement)
             withEntry("sourceKind", actualSourceElement.kind::class.simpleName)
         }
     }
+
+    /**
+     * The name of the node type or token with this [SyntaxId], e.g., `private` or `class`.
+     * It's used, for instance, to render modifiers in diagnostics.
+     *
+     * TODO: KT-91973
+     */
+    abstract val SyntaxId.name: String
 
     /**
      * Iterates recursively over the descendants of the element in pre-order, up to the given [depth] or indefinitely if [depth] is -1.
@@ -95,12 +103,18 @@ abstract class FirSyntaxComponent<T> : FirSessionComponent {
         }
     }
 
+    abstract fun KtSourceElement.extractModifierList(): FirModifierList?
+
     abstract fun KtSourceElement.findContextParameterListSources(): List<KtSourceElement>
 
     abstract fun KtSourceElement.findFunctionTypeContextParameterListSource(): KtSourceElement?
 
     abstract fun KtSourceElement.findDefaultValueSource(): KtSourceElement?
 
+    /**
+     * Finds the `val` or `var` keyword among the direct children of the element
+     * (e.g., of a parameter, a property, a destructuring declaration or its entry).
+     */
     abstract fun KtSourceElement.findValOrVarKeywordSource(): KtSourceElement?
 
     abstract fun KtSourceElement.findExplicitReceiverOfDotQualifiedSource(): KtSourceElement?

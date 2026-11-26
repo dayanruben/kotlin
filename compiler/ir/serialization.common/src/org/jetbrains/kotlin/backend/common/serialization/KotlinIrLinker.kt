@@ -29,6 +29,8 @@ import org.jetbrains.kotlin.ir.util.IdSignature
 import org.jetbrains.kotlin.ir.util.KotlinMangler
 import org.jetbrains.kotlin.ir.util.ModuleVisibilityProvider
 import org.jetbrains.kotlin.ir.util.SymbolTable
+import org.jetbrains.kotlin.ir.util.canBeReferencedFromOtherFiles
+import org.jetbrains.kotlin.ir.util.isClassSignature
 import org.jetbrains.kotlin.ir.util.render
 import org.jetbrains.kotlin.ir.util.toIdSignature
 import org.jetbrains.kotlin.library.KotlinLibrary
@@ -36,8 +38,13 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.utils.pollFirst
 import org.jetbrains.kotlin.utils.putToMultiMap
 
+@RequiresOptIn("Internal API of the IR linker. Not supposed to be used outside the linker.")
+annotation class IrLinkerInternalApi
+
+@OptIn(IrLinkerInternalApi::class)
 abstract class KotlinIrLinker(
     val symbolTable: SymbolTable,
     private val friendModules: Map<KotlinLibrary, Collection<KotlinLibrary>>,
@@ -60,7 +67,10 @@ abstract class KotlinIrLinker(
     val unitClass = symbolTable.referenceClass(StandardClassIds.Unit.toIdSignature())
     val nothingClass = symbolTable.referenceClass(StandardClassIds.Nothing.toIdSignature())
 
+    @IrLinkerInternalApi
     val irInterner = IrInterningService()
+
+    @IrLinkerInternalApi
     val fileEntryDeserializer = FileEntryDeserializer(irInterner)
 
     protected val fileLocalSymbolProvider = object : FileLocalSymbolProvider {
@@ -98,6 +108,7 @@ abstract class KotlinIrLinker(
      * deserialization in that module have been actually deserialized. Later the module can be enqueued
      * once again to deserialize other top-level declaration(s). This process can be repeated multiple times.
      */
+    @IrLinkerInternalApi
     val modulesWithReachableTopLevels = linkedSetOf<IrModuleDeserializer>()
 
     protected val klibDeserializers = linkedMapOf<KotlinLibrary, IrModuleDeserializer>()
@@ -125,11 +136,16 @@ abstract class KotlinIrLinker(
     // In case if a symbol was asked after deserialization, we would like to make sure that it is correctly and fully linked.
     private var finished = false
 
+    @IrLinkerInternalApi
     fun deserializeOrReturnUnboundIrSymbolIfPartialLinkageEnabled(
         idSignature: IdSignature,
         symbolKind: BinarySymbolData.SymbolKind,
         moduleDeserializer: IrModuleDeserializer,
     ): IrSymbol {
+        check(idSignature.canBeReferencedFromOtherFiles) {
+            "An attempt to run a lookup in IR linker for a signature that is supposed to be limited to the single file: ${idSignature::class.java.simpleName}, ${idSignature.render()}"
+        }
+
         val topLevelSignature: IdSignature = idSignature.topLevelSignature()
 
         // Note: The top-level symbol might be gone in newer version of dependency KLIB. Then the KLIB that was compiled against
@@ -238,10 +254,8 @@ abstract class KotlinIrLinker(
      * Run deserialization of top-level declarations previously scheduled for deserialization in the current [KotlinIrLinker].
      */
     fun deserializeAllReachableTopLevels() {
-        while (modulesWithReachableTopLevels.isNotEmpty()) {
-            val moduleDeserializer = modulesWithReachableTopLevels.first()
-            modulesWithReachableTopLevels.remove(moduleDeserializer)
-
+        while (true) {
+            val moduleDeserializer = modulesWithReachableTopLevels.pollFirst() ?: break
             moduleDeserializer.deserializeReachableDeclarations()
         }
     }
@@ -436,6 +450,17 @@ abstract class KotlinIrLinker(
 }
 
 /**
+ * A key for looking up a declaration (or its symbol) in the linker: the [signature] tells which declaration
+ * it is, and the [kind] tells what kind of declaration (and so what kind of [IrSymbol]) is expected.
+ *
+ * Unlike [TopLevelCallableIdAndKind], which may correspond to several overloaded callables,
+ * a [SignatureAndKind] denotes exactly one declaration.
+ */
+data class SignatureAndKind(val signature: IdSignature, val kind: BinarySymbolData.SymbolKind) {
+    override fun toString() = "${signature.render()}, kind=$kind"
+}
+
+/**
  * A key for looking up top-level callables (functions or properties) in a module by their [CallableId].
  *
  * A [CallableId] alone does not identify a single declaration: there can be several overloaded functions
@@ -451,17 +476,46 @@ data class TopLevelCallableIdAndKind(val callableId: CallableId, val kind: Binar
     val packageFqName: FqName get() = callableId.packageName
 
     constructor(signature: IdSignature.CommonSignature, kind: BinarySymbolData.SymbolKind) : this(
-        callableId = CallableId(signature.packageFqName(), Name.identifier(signature.declarationFqName)),
+        callableId = signature.checkSignature().toCallableId(),
         kind = kind,
     )
 
+    constructor(symbol: IrSymbol) : this(
+        callableId = symbol.getCallableSignatureOrFail().toCallableId(),
+        kind = symbol.kind(),
+    )
+
     init {
-        require(kind == BinarySymbolData.SymbolKind.FUNCTION_SYMBOL || kind == BinarySymbolData.SymbolKind.PROPERTY_SYMBOL)
+        require(callableId.className == null && callableId.classId == null) {
+            "Can not create ${TopLevelCallableIdAndKind::class.java.simpleName} for a class member: $kind, $callableId"
+        }
+
+        require(kind == BinarySymbolData.SymbolKind.FUNCTION_SYMBOL || kind == BinarySymbolData.SymbolKind.PROPERTY_SYMBOL) {
+            "Can not create ${TopLevelCallableIdAndKind::class.java.simpleName} for unsupported symbol kind: $kind, $callableId"
+        }
     }
 
-    override fun toString() = "$callableId, kind = $kind"
-}
+    override fun toString() = "$callableId, kind=$kind"
 
+    companion object {
+        private fun IrSymbol.getCallableSignatureOrFail(): IdSignature.CommonSignature {
+            when (val signature = signature) {
+                is IdSignature.CommonSignature -> return signature.checkSignature()
+                null -> error("Can not create ${TopLevelCallableIdAndKind::class.java.simpleName}, no signature in symbol $this")
+                else -> error("Can not create ${TopLevelCallableIdAndKind::class.java.simpleName} for symbol $this, unexpected signature type: ${signature::class.java.simpleName}, $signature")
+            }
+        }
+
+        private fun IdSignature.CommonSignature.checkSignature(): IdSignature.CommonSignature {
+            check(!isClassSignature()) { "Can not create ${TopLevelCallableIdAndKind::class.java.simpleName} for class signature $this" }
+            check(nameSegments.size == 1) { "Can not create ${TopLevelCallableIdAndKind::class.java.simpleName} for a non-top-level declaration signature $this" }
+            return this
+        }
+
+        private fun IdSignature.CommonSignature.toCallableId(): CallableId =
+            CallableId(packageFqName(), Name.identifier(declarationFqName))
+    }
+}
 
 /**
  * Defines which declarations of a deserialized IR file are loaded, and how much of each declaration.

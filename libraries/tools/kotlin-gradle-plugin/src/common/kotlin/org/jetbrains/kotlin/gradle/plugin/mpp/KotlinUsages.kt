@@ -76,6 +76,17 @@ object KotlinUsages {
      */
     internal const val KOTLIN_NPM_RUNTIME_DEPENDENCIES = "kotlin-npm-runtime-dependencies"
 
+    /**
+     * WIT declarations of a Wasm WASI project, offered to the projects that depend on it.
+     *
+     * It is the usage of the secondary variant of the runtime elements with the `wit` directory of a project,
+     * and of the WIT declarations extracted from klibs by
+     * [org.jetbrains.kotlin.gradle.targets.wasm.component.internal.WitExtractionTransform].
+     *
+     * It isn't compatible with any other usage, so consumers of the runtime usage never select the WIT declarations instead of the klib.
+     */
+    internal const val KOTLIN_WIT_RUNTIME_DEPENDENCIES = "kotlin-wit-runtime-dependencies"
+
     // Following two constants were removed in Gradle 8.0 from 'Usages' class
     private const val JAVA_RUNTIME_CLASSES = "java-runtime-classes"
     private const val JAVA_RUNTIME_RESOURCES = "java-runtime-resources"

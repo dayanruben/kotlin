@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.analysis.api.fir.utils.KaNonBoundToPsiErrorDiagnosti
 import org.jetbrains.kotlin.analysis.api.fir.utils.firSymbol
 import org.jetbrains.kotlin.analysis.api.fir.utils.processEqualsFunctions
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallResolutionAttempt
+import org.jetbrains.kotlin.analysis.api.signatures.substitute
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
@@ -54,12 +55,12 @@ private val unresolvedArrayOfDiagnostic: KaDiagnostic
 
 context(resolver: KaFirResolver)
 internal fun FirCollectionLiteral.toKaResolutionAttempt(): KaCallResolutionAttempt? {
-    val arrayOfSymbol = with(analysisSession) {
+    val arrayOfSymbol = run {
         val type = resolvedType as? ConeClassLikeType ?: return run {
-            val defaultArrayOfSymbol = arrayOfSymbol(ArrayFqNames.ARRAY_OF_FUNCTION) ?: return null
+            val defaultArrayOfSymbol = arrayOfSymbol(ArrayFqNames.ARRAY_OF_FUNCTION, analysisSession = analysisSession) ?: return null
             val substitutor = createSubstitutorFromTypeArguments(defaultArrayOfSymbol)
             val partiallyAppliedSymbol = KaFirPartiallyAppliedSymbol(
-                backingSignature = with(useSiteSession) { defaultArrayOfSymbol.substitute(substitutor) },
+                backingSignature = defaultArrayOfSymbol.substitute(substitutor, session = analysisSession),
                 dispatchReceiver = null,
                 extensionReceiver = null,
                 contextArguments = emptyList(),
@@ -83,12 +84,12 @@ internal fun FirCollectionLiteral.toKaResolutionAttempt(): KaCallResolutionAttem
             eagerlyReturnNonPrimitive = true
         ) ?: return null
 
-        arrayOfSymbol(factoryName)
+        arrayOfSymbol(factoryName, analysisSession = analysisSession)
     } ?: return null
 
     val substitutor = createSubstitutorFromTypeArguments(arrayOfSymbol)
     val partiallyAppliedSymbol = KaFirPartiallyAppliedSymbol(
-        backingSignature = with(analysisSession) { arrayOfSymbol.substitute(substitutor) },
+        backingSignature = context(analysisSession) { arrayOfSymbol.substitute(substitutor) },
         dispatchReceiver = null,
         extensionReceiver = null,
         contextArguments = emptyList(),
@@ -150,9 +151,11 @@ internal fun FirEqualityOperatorCall.toKaResolutionAttempt(psi: KtElement): KaCa
 context(resolver: KaFirResolver)
 private fun FirEqualityOperatorCall.getEqualsSymbol(): FirNamedFunctionSymbol? {
     var equalsSymbol: FirNamedFunctionSymbol? = null
-    processEqualsFunctions(analysisSession.firSession, analysisSession) {
-        if (equalsSymbol != null) return@processEqualsFunctions
-        equalsSymbol = it
+    context(analysisSession) {
+        processEqualsFunctions(analysisSession.firSession) {
+            if (equalsSymbol != null) return@processEqualsFunctions
+            equalsSymbol = it
+        }
     }
 
     return equalsSymbol ?: resolver.equalsSymbolInAny

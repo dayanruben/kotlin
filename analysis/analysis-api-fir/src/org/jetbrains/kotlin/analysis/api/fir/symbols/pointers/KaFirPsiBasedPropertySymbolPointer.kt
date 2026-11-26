@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2026 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -12,14 +12,16 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
+import org.jetbrains.kotlin.analysis.api.symbols.pointers.restoreSymbol
 
 internal class KaFirPsiBasedPropertySymbolPointer(
     private val variableSymbolPointer: KaSymbolPointer<KaVariableSymbol>,
     originalSymbol: KaKotlinPropertySymbol?,
 ) : KaFirCachedSymbolPointer<KaKotlinPropertySymbol>(originalSymbol) {
     @KaImplementationDetail
-    override fun restoreIfNotCached(analysisSession: KaSession): KaKotlinPropertySymbol? =
-        when (val variable = with(analysisSession) { variableSymbolPointer.restoreSymbol() }) {
+    context(session: KaSession)
+    override fun restoreIfNotCached(): KaKotlinPropertySymbol? =
+        when (val variable = variableSymbolPointer.restoreSymbol()) {
             is KaKotlinPropertySymbol -> variable
             is KaValueParameterSymbol -> variable.primaryConstructorProperty
             else -> null

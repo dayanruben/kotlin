@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.rendere
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.scopes.KaScope
-import org.jetbrains.kotlin.analysis.api.session.useSiteSession
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
@@ -77,14 +76,14 @@ internal fun stringRepresentation(any: Any?): String = with(any) {
         }
         is KaValueParameterSymbol -> "${if (isVararg) "vararg " else ""}$name: ${returnType.render()}"
         // Receiver parameter should be rendered as it is because it is hard to cover it with tests overwise
-        is KaReceiverParameterSymbol -> KaDebugRenderer().render(useSiteSession, this)
+        is KaReceiverParameterSymbol -> KaDebugRenderer().render(this)
         is KaParameterSymbol -> "$name: ${returnType.render()}"
         is KaTypeParameterSymbol -> this.nameOrAnonymous.asString()
         is KaEnumEntrySymbol -> callableId?.toString() ?: name.asString()
         is KaVariableSymbol -> "${if (isVal) "val" else "var"} $name: ${returnType.render()}"
         is KaClassLikeSymbol -> classId?.toString() ?: nameOrAnonymous.asString()
         is KaPackageSymbol -> fqName.toString()
-        is KaSymbol -> KaDebugRenderer().render(useSiteSession, this)
+        is KaSymbol -> KaDebugRenderer().render(this)
         is Boolean -> toString()
         is Map<*, *> -> if (isEmpty()) "{}" else entries.joinToString(
             separator = ",\n  ",
@@ -432,6 +431,7 @@ internal fun assertStableResult(
 /**
  * The function returns a non-empty list of functions with the specified [functionName] and [receiverClass].
  */
+@Suppress("DEPRECATION") // Looks up the specialized members of the deprecated `KaResolver` component; drop this together with it.
 internal fun KClass<KaResolver>.findSpecializedResolveFunctions(
     functionName: String,
     receiverClass: KClass<*>,

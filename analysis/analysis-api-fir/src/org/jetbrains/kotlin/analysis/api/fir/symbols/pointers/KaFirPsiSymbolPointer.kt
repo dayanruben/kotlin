@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2025 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2026 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -15,9 +15,11 @@ import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.session.canBeAnalysed
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
@@ -30,18 +32,17 @@ internal class KaFirPsiSymbolPointer<S : KaSymbol> private constructor(
     originalSymbol: S?,
 ) : KaFirCachedSymbolPointer<S>(originalSymbol) {
     @KaImplementationDetail
-    override fun restoreIfNotCached(analysisSession: KaSession): S? {
+    context(session: KaSession)
+    override fun restoreIfNotCached(): S? {
         val psi = psiPointer.element ?: return null
 
-        val symbol: KaSymbol = with(analysisSession) {
-            if (!psi.canBeAnalysed()) return null
-            when (psi) {
-                is KtDeclaration -> psi.symbol
-                is KtFile -> psi.symbol
-                is KtContextReceiver -> psi.symbol
-                else -> errorWithAttachment("Unexpected declaration to restore: ${psi::class.simpleName}") {
-                    withPsiEntry("psi", psi)
-                }
+        if (!psi.canBeAnalysed()) return null
+        val symbol: KaSymbol = when (psi) {
+            is KtDeclaration -> psi.symbol
+            is KtFile -> psi.symbol
+            is KtContextReceiver -> psi.symbol
+            else -> errorWithAttachment("Unexpected declaration to restore: ${psi::class.simpleName}") {
+                withPsiEntry("psi", psi)
             }
         }
 

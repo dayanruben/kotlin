@@ -10,30 +10,46 @@ import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
+import org.jetbrains.kotlin.KtFakeSourceElementKind
+import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.KtPsiSourceElement
+import org.jetbrains.kotlin.KtRealPsiSourceElement
 import org.jetbrains.kotlin.KtSourceElement
-import org.jetbrains.kotlin.config.ParserMode
 import org.jetbrains.kotlin.fir.NoMutableState
+import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
+import org.jetbrains.kotlin.psi.psiUtil.children
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getChildOfType
 import org.jetbrains.kotlin.psi.psiUtil.getAssignmentLhsIfUnwrappable
 import org.jetbrains.kotlin.psi.psiUtil.getExplicitReceiverOfDotQualified
 import org.jetbrains.kotlin.syntax.BasicSyntaxElementTypeIds
+import org.jetbrains.kotlin.syntax.ParseTreeKind
+import org.jetbrains.kotlin.syntax.PsiParseTreeKind
+import org.jetbrains.kotlin.syntax.SyntaxId
+import org.jetbrains.kotlin.syntax.elementType
 import org.jetbrains.kotlin.syntax.syntaxId
 import org.jetbrains.kotlin.toKtPsiSourceElement
+import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
+import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 
 @NoMutableState
 object FirPsiSyntaxComponent : FirSyntaxComponent<KtPsiSourceElement>() {
-    override val parserMode: ParserMode
-        get() = Psi
+    override val parseTreeKind: ParseTreeKind
+        get() = PsiParseTreeKind
 
     override fun KtSourceElement.unwrap(): KtPsiSourceElement {
         return this as? KtPsiSourceElement ?: unwrapError(this@unwrap)
     }
+
+    override val SyntaxId.name: String
+        get() {
+            @OptIn(KtImplementationDetail::class)
+            return elementType().toString()
+        }
 
     override fun KtSourceElement.forEachChildMatching(
         depth: Int,
@@ -48,6 +64,32 @@ object FirPsiSyntaxComponent : FirSyntaxComponent<KtPsiSourceElement>() {
         ) {
             processChild(it.toKtPsiSourceElement())
         }
+    }
+
+    override fun KtSourceElement.extractModifierList(): FirModifierList? {
+        val source = unwrap()
+        // todo this code is buggy. psi for fake declarations (e.g. ImplicitConstructor, EnumGeneratedDeclaration) means a completely different thing
+        //  KT-63751
+        val modifierListOwner = source.psi as? KtModifierListOwner
+
+        // The check is required in the Analysis API mode as in this case property accessor
+        // has the containing property as a source
+        if (source.kind is KtFakeSourceElementKind.DelegatedPropertyAccessor && modifierListOwner is KtProperty) {
+            errorWithAttachment("Don't request modifiers on fake PSI of delegated property accessors, it's not the right PSI") {
+                withPsiEntry("property", modifierListOwner)
+            }
+        }
+
+        val modifierList = modifierListOwner?.modifierList ?: return null
+        val modifiers = mutableListOf<FirModifier>()
+        val annotationSources = mutableListOf<KtSourceElement>()
+        for (node in modifierList.node.children()) {
+            when (val elementType = node.elementType) {
+                is KtModifierKeywordToken -> modifiers += FirModifier(elementType.tokenId, node.psi.toKtPsiSourceElement())
+                KtNodeTypes.ANNOTATION_ENTRY -> annotationSources += KtRealPsiSourceElement(node.psi)
+            }
+        }
+        return FirModifierList(modifiers, annotationSources)
     }
 
     override fun KtSourceElement.findContextParameterListSources(): List<KtSourceElement> {
@@ -72,7 +114,8 @@ object FirPsiSyntaxComponent : FirSyntaxComponent<KtPsiSourceElement>() {
     }
 
     override fun KtSourceElement.findValOrVarKeywordSource(): KtSourceElement? {
-        return (unwrap().psi as? KtValVarKeywordOwner)?.valOrVarKeyword?.toKtPsiSourceElement()
+        // Not `KtValVarKeywordOwner.valOrVarKeyword`: for a destructuring declaration entry, it returns the keyword of the whole declaration
+        return unwrap().psi.node?.findChildByType(KtTokens.VAL_VAR)?.psi?.toKtPsiSourceElement()
     }
 
     override fun KtSourceElement.findExplicitReceiverOfDotQualifiedSource(): KtSourceElement? {

@@ -568,7 +568,6 @@ org.jetbrains.kotlin.analysis.api.resolve.extensions.KaResolveExtensionProvider.
 org.jetbrains.kotlin.analysis.api.scopes.KaScopeLike
 org.jetbrains.kotlin.analysis.api.session.KaSessionProvider.Companion.getInstance(Project)
 org.jetbrains.kotlin.analysis.api.session.KaSessionProvider.analyze(KaModule, context(KaSession) () -> R)
-org.jetbrains.kotlin.analysis.api.session.KaSessionProvider.analyze(KtElement, KaSession.() -> R)
 org.jetbrains.kotlin.analysis.api.session.KaSessionProvider.analyze(PsiElement, context(KaSession) () -> R)
 org.jetbrains.kotlin.analysis.api.session.KaSessionProvider.clearCaches()
 org.jetbrains.kotlin.analysis.api.session.KaSessionProvider.getAnalysisSession(KaModule)
@@ -580,10 +579,10 @@ org.jetbrains.kotlin.analysis.api.symbols.KaClassKind.isClass
 org.jetbrains.kotlin.analysis.api.symbols.KaClassKind.isObject
 org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol.name
 org.jetbrains.kotlin.analysis.api.symbols.KaDebugRenderer
-org.jetbrains.kotlin.analysis.api.symbols.KaDebugRenderer.render(KaSession, KaSymbol)
-org.jetbrains.kotlin.analysis.api.symbols.KaDebugRenderer.renderAnnotationApplication(KaSession, KaAnnotation)
-org.jetbrains.kotlin.analysis.api.symbols.KaDebugRenderer.renderForSubstitutionOverrideUnwrappingTest(KaSession, KaSymbol)
-org.jetbrains.kotlin.analysis.api.symbols.KaDebugRenderer.renderType(KaSession, KaType)
+org.jetbrains.kotlin.analysis.api.symbols.KaDebugRenderer.render(KaSymbol)
+org.jetbrains.kotlin.analysis.api.symbols.KaDebugRenderer.renderAnnotationApplication(KaAnnotation)
+org.jetbrains.kotlin.analysis.api.symbols.KaDebugRenderer.renderForSubstitutionOverrideUnwrappingTest(KaSymbol)
+org.jetbrains.kotlin.analysis.api.symbols.KaDebugRenderer.renderType(KaType)
 org.jetbrains.kotlin.analysis.api.types.KaClassTypeQualifier.name
 org.jetbrains.kotlin.analysis.api.types.KaClassTypeQualifier.typeArguments
 org.jetbrains.kotlin.analysis.api.types.KaErrorType.errorMessage

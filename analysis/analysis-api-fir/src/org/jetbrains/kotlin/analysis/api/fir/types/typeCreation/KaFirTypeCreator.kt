@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2025 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2026 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -67,7 +67,7 @@ internal class KaFirTypeCreator(
     }
 
     override fun arrayType(elementType: KaType, init: KaArrayTypeBuilder.() -> Unit): KaType = withValidityAssertion {
-        with(analysisSession) {
+        context(analysisSession) {
             val builder = KaFirArrayTypeBuilder(this@KaFirTypeCreator).apply(init)
 
             if (elementType is KaClassType && builder.shouldPreferPrimitiveTypes && !elementType.isMarkedNullable) {
@@ -120,7 +120,7 @@ internal class KaFirTypeCreator(
         val arguments = List(expectedNumberOfParameters) { index ->
             when (val builderArgument = builderTypeArguments.getOrNull(index)) {
                 null -> ConeStarProjection
-                else -> builderArgument.coneTypeProjection
+                else -> context(analysisSession) { builderArgument.coneTypeProjection }
             }
         }
 
@@ -159,13 +159,13 @@ internal class KaFirTypeCreator(
         init: KaCapturedTypeBuilder.() -> Unit,
     ): KaCapturedType? {
         withValidityAssertion {
-            with(analysisSession) {
+            context(analysisSession) {
                 if ((projection as? KaTypeArgumentWithVariance)?.variance == Variance.INVARIANT) {
                     return null
                 }
 
                 val builder = KaFirCapturedTypeBuilder(this@KaFirTypeCreator).apply(init)
-                val capturedType = firSession.typeContext.createCapturedType(
+                val capturedType = analysisSession.firSession.typeContext.createCapturedType(
                     projection.coneTypeProjection,
                     projection.type?.directSupertypes?.map { it.coneType }?.toList() ?: emptyList(),
                     lowerType = null,
@@ -220,7 +220,7 @@ internal class KaFirTypeCreator(
         init: KaFlexibleTypeBuilder.() -> Unit,
     ): KaType? {
         withValidityAssertion {
-            with(analysisSession) {
+            context(analysisSession) {
                 val builder = KaFirFlexibleTypeBuilder(
                     lowerBound = builtinTypes.nothing,
                     upperBound = builtinTypes.nullableAny,
@@ -247,7 +247,7 @@ internal class KaFirTypeCreator(
 
     private fun buildFlexibleType(builder: KaFlexibleTypeBuilder): KaType? {
         withValidityAssertion {
-            with(analysisSession) {
+            context(analysisSession) {
                 val lowerBound = builder.lowerBound.coneType.lowerBoundIfFlexible()
                 val upperBound = builder.upperBound.coneType.upperBoundIfFlexible()
 
@@ -255,7 +255,7 @@ internal class KaFirTypeCreator(
                     return lowerBound.withAnnotationAttributes(builder.annotations).asKaType()
                 }
 
-                if (!lowerBound.isSubtypeOf(upperBound, firSession)) {
+                if (!lowerBound.isSubtypeOf(upperBound, analysisSession.firSession)) {
                     return null
                 }
 
@@ -269,7 +269,7 @@ internal class KaFirTypeCreator(
         init: KaIntersectionTypeBuilder.() -> Unit,
     ): KaType {
         withValidityAssertion {
-            with(analysisSession) {
+            context(analysisSession) {
                 val builder = KaFirIntersectionTypeBuilder(this@KaFirTypeCreator).apply(init)
                 val conjuncts = builder.conjuncts
 
@@ -278,7 +278,7 @@ internal class KaFirTypeCreator(
                 }
 
                 val coneType = ConeTypeIntersector.intersectTypes(
-                    firSession.typeContext,
+                    analysisSession.firSession.typeContext,
                     conjuncts.map { it.coneType }
                 )
                 return coneType.asKaType()
@@ -414,10 +414,7 @@ internal class KaFirTypeCreator(
     }
 
 
-    private fun ConeKotlinType.asKaType(): KaType = asKaType(analysisSession)
-
-    private val KaTypeProjection.coneTypeProjection: ConeTypeProjection
-        get() = coneTypeProjection(analysisSession)
+    private fun ConeKotlinType.asKaType(): KaType = asKaType(analysisSession = analysisSession)
 
     private val rootModuleSession: FirSession get() = analysisSession.resolutionFacade.useSiteFirSession
     private val typeContext: ConeInferenceContext get() = rootModuleSession.typeContext

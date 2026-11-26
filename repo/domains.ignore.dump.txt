@@ -63,6 +63,8 @@ ignored:
  - compiler/testData/debug/localVariables/inlineScopes/newFormatToOld/README.md
  - compiler/testData/diagnostics/ReadMe.md
  - compiler/testData/diagnostics/nativeTests/specialBackendChecks/README.md
+ - compiler/testData/klib/partial-linkage/interdependentCInteropKlibs/ReadMe.md
+ - compiler/testData/klib/partial-linkage/interdependentObjCInteropKlibs/ReadMe.md
  - compiler/testData/klib/partial-linkage/referencingUnusableDeclarations/ReadMe.md
  - compiler/testData/klib/syntheticAccessors/README.md
  - compiler/util-klib-abi/ReadMe.md
@@ -126,6 +128,7 @@ ignored:
  - libraries/tools/gradle/fus-statistics-gradle-plugin/ReadMe.md
  - libraries/tools/ide-plugin-dependencies-validator/README.md
  - libraries/tools/jdk-api-validator/ReadMe.md
+ - libraries/tools/kotlin-documentation-model/analyzer/README.md
  - libraries/tools/kotlin-gradle-plugin-annotations/ReadMe.md
  - libraries/tools/kotlin-gradle-plugin-api/ReadMe.md
  - libraries/tools/kotlin-gradle-plugin-api/dokka-template/ReadMe.md
@@ -135,6 +138,7 @@ ignored:
  - libraries/tools/kotlin-gradle-plugin/ReadMe.md
  - libraries/tools/kotlin-gradle-plugin/kotlin-npm-tooling/README.md
  - libraries/tools/kotlin-gradle-statistics/ReadMe.md
+ - libraries/tools/kotlin-import-models/README.md
  - libraries/tools/kotlin-stdlib-docs/README.md
  - libraries/tools/kotlin-stdlib-docs/templates/README.md
  - libraries/tools/kotlin-stdlib-gen/ReadMe.md

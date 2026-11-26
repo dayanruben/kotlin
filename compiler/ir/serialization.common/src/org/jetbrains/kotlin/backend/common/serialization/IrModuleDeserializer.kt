@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.ir.types.IrTypeSystemContextImpl
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.library.KotlinAbiVersion
 import org.jetbrains.kotlin.library.KotlinLibrary
-import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.utils.putToMultiMap
@@ -130,6 +129,7 @@ abstract class IrModuleDeserializer(
      *
      * If there are no matching callables in this module, [output] is left unchanged.
      */
+    @IrLinkerInternalApi
     abstract fun collectAllMatchingSignatures(
         topLevelCallableId: TopLevelCallableIdAndKind,
         output: MutableCollection<IdSignature>,
@@ -140,7 +140,7 @@ fun IrModuleDeserializer.deserializeIrSymbolOrFail(idSig: IdSignature, symbolKin
     tryDeserializeIrSymbol(idSig, symbolKind) ?: deserializedSymbolNotFound(idSig)
 
 // Used to resolve built in symbols like `kotlin.ir.internal.*` or `kotlin.FunctionN`
-@OptIn(InternalSymbolFinderAPI::class)
+@OptIn(IrLinkerInternalApi::class)
 class IrModuleDeserializerWithBuiltIns(
     moduleFragment: IrModuleFragment,
     private val symbolTable: SymbolTable,
@@ -181,9 +181,7 @@ class IrModuleDeserializerWithBuiltIns(
         buildMap<TopLevelCallableIdAndKind, MutableList<IdSignature>> {
             syntheticProvider.operatorsPackageFragment.declarations.forEach {
                 val symbol = (it as IrSymbolOwner).symbol
-                val callableId = CallableId(it.getPackageFragment().packageFqName, (it as IrDeclarationWithName).name)
-
-                putToMultiMap(TopLevelCallableIdAndKind(callableId, symbol.kind()), symbol.signature!!)
+                putToMultiMap(TopLevelCallableIdAndKind(symbol), symbol.signature!!)
             }
         }
     }

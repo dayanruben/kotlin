@@ -3,14 +3,13 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
+@file:Suppress("DEPRECATION")
+
 package org.jetbrains.kotlin.analysis.api.components
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
-import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
-import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
+import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
+import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.api.types.typeCreation.KaClassTypeBuilder
 import org.jetbrains.kotlin.analysis.api.types.typeCreation.KaFunctionTypeBuilder
 import org.jetbrains.kotlin.analysis.api.types.typeCreation.KaTypeCreator
@@ -19,13 +18,27 @@ import org.jetbrains.kotlin.analysis.api.types.typeCreation.KaTypeParameterTypeB
 /**
  * Provides an instance of [KaTypeCreator] to create various [types][org.jetbrains.kotlin.analysis.api.types.KaType].
  */
+@Deprecated(
+    message = "Session components are an implementation detail of the legacy 'KaSession' API. Use the context-parameter API instead.",
+    level = DeprecationLevel.WARNING,
+)
 @KaExperimentalApi
 @KaSessionComponentImplementationDetail
 @SubclassOptInRequired(KaSessionComponentImplementationDetail::class)
-public interface KaTypeCreatorProvider : KaSessionComponent {
+public interface KaTypeCreatorProvider : KaLifetimeOwner {
     /**
      * A single entry point for the type building infrastructure.
      */
+    @Deprecated(
+        message = "Use 'org.jetbrains.kotlin.analysis.api.types.typeCreation.typeCreator' from the context-parameter API instead.",
+        replaceWith = ReplaceWith(
+            expression = "typeCreator",
+            imports = [
+                "org.jetbrains.kotlin.analysis.api.types.typeCreation.typeCreator",
+            ]
+        ),
+        level = DeprecationLevel.WARNING,
+    )
     @KaExperimentalApi
     public val typeCreator: KaTypeCreator
 
@@ -45,6 +58,16 @@ public interface KaTypeCreatorProvider : KaSessionComponent {
      *
      * @see KaTypeCreator.classType
      */
+    @Deprecated(
+        message = "Use 'org.jetbrains.kotlin.analysis.api.types.typeCreation.copy' from the context-parameter API instead.",
+        replaceWith = ReplaceWith(
+            expression = "this.copy(init)",
+            imports = [
+                "org.jetbrains.kotlin.analysis.api.types.typeCreation.copy",
+            ]
+        ),
+        level = DeprecationLevel.WARNING,
+    )
     @KaExperimentalApi
     public fun <T : KaClassType> T.copy(init: KaClassTypeBuilder.() -> Unit): KaClassType
 
@@ -64,6 +87,16 @@ public interface KaTypeCreatorProvider : KaSessionComponent {
      *
      * @see KaTypeCreator.classType
      */
+    @Deprecated(
+        message = "Use 'org.jetbrains.kotlin.analysis.api.types.typeCreation.copy' from the context-parameter API instead.",
+        replaceWith = ReplaceWith(
+            expression = "this.copy(init)",
+            imports = [
+                "org.jetbrains.kotlin.analysis.api.types.typeCreation.copy",
+            ]
+        ),
+        level = DeprecationLevel.WARNING,
+    )
     @KaExperimentalApi
     public fun KaUsualClassType.copy(init: KaClassTypeBuilder.() -> Unit): KaUsualClassType
 
@@ -87,6 +120,16 @@ public interface KaTypeCreatorProvider : KaSessionComponent {
      *
      * @see KaTypeCreator.functionType
      */
+    @Deprecated(
+        message = "Use 'org.jetbrains.kotlin.analysis.api.types.typeCreation.copy' from the context-parameter API instead.",
+        replaceWith = ReplaceWith(
+            expression = "this.copy(init)",
+            imports = [
+                "org.jetbrains.kotlin.analysis.api.types.typeCreation.copy",
+            ]
+        ),
+        level = DeprecationLevel.WARNING,
+    )
     @KaExperimentalApi
     public fun KaFunctionType.copy(init: KaFunctionTypeBuilder.() -> Unit): KaType
 
@@ -106,6 +149,16 @@ public interface KaTypeCreatorProvider : KaSessionComponent {
      *
      * @see KaTypeCreator.typeParameterType
      */
+    @Deprecated(
+        message = "Use 'org.jetbrains.kotlin.analysis.api.types.typeCreation.copy' from the context-parameter API instead.",
+        replaceWith = ReplaceWith(
+            expression = "this.copy(init)",
+            imports = [
+                "org.jetbrains.kotlin.analysis.api.types.typeCreation.copy",
+            ]
+        ),
+        level = DeprecationLevel.WARNING,
+    )
     @KaExperimentalApi
     public fun KaTypeParameterType.copy(init: KaTypeParameterTypeBuilder.() -> Unit): KaTypeParameterType
 }

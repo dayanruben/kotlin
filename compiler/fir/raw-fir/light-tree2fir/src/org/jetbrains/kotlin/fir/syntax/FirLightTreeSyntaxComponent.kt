@@ -16,17 +16,21 @@ import org.jetbrains.kotlin.KtLightSourceElement
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.KtNodeTypes.DOT_QUALIFIED_EXPRESSION
 import org.jetbrains.kotlin.KtSourceElement
-import org.jetbrains.kotlin.config.ParserMode
 import org.jetbrains.kotlin.diagnostics.findChildByType
 import org.jetbrains.kotlin.diagnostics.findChildrenByType
 import org.jetbrains.kotlin.diagnostics.getAssignmentLhsIfUnwrappable
 import org.jetbrains.kotlin.diagnostics.nameIdentifier
 import org.jetbrains.kotlin.diagnostics.valOrVarKeyword
 import org.jetbrains.kotlin.fir.NoMutableState
+import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtImplementationDetail
 import org.jetbrains.kotlin.psi.stubs.elements.KtTokenSets
+import org.jetbrains.kotlin.syntax.LightTreeParseTreeKind
+import org.jetbrains.kotlin.syntax.ParseTreeKind
+import org.jetbrains.kotlin.syntax.SyntaxId
+import org.jetbrains.kotlin.syntax.elementType
 import org.jetbrains.kotlin.syntax.syntaxId
 import org.jetbrains.kotlin.toKtLightSourceElement
 import org.jetbrains.kotlin.util.getChildren
@@ -34,12 +38,18 @@ import org.jetbrains.kotlin.util.getPreviousSibling
 
 @NoMutableState
 object FirLightTreeSyntaxComponent : FirSyntaxComponent<KtLightSourceElement>() {
-    override val parserMode: ParserMode
-        get() = LightTree
+    override val parseTreeKind: ParseTreeKind
+        get() = LightTreeParseTreeKind
 
     override fun KtSourceElement.unwrap(): KtLightSourceElement {
         return this as? KtLightSourceElement ?: unwrapError(this@unwrap)
     }
+
+    override val SyntaxId.name: String
+        get() {
+            @OptIn(KtImplementationDetail::class)
+            return elementType().toString()
+        }
 
     override fun KtSourceElement.forEachChildMatching(
         depth: Int,
@@ -56,6 +66,31 @@ object FirLightTreeSyntaxComponent : FirSyntaxComponent<KtLightSourceElement>() 
         ) {
             processChild(it.toKtLightSourceElement(tree))
         }
+    }
+
+    override fun KtSourceElement.extractModifierList(): FirModifierList? {
+        val source = unwrap()
+        val tree = source.treeStructure
+        val modifierListNode = source.lighterASTNode.getChildren(tree).find { it.tokenType == KtNodeTypes.MODIFIER_LIST }
+            ?: return null
+        // Keeps the 'padding' of the source element (if its offsets differ from the node's ones) in the modifier sources
+        val offsetDelta = source.startOffset - source.lighterASTNode.startOffset
+        val modifiers = mutableListOf<FirModifier>()
+        val annotationSources = mutableListOf<KtSourceElement>()
+        for (node in modifierListNode.getChildren(tree)) {
+            when (val tokenType = node.tokenType) {
+                is KtModifierKeywordToken -> modifiers += FirModifier(
+                    tokenType.tokenId,
+                    node.toKtLightSourceElement(
+                        tree,
+                        startOffset = node.startOffset + offsetDelta,
+                        endOffset = node.endOffset + offsetDelta,
+                    ),
+                )
+                KtNodeTypes.ANNOTATION_ENTRY -> annotationSources += node.toKtLightSourceElement(tree)
+            }
+        }
+        return FirModifierList(modifiers, annotationSources)
     }
 
     override fun KtSourceElement.findContextParameterListSources(): List<KtSourceElement> {

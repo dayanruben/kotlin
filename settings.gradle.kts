@@ -391,6 +391,7 @@ include(
     ":kotlin-gradle-plugin-idea",
     ":kotlin-gradle-plugin-idea-browser-debug",
     ":kotlin-gradle-plugin-idea-proto",
+    ":kotlin-import-models",
     ":kotlin-gradle-plugin-idea-for-compatibility-tests",
     ":analysis:analysis-tools:deprecated-k1-frontend-internals-for-ide-generator",
     ":analysis:analysis-tools:deprecated-k1-frontend-internals-for-ide-generated",
@@ -458,7 +459,6 @@ include(
     ":examples:scripting-jvm-embeddable-host",
     ":examples:scripting-jsr223-daemon",
     ":examples:scripting-jsr223-bta",
-    ":libraries:kotlin-prepush-hook",
     ":libraries:tools:mutability-annotations-compat",
     ":plugins:jvm-abi-gen",
     ":plugins:jvm-abi-gen-embeddable",
@@ -918,6 +918,7 @@ project(":kotlin-gradle-plugin-idea").projectDir = File("$rootDir/libraries/tool
 project(":kotlin-gradle-plugin-idea-browser-debug").projectDir =
     File("$rootDir/libraries/tools/kotlin-gradle-plugin-idea-browser-debug")
 project(":kotlin-gradle-plugin-idea-proto").projectDir = File("$rootDir/libraries/tools/kotlin-gradle-plugin-idea-proto")
+project(":kotlin-import-models").projectDir = File("$rootDir/libraries/tools/kotlin-import-models")
 project(":kotlin-gradle-plugin-idea-for-compatibility-tests").projectDir =
     File("$rootDir/libraries/tools/kotlin-gradle-plugin-idea-for-compatibility-tests")
 project(":kotlin-gradle-plugin-dsl-codegen").projectDir = File("$rootDir/libraries/tools/kotlin-gradle-plugin-dsl-codegen")
@@ -984,7 +985,6 @@ project(":examples:scripting-jvm-maven-deps-host").projectDir = File("$rootDir/l
 project(":examples:scripting-jvm-embeddable-host").projectDir = File("$rootDir/libraries/examples/scripting/jvm-embeddable-host")
 project(":examples:scripting-jsr223-daemon").projectDir = File("$rootDir/libraries/examples/scripting/jsr223-daemon")
 project(":examples:scripting-jsr223-bta").projectDir = File("$rootDir/libraries/examples/scripting/jsr223-bta")
-project(":libraries:kotlin-prepush-hook").projectDir = File("$rootDir/libraries/tools/kotlin-prepush-hook")
 project(":plugins:jvm-abi-gen").projectDir = File("$rootDir/plugins/jvm-abi-gen")
 project(":plugins:jvm-abi-gen-embeddable").projectDir = File("$rootDir/plugins/jvm-abi-gen/embeddable")
 

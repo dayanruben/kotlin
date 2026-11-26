@@ -8,17 +8,42 @@ public interface IrFileOrBuilder extends
     org.jetbrains.kotlin.protobuf.MessageLiteOrBuilder {
 
   /**
-   * <code>repeated int32 declaration_id = 1 [packed = true];</code>
+   * <code>repeated int32 legacy_top_level_declaration_signatures = 1 [packed = true];</code>
+   *
+   * <pre>
+   * Deprecated in favor of `top_level_declaration_symbols`.
+   * </pre>
    */
-  java.util.List<java.lang.Integer> getDeclarationIdList();
+  java.util.List<java.lang.Integer> getLegacyTopLevelDeclarationSignaturesList();
   /**
-   * <code>repeated int32 declaration_id = 1 [packed = true];</code>
+   * <code>repeated int32 legacy_top_level_declaration_signatures = 1 [packed = true];</code>
+   *
+   * <pre>
+   * Deprecated in favor of `top_level_declaration_symbols`.
+   * </pre>
    */
-  int getDeclarationIdCount();
+  int getLegacyTopLevelDeclarationSignaturesCount();
   /**
-   * <code>repeated int32 declaration_id = 1 [packed = true];</code>
+   * <code>repeated int32 legacy_top_level_declaration_signatures = 1 [packed = true];</code>
+   *
+   * <pre>
+   * Deprecated in favor of `top_level_declaration_symbols`.
+   * </pre>
    */
-  int getDeclarationId(int index);
+  int getLegacyTopLevelDeclarationSignatures(int index);
+
+  /**
+   * <code>repeated int64 top_level_declaration_symbols = 9 [packed = true];</code>
+   */
+  java.util.List<java.lang.Long> getTopLevelDeclarationSymbolsList();
+  /**
+   * <code>repeated int64 top_level_declaration_symbols = 9 [packed = true];</code>
+   */
+  int getTopLevelDeclarationSymbolsCount();
+  /**
+   * <code>repeated int64 top_level_declaration_symbols = 9 [packed = true];</code>
+   */
+  long getTopLevelDeclarationSymbols(int index);
 
   /**
    * <code>optional .org.jetbrains.kotlin.backend.common.serialization.proto.FileEntry file_entry = 2;</code>

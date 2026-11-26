@@ -10,10 +10,10 @@ import org.jetbrains.kotlin.KtRealSourceElementKind
 import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.ClassKind
-import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactory0
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactory1
+import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactory2
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactoryForDeprecation0
 import org.jetbrains.kotlin.diagnostics.reportOn
 import org.jetbrains.kotlin.fir.FirSession
@@ -34,17 +34,16 @@ import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.getContainingClassSymbol
 import org.jetbrains.kotlin.fir.resolve.lookupSuperTypes
 import org.jetbrains.kotlin.fir.scopes.platformClassMapper
-import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
+import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.impl.FirImplicitAnyTypeRef
 import org.jetbrains.kotlin.fir.unwrapFakeOverrides
-import org.jetbrains.kotlin.lexer.KtTokens.INLINE_KEYWORD
-import org.jetbrains.kotlin.lexer.KtTokens.VALUE_KEYWORD
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.syntax.KotlinSyntaxTokenIds
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 
 sealed class FirValueClassDeclarationChecker(mppKind: MppCheckerKind) : FirRegularClassChecker(mppKind) {
@@ -78,15 +77,13 @@ sealed class FirValueClassDeclarationChecker(mppKind: MppCheckerKind) : FirRegul
         if (!declaration.symbol.isValue && !isWillBecomeValueClass) {
             return
         }
-        val supportsFullValueClasses = LanguageFeature.FullValueClasses.isEnabled()
-        val valueObjectsAllowed = supportsFullValueClasses || isWillBecomeValueClass
+        val valueObjectsAllowed = LanguageFeature.FullValueClasses.isEnabled() || isWillBecomeValueClass
         if (declaration.classKind != ClassKind.CLASS && !(declaration.classKind == ClassKind.OBJECT && valueObjectsAllowed)) {
             return
         }
         val kind = ValueClassKind(
             isWillBecomeValueClass = isWillBecomeValueClass,
             isFullValueClass = declaration.symbol.isFullValueClass || isWillBecomeValueClass,
-            supportsFullValueClasses = supportsFullValueClasses,
         )
 
         checkPlacement(declaration, kind)
@@ -113,18 +110,19 @@ sealed class FirValueClassDeclarationChecker(mppKind: MppCheckerKind) : FirRegul
     private class ValueClassKind(
         val isWillBecomeValueClass: Boolean,
         val isFullValueClass: Boolean,
-        val supportsFullValueClasses: Boolean,
     ) {
+        context(_: CheckerContext)
         val valueModifierPrefix: String
             get() = when {
-                !supportsFullValueClasses -> "Value"
+                LanguageFeature.FullValueClasses.isDisabled() -> "Value"
                 isFullValueClass -> "Final value"
                 else -> "Inline value"
             }
 
+        context(_: CheckerContext)
         val finalOrInlineClassPrefix: String
             get() = when {
-                !supportsFullValueClasses -> "value"
+                LanguageFeature.FullValueClasses.isDisabled() -> "value"
                 isFullValueClass -> "final value"
                 else -> "inline value"
             }
@@ -142,15 +140,19 @@ sealed class FirValueClassDeclarationChecker(mppKind: MppCheckerKind) : FirRegul
 
     context(context: CheckerContext, reporter: DiagnosticReporter)
     private fun checkModality(declaration: FirRegularClass, kind: ValueClassKind) {
-        if (kind.isFullValueClass) {
-            if (declaration.modality == Modality.OPEN) {
-                reporter.reportOn(declaration.source, FirErrors.VALUE_CLASS_OPEN)
-            }
-        } else if (declaration.modality != Modality.FINAL) {
+        if (!kind.isFullValueClass && declaration.modality != FINAL) {
             reporter.reportOn(
                 declaration.source,
                 FirErrors.VALUE_CLASS_NOT_FINAL,
-                kind.valueModifierPrefix,
+            )
+        }
+
+        if (kind.isFullValueClass && declaration.modality == OPEN) {
+            reportOn(
+                declaration.source,
+                kind.isWillBecomeValueClass,
+                FirErrors.VALUE_CLASS_OPEN,
+                FirErrors.WILL_BECOME_VALUE_CLASS_OPEN,
             )
         }
     }
@@ -319,8 +321,8 @@ sealed class FirValueClassDeclarationChecker(mppKind: MppCheckerKind) : FirRegul
             } else if (primaryConstructorParametersByName.size != 1) {
                 val jvmInlineAnnotation = StandardClassIds.Annotations.JvmInline
                 val hasJvmInlineAnnotation = declaration.hasAnnotation(jvmInlineAnnotation, context.session)
-                val valueModifier = declaration.getModifier(VALUE_KEYWORD)
-                val hasInlineModifier = declaration.hasModifier(INLINE_KEYWORD)
+                val valueModifier = declaration.getModifier(KotlinSyntaxTokenIds.VALUE_MODIFIER)
+                val hasInlineModifier = declaration.hasModifier(KotlinSyntaxTokenIds.INLINE_MODIFIER)
                 if (
                     primaryConstructorParametersByName.size > 1 && !hasJvmInlineAnnotation && valueModifier != null && !hasInlineModifier
                 ) {
@@ -375,7 +377,7 @@ sealed class FirValueClassDeclarationChecker(mppKind: MppCheckerKind) : FirRegul
                     reportOn(
                         primaryConstructorParameter.source, kind.isWillBecomeValueClass,
                         FirErrors.VALUE_CLASS_CONSTRUCTOR_NOT_FINAL_READ_ONLY_PARAMETER,
-                        if (kind.supportsFullValueClasses) "Final value" else "Value",
+                        if (LanguageFeature.FullValueClasses.isEnabled()) "Final value" else "Value",
                         FirErrors.WILL_BECOME_VALUE_CLASS_CONSTRUCTOR_NOT_FINAL_READ_ONLY_PARAMETER,
                     )
                 kind.isFullValueClass && declaration.isAbstract && correspondingProperty != null -> reportOn(
@@ -391,11 +393,13 @@ sealed class FirValueClassDeclarationChecker(mppKind: MppCheckerKind) : FirRegul
                 )
 
                 parameterTypeRef.isInapplicableParameterType(context.session, kind.isFullValueClass, declaration.isFinal) -> {
-                    reporter.reportOn(
+                    reportOn(
                         parameterTypeRef.source,
+                        kind.isWillBecomeValueClass,
                         FirErrors.VALUE_CLASS_HAS_INAPPLICABLE_PARAMETER_TYPE,
-                        parameterTypeRef.coneType,
                         kind.valueModifierPrefix,
+                        FirErrors.WILL_BECOME_VALUE_CLASS_HAS_INAPPLICABLE_PARAMETER_TYPE,
+                        parameterTypeRef.coneType,
                     )
                 }
 
@@ -497,6 +501,22 @@ sealed class FirValueClassDeclarationChecker(mppKind: MppCheckerKind) : FirRegul
         }
     }
 
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    private fun <A, B> reportOn(
+        source: KtSourceElement?,
+        isWillBecomeValueClass: Boolean,
+        valueClassFactory: KtDiagnosticFactory2<A, B>,
+        valueClassArgument: A,
+        willBecomeValueClassFactory: KtDiagnosticFactory1<B>,
+        commonArgument: B
+    ) {
+        if (isWillBecomeValueClass) {
+            reporter.reportOn(source, willBecomeValueClassFactory, commonArgument)
+        } else {
+            reporter.reportOn(source, valueClassFactory, valueClassArgument, commonArgument)
+        }
+    }
+
     private fun FirValueParameterSymbol.isNotSimpleValProperty(primaryConstructorProperty: FirPropertySymbol?): Boolean {
         if (primaryConstructorProperty == null) return true
 
@@ -506,15 +526,6 @@ sealed class FirValueClassDeclarationChecker(mppKind: MppCheckerKind) : FirRegul
     // Unlike inline value classes, full value classes store their properties as fields, so `Unit` and `Nothing` are fine there.
     private fun FirTypeRef.isInapplicableParameterType(session: FirSession, isFullValueClass: Boolean, isFinal: Boolean): Boolean =
         coneType.fullyExpandedType(session).let { !isFullValueClass && (it.isUnit || it.isNothing) || isFinal && it is ConeDynamicType }
-
-    private fun ConeKotlinType.isGenericArrayOfTypeParameter(): Boolean {
-        if (this.typeArguments.firstOrNull() is ConeStarProjection || !isArrayOrPrimitiveArray())
-            return false
-
-        val arrayElementType = arrayElementType() ?: return false
-        return arrayElementType is ConeTypeParameterType ||
-                arrayElementType.isGenericArrayOfTypeParameter()
-    }
 
     private fun FirRegularClass.isSubtypeOfCloneable(session: FirSession): Boolean {
         if (classId.isCloneableId()) return true

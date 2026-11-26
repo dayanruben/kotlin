@@ -55,21 +55,21 @@ public final class IrFile extends
           }
           case 8: {
             if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-              declarationId_ = new java.util.ArrayList<java.lang.Integer>();
+              legacyTopLevelDeclarationSignatures_ = new java.util.ArrayList<java.lang.Integer>();
               mutable_bitField0_ |= 0x00000001;
             }
-            declarationId_.add(input.readInt32());
+            legacyTopLevelDeclarationSignatures_.add(input.readInt32());
             break;
           }
           case 10: {
             int length = input.readRawVarint32();
             int limit = input.pushLimit(length);
             if (!((mutable_bitField0_ & 0x00000001) == 0x00000001) && input.getBytesUntilLimit() > 0) {
-              declarationId_ = new java.util.ArrayList<java.lang.Integer>();
+              legacyTopLevelDeclarationSignatures_ = new java.util.ArrayList<java.lang.Integer>();
               mutable_bitField0_ |= 0x00000001;
             }
             while (input.getBytesUntilLimit() > 0) {
-              declarationId_.add(input.readInt32());
+              legacyTopLevelDeclarationSignatures_.add(input.readInt32());
             }
             input.popLimit(limit);
             break;
@@ -88,9 +88,9 @@ public final class IrFile extends
             break;
           }
           case 24: {
-            if (!((mutable_bitField0_ & 0x00000008) == 0x00000008)) {
+            if (!((mutable_bitField0_ & 0x00000010) == 0x00000010)) {
               fqName_ = new java.util.ArrayList<java.lang.Integer>();
-              mutable_bitField0_ |= 0x00000008;
+              mutable_bitField0_ |= 0x00000010;
             }
             fqName_.add(input.readInt32());
             break;
@@ -98,9 +98,9 @@ public final class IrFile extends
           case 26: {
             int length = input.readRawVarint32();
             int limit = input.pushLimit(length);
-            if (!((mutable_bitField0_ & 0x00000008) == 0x00000008) && input.getBytesUntilLimit() > 0) {
+            if (!((mutable_bitField0_ & 0x00000010) == 0x00000010) && input.getBytesUntilLimit() > 0) {
               fqName_ = new java.util.ArrayList<java.lang.Integer>();
-              mutable_bitField0_ |= 0x00000008;
+              mutable_bitField0_ |= 0x00000010;
             }
             while (input.getBytesUntilLimit() > 0) {
               fqName_.add(input.readInt32());
@@ -109,17 +109,17 @@ public final class IrFile extends
             break;
           }
           case 34: {
-            if (!((mutable_bitField0_ & 0x00000010) == 0x00000010)) {
+            if (!((mutable_bitField0_ & 0x00000020) == 0x00000020)) {
               annotation_ = new java.util.ArrayList<org.jetbrains.kotlin.backend.common.serialization.proto.IrAnnotation>();
-              mutable_bitField0_ |= 0x00000010;
+              mutable_bitField0_ |= 0x00000020;
             }
             annotation_.add(input.readMessage(org.jetbrains.kotlin.backend.common.serialization.proto.IrAnnotation.PARSER, extensionRegistry));
             break;
           }
           case 40: {
-            if (!((mutable_bitField0_ & 0x00000020) == 0x00000020)) {
+            if (!((mutable_bitField0_ & 0x00000040) == 0x00000040)) {
               explicitlyExportedToCompiler_ = new java.util.ArrayList<java.lang.Long>();
-              mutable_bitField0_ |= 0x00000020;
+              mutable_bitField0_ |= 0x00000040;
             }
             explicitlyExportedToCompiler_.add(input.readInt64());
             break;
@@ -127,9 +127,9 @@ public final class IrFile extends
           case 42: {
             int length = input.readRawVarint32();
             int limit = input.pushLimit(length);
-            if (!((mutable_bitField0_ & 0x00000020) == 0x00000020) && input.getBytesUntilLimit() > 0) {
+            if (!((mutable_bitField0_ & 0x00000040) == 0x00000040) && input.getBytesUntilLimit() > 0) {
               explicitlyExportedToCompiler_ = new java.util.ArrayList<java.lang.Long>();
-              mutable_bitField0_ |= 0x00000020;
+              mutable_bitField0_ |= 0x00000040;
             }
             while (input.getBytesUntilLimit() > 0) {
               explicitlyExportedToCompiler_.add(input.readInt64());
@@ -142,6 +142,27 @@ public final class IrFile extends
             fileEntryId_ = input.readInt32();
             break;
           }
+          case 72: {
+            if (!((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
+              topLevelDeclarationSymbols_ = new java.util.ArrayList<java.lang.Long>();
+              mutable_bitField0_ |= 0x00000002;
+            }
+            topLevelDeclarationSymbols_.add(input.readInt64());
+            break;
+          }
+          case 74: {
+            int length = input.readRawVarint32();
+            int limit = input.pushLimit(length);
+            if (!((mutable_bitField0_ & 0x00000002) == 0x00000002) && input.getBytesUntilLimit() > 0) {
+              topLevelDeclarationSymbols_ = new java.util.ArrayList<java.lang.Long>();
+              mutable_bitField0_ |= 0x00000002;
+            }
+            while (input.getBytesUntilLimit() > 0) {
+              topLevelDeclarationSymbols_.add(input.readInt64());
+            }
+            input.popLimit(limit);
+            break;
+          }
         }
       }
     } catch (org.jetbrains.kotlin.protobuf.InvalidProtocolBufferException e) {
@@ -151,16 +172,19 @@ public final class IrFile extends
           e.getMessage()).setUnfinishedMessage(this);
     } finally {
       if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-        declarationId_ = java.util.Collections.unmodifiableList(declarationId_);
-      }
-      if (((mutable_bitField0_ & 0x00000008) == 0x00000008)) {
-        fqName_ = java.util.Collections.unmodifiableList(fqName_);
+        legacyTopLevelDeclarationSignatures_ = java.util.Collections.unmodifiableList(legacyTopLevelDeclarationSignatures_);
       }
       if (((mutable_bitField0_ & 0x00000010) == 0x00000010)) {
-        annotation_ = java.util.Collections.unmodifiableList(annotation_);
+        fqName_ = java.util.Collections.unmodifiableList(fqName_);
       }
       if (((mutable_bitField0_ & 0x00000020) == 0x00000020)) {
+        annotation_ = java.util.Collections.unmodifiableList(annotation_);
+      }
+      if (((mutable_bitField0_ & 0x00000040) == 0x00000040)) {
         explicitlyExportedToCompiler_ = java.util.Collections.unmodifiableList(explicitlyExportedToCompiler_);
+      }
+      if (((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
+        topLevelDeclarationSymbols_ = java.util.Collections.unmodifiableList(topLevelDeclarationSymbols_);
       }
       try {
         unknownFieldsCodedOutput.flush();
@@ -188,28 +212,63 @@ public final class IrFile extends
   }
 
   private int bitField0_;
-  public static final int DECLARATION_ID_FIELD_NUMBER = 1;
-  private java.util.List<java.lang.Integer> declarationId_;
+  public static final int LEGACY_TOP_LEVEL_DECLARATION_SIGNATURES_FIELD_NUMBER = 1;
+  private java.util.List<java.lang.Integer> legacyTopLevelDeclarationSignatures_;
   /**
-   * <code>repeated int32 declaration_id = 1 [packed = true];</code>
+   * <code>repeated int32 legacy_top_level_declaration_signatures = 1 [packed = true];</code>
+   *
+   * <pre>
+   * Deprecated in favor of `top_level_declaration_symbols`.
+   * </pre>
    */
   public java.util.List<java.lang.Integer>
-      getDeclarationIdList() {
-    return declarationId_;
+      getLegacyTopLevelDeclarationSignaturesList() {
+    return legacyTopLevelDeclarationSignatures_;
   }
   /**
-   * <code>repeated int32 declaration_id = 1 [packed = true];</code>
+   * <code>repeated int32 legacy_top_level_declaration_signatures = 1 [packed = true];</code>
+   *
+   * <pre>
+   * Deprecated in favor of `top_level_declaration_symbols`.
+   * </pre>
    */
-  public int getDeclarationIdCount() {
-    return declarationId_.size();
+  public int getLegacyTopLevelDeclarationSignaturesCount() {
+    return legacyTopLevelDeclarationSignatures_.size();
   }
   /**
-   * <code>repeated int32 declaration_id = 1 [packed = true];</code>
+   * <code>repeated int32 legacy_top_level_declaration_signatures = 1 [packed = true];</code>
+   *
+   * <pre>
+   * Deprecated in favor of `top_level_declaration_symbols`.
+   * </pre>
    */
-  public int getDeclarationId(int index) {
-    return declarationId_.get(index);
+  public int getLegacyTopLevelDeclarationSignatures(int index) {
+    return legacyTopLevelDeclarationSignatures_.get(index);
   }
-  private int declarationIdMemoizedSerializedSize = -1;
+  private int legacyTopLevelDeclarationSignaturesMemoizedSerializedSize = -1;
+
+  public static final int TOP_LEVEL_DECLARATION_SYMBOLS_FIELD_NUMBER = 9;
+  private java.util.List<java.lang.Long> topLevelDeclarationSymbols_;
+  /**
+   * <code>repeated int64 top_level_declaration_symbols = 9 [packed = true];</code>
+   */
+  public java.util.List<java.lang.Long>
+      getTopLevelDeclarationSymbolsList() {
+    return topLevelDeclarationSymbols_;
+  }
+  /**
+   * <code>repeated int64 top_level_declaration_symbols = 9 [packed = true];</code>
+   */
+  public int getTopLevelDeclarationSymbolsCount() {
+    return topLevelDeclarationSymbols_.size();
+  }
+  /**
+   * <code>repeated int64 top_level_declaration_symbols = 9 [packed = true];</code>
+   */
+  public long getTopLevelDeclarationSymbols(int index) {
+    return topLevelDeclarationSymbols_.get(index);
+  }
+  private int topLevelDeclarationSymbolsMemoizedSerializedSize = -1;
 
   public static final int FILE_ENTRY_FIELD_NUMBER = 2;
   private org.jetbrains.kotlin.backend.common.serialization.proto.FileEntry fileEntry_;
@@ -339,7 +398,8 @@ public final class IrFile extends
   private int explicitlyExportedToCompilerMemoizedSerializedSize = -1;
 
   private void initFields() {
-    declarationId_ = java.util.Collections.emptyList();
+    legacyTopLevelDeclarationSignatures_ = java.util.Collections.emptyList();
+    topLevelDeclarationSymbols_ = java.util.Collections.emptyList();
     fileEntry_ = org.jetbrains.kotlin.backend.common.serialization.proto.FileEntry.getDefaultInstance();
     fileEntryId_ = 0;
     fqName_ = java.util.Collections.emptyList();
@@ -365,12 +425,12 @@ public final class IrFile extends
   public void writeTo(org.jetbrains.kotlin.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     getSerializedSize();
-    if (getDeclarationIdList().size() > 0) {
+    if (getLegacyTopLevelDeclarationSignaturesList().size() > 0) {
       output.writeRawVarint32(10);
-      output.writeRawVarint32(declarationIdMemoizedSerializedSize);
+      output.writeRawVarint32(legacyTopLevelDeclarationSignaturesMemoizedSerializedSize);
     }
-    for (int i = 0; i < declarationId_.size(); i++) {
-      output.writeInt32NoTag(declarationId_.get(i));
+    for (int i = 0; i < legacyTopLevelDeclarationSignatures_.size(); i++) {
+      output.writeInt32NoTag(legacyTopLevelDeclarationSignatures_.get(i));
     }
     if (((bitField0_ & 0x00000001) == 0x00000001)) {
       output.writeMessage(2, fileEntry_);
@@ -395,6 +455,13 @@ public final class IrFile extends
     if (((bitField0_ & 0x00000002) == 0x00000002)) {
       output.writeInt32(7, fileEntryId_);
     }
+    if (getTopLevelDeclarationSymbolsList().size() > 0) {
+      output.writeRawVarint32(74);
+      output.writeRawVarint32(topLevelDeclarationSymbolsMemoizedSerializedSize);
+    }
+    for (int i = 0; i < topLevelDeclarationSymbols_.size(); i++) {
+      output.writeInt64NoTag(topLevelDeclarationSymbols_.get(i));
+    }
     output.writeRawBytes(unknownFields);
   }
 
@@ -406,17 +473,17 @@ public final class IrFile extends
     size = 0;
     {
       int dataSize = 0;
-      for (int i = 0; i < declarationId_.size(); i++) {
+      for (int i = 0; i < legacyTopLevelDeclarationSignatures_.size(); i++) {
         dataSize += org.jetbrains.kotlin.protobuf.CodedOutputStream
-          .computeInt32SizeNoTag(declarationId_.get(i));
+          .computeInt32SizeNoTag(legacyTopLevelDeclarationSignatures_.get(i));
       }
       size += dataSize;
-      if (!getDeclarationIdList().isEmpty()) {
+      if (!getLegacyTopLevelDeclarationSignaturesList().isEmpty()) {
         size += 1;
         size += org.jetbrains.kotlin.protobuf.CodedOutputStream
             .computeInt32SizeNoTag(dataSize);
       }
-      declarationIdMemoizedSerializedSize = dataSize;
+      legacyTopLevelDeclarationSignaturesMemoizedSerializedSize = dataSize;
     }
     if (((bitField0_ & 0x00000001) == 0x00000001)) {
       size += org.jetbrains.kotlin.protobuf.CodedOutputStream
@@ -457,6 +524,20 @@ public final class IrFile extends
     if (((bitField0_ & 0x00000002) == 0x00000002)) {
       size += org.jetbrains.kotlin.protobuf.CodedOutputStream
         .computeInt32Size(7, fileEntryId_);
+    }
+    {
+      int dataSize = 0;
+      for (int i = 0; i < topLevelDeclarationSymbols_.size(); i++) {
+        dataSize += org.jetbrains.kotlin.protobuf.CodedOutputStream
+          .computeInt64SizeNoTag(topLevelDeclarationSymbols_.get(i));
+      }
+      size += dataSize;
+      if (!getTopLevelDeclarationSymbolsList().isEmpty()) {
+        size += 1;
+        size += org.jetbrains.kotlin.protobuf.CodedOutputStream
+            .computeInt32SizeNoTag(dataSize);
+      }
+      topLevelDeclarationSymbolsMemoizedSerializedSize = dataSize;
     }
     size += unknownFields.size();
     memoizedSerializedSize = size;
@@ -552,18 +633,20 @@ public final class IrFile extends
 
     public Builder clear() {
       super.clear();
-      declarationId_ = java.util.Collections.emptyList();
+      legacyTopLevelDeclarationSignatures_ = java.util.Collections.emptyList();
       bitField0_ = (bitField0_ & ~0x00000001);
-      fileEntry_ = org.jetbrains.kotlin.backend.common.serialization.proto.FileEntry.getDefaultInstance();
+      topLevelDeclarationSymbols_ = java.util.Collections.emptyList();
       bitField0_ = (bitField0_ & ~0x00000002);
-      fileEntryId_ = 0;
+      fileEntry_ = org.jetbrains.kotlin.backend.common.serialization.proto.FileEntry.getDefaultInstance();
       bitField0_ = (bitField0_ & ~0x00000004);
-      fqName_ = java.util.Collections.emptyList();
+      fileEntryId_ = 0;
       bitField0_ = (bitField0_ & ~0x00000008);
-      annotation_ = java.util.Collections.emptyList();
+      fqName_ = java.util.Collections.emptyList();
       bitField0_ = (bitField0_ & ~0x00000010);
-      explicitlyExportedToCompiler_ = java.util.Collections.emptyList();
+      annotation_ = java.util.Collections.emptyList();
       bitField0_ = (bitField0_ & ~0x00000020);
+      explicitlyExportedToCompiler_ = java.util.Collections.emptyList();
+      bitField0_ = (bitField0_ & ~0x00000040);
       return this;
     }
 
@@ -588,31 +671,36 @@ public final class IrFile extends
       int from_bitField0_ = bitField0_;
       int to_bitField0_ = 0;
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        declarationId_ = java.util.Collections.unmodifiableList(declarationId_);
+        legacyTopLevelDeclarationSignatures_ = java.util.Collections.unmodifiableList(legacyTopLevelDeclarationSignatures_);
         bitField0_ = (bitField0_ & ~0x00000001);
       }
-      result.declarationId_ = declarationId_;
-      if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
+      result.legacyTopLevelDeclarationSignatures_ = legacyTopLevelDeclarationSignatures_;
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        topLevelDeclarationSymbols_ = java.util.Collections.unmodifiableList(topLevelDeclarationSymbols_);
+        bitField0_ = (bitField0_ & ~0x00000002);
+      }
+      result.topLevelDeclarationSymbols_ = topLevelDeclarationSymbols_;
+      if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
         to_bitField0_ |= 0x00000001;
       }
       result.fileEntry_ = fileEntry_;
-      if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
+      if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
         to_bitField0_ |= 0x00000002;
       }
       result.fileEntryId_ = fileEntryId_;
-      if (((bitField0_ & 0x00000008) == 0x00000008)) {
-        fqName_ = java.util.Collections.unmodifiableList(fqName_);
-        bitField0_ = (bitField0_ & ~0x00000008);
-      }
-      result.fqName_ = fqName_;
       if (((bitField0_ & 0x00000010) == 0x00000010)) {
-        annotation_ = java.util.Collections.unmodifiableList(annotation_);
+        fqName_ = java.util.Collections.unmodifiableList(fqName_);
         bitField0_ = (bitField0_ & ~0x00000010);
       }
-      result.annotation_ = annotation_;
+      result.fqName_ = fqName_;
       if (((bitField0_ & 0x00000020) == 0x00000020)) {
-        explicitlyExportedToCompiler_ = java.util.Collections.unmodifiableList(explicitlyExportedToCompiler_);
+        annotation_ = java.util.Collections.unmodifiableList(annotation_);
         bitField0_ = (bitField0_ & ~0x00000020);
+      }
+      result.annotation_ = annotation_;
+      if (((bitField0_ & 0x00000040) == 0x00000040)) {
+        explicitlyExportedToCompiler_ = java.util.Collections.unmodifiableList(explicitlyExportedToCompiler_);
+        bitField0_ = (bitField0_ & ~0x00000040);
       }
       result.explicitlyExportedToCompiler_ = explicitlyExportedToCompiler_;
       result.bitField0_ = to_bitField0_;
@@ -621,13 +709,23 @@ public final class IrFile extends
 
     public Builder mergeFrom(org.jetbrains.kotlin.backend.common.serialization.proto.IrFile other) {
       if (other == org.jetbrains.kotlin.backend.common.serialization.proto.IrFile.getDefaultInstance()) return this;
-      if (!other.declarationId_.isEmpty()) {
-        if (declarationId_.isEmpty()) {
-          declarationId_ = other.declarationId_;
+      if (!other.legacyTopLevelDeclarationSignatures_.isEmpty()) {
+        if (legacyTopLevelDeclarationSignatures_.isEmpty()) {
+          legacyTopLevelDeclarationSignatures_ = other.legacyTopLevelDeclarationSignatures_;
           bitField0_ = (bitField0_ & ~0x00000001);
         } else {
-          ensureDeclarationIdIsMutable();
-          declarationId_.addAll(other.declarationId_);
+          ensureLegacyTopLevelDeclarationSignaturesIsMutable();
+          legacyTopLevelDeclarationSignatures_.addAll(other.legacyTopLevelDeclarationSignatures_);
+        }
+        
+      }
+      if (!other.topLevelDeclarationSymbols_.isEmpty()) {
+        if (topLevelDeclarationSymbols_.isEmpty()) {
+          topLevelDeclarationSymbols_ = other.topLevelDeclarationSymbols_;
+          bitField0_ = (bitField0_ & ~0x00000002);
+        } else {
+          ensureTopLevelDeclarationSymbolsIsMutable();
+          topLevelDeclarationSymbols_.addAll(other.topLevelDeclarationSymbols_);
         }
         
       }
@@ -640,7 +738,7 @@ public final class IrFile extends
       if (!other.fqName_.isEmpty()) {
         if (fqName_.isEmpty()) {
           fqName_ = other.fqName_;
-          bitField0_ = (bitField0_ & ~0x00000008);
+          bitField0_ = (bitField0_ & ~0x00000010);
         } else {
           ensureFqNameIsMutable();
           fqName_.addAll(other.fqName_);
@@ -650,7 +748,7 @@ public final class IrFile extends
       if (!other.annotation_.isEmpty()) {
         if (annotation_.isEmpty()) {
           annotation_ = other.annotation_;
-          bitField0_ = (bitField0_ & ~0x00000010);
+          bitField0_ = (bitField0_ & ~0x00000020);
         } else {
           ensureAnnotationIsMutable();
           annotation_.addAll(other.annotation_);
@@ -660,7 +758,7 @@ public final class IrFile extends
       if (!other.explicitlyExportedToCompiler_.isEmpty()) {
         if (explicitlyExportedToCompiler_.isEmpty()) {
           explicitlyExportedToCompiler_ = other.explicitlyExportedToCompiler_;
-          bitField0_ = (bitField0_ & ~0x00000020);
+          bitField0_ = (bitField0_ & ~0x00000040);
         } else {
           ensureExplicitlyExportedToCompilerIsMutable();
           explicitlyExportedToCompiler_.addAll(other.explicitlyExportedToCompiler_);
@@ -701,68 +799,162 @@ public final class IrFile extends
     }
     private int bitField0_;
 
-    private java.util.List<java.lang.Integer> declarationId_ = java.util.Collections.emptyList();
-    private void ensureDeclarationIdIsMutable() {
+    private java.util.List<java.lang.Integer> legacyTopLevelDeclarationSignatures_ = java.util.Collections.emptyList();
+    private void ensureLegacyTopLevelDeclarationSignaturesIsMutable() {
       if (!((bitField0_ & 0x00000001) == 0x00000001)) {
-        declarationId_ = new java.util.ArrayList<java.lang.Integer>(declarationId_);
+        legacyTopLevelDeclarationSignatures_ = new java.util.ArrayList<java.lang.Integer>(legacyTopLevelDeclarationSignatures_);
         bitField0_ |= 0x00000001;
        }
     }
     /**
-     * <code>repeated int32 declaration_id = 1 [packed = true];</code>
+     * <code>repeated int32 legacy_top_level_declaration_signatures = 1 [packed = true];</code>
+     *
+     * <pre>
+     * Deprecated in favor of `top_level_declaration_symbols`.
+     * </pre>
      */
     public java.util.List<java.lang.Integer>
-        getDeclarationIdList() {
-      return java.util.Collections.unmodifiableList(declarationId_);
+        getLegacyTopLevelDeclarationSignaturesList() {
+      return java.util.Collections.unmodifiableList(legacyTopLevelDeclarationSignatures_);
     }
     /**
-     * <code>repeated int32 declaration_id = 1 [packed = true];</code>
+     * <code>repeated int32 legacy_top_level_declaration_signatures = 1 [packed = true];</code>
+     *
+     * <pre>
+     * Deprecated in favor of `top_level_declaration_symbols`.
+     * </pre>
      */
-    public int getDeclarationIdCount() {
-      return declarationId_.size();
+    public int getLegacyTopLevelDeclarationSignaturesCount() {
+      return legacyTopLevelDeclarationSignatures_.size();
     }
     /**
-     * <code>repeated int32 declaration_id = 1 [packed = true];</code>
+     * <code>repeated int32 legacy_top_level_declaration_signatures = 1 [packed = true];</code>
+     *
+     * <pre>
+     * Deprecated in favor of `top_level_declaration_symbols`.
+     * </pre>
      */
-    public int getDeclarationId(int index) {
-      return declarationId_.get(index);
+    public int getLegacyTopLevelDeclarationSignatures(int index) {
+      return legacyTopLevelDeclarationSignatures_.get(index);
     }
     /**
-     * <code>repeated int32 declaration_id = 1 [packed = true];</code>
+     * <code>repeated int32 legacy_top_level_declaration_signatures = 1 [packed = true];</code>
+     *
+     * <pre>
+     * Deprecated in favor of `top_level_declaration_symbols`.
+     * </pre>
      */
-    public Builder setDeclarationId(
+    public Builder setLegacyTopLevelDeclarationSignatures(
         int index, int value) {
-      ensureDeclarationIdIsMutable();
-      declarationId_.set(index, value);
+      ensureLegacyTopLevelDeclarationSignaturesIsMutable();
+      legacyTopLevelDeclarationSignatures_.set(index, value);
       
       return this;
     }
     /**
-     * <code>repeated int32 declaration_id = 1 [packed = true];</code>
+     * <code>repeated int32 legacy_top_level_declaration_signatures = 1 [packed = true];</code>
+     *
+     * <pre>
+     * Deprecated in favor of `top_level_declaration_symbols`.
+     * </pre>
      */
-    public Builder addDeclarationId(int value) {
-      ensureDeclarationIdIsMutable();
-      declarationId_.add(value);
+    public Builder addLegacyTopLevelDeclarationSignatures(int value) {
+      ensureLegacyTopLevelDeclarationSignaturesIsMutable();
+      legacyTopLevelDeclarationSignatures_.add(value);
       
       return this;
     }
     /**
-     * <code>repeated int32 declaration_id = 1 [packed = true];</code>
+     * <code>repeated int32 legacy_top_level_declaration_signatures = 1 [packed = true];</code>
+     *
+     * <pre>
+     * Deprecated in favor of `top_level_declaration_symbols`.
+     * </pre>
      */
-    public Builder addAllDeclarationId(
+    public Builder addAllLegacyTopLevelDeclarationSignatures(
         java.lang.Iterable<? extends java.lang.Integer> values) {
-      ensureDeclarationIdIsMutable();
+      ensureLegacyTopLevelDeclarationSignaturesIsMutable();
       org.jetbrains.kotlin.protobuf.AbstractMessageLite.Builder.addAll(
-          values, declarationId_);
+          values, legacyTopLevelDeclarationSignatures_);
       
       return this;
     }
     /**
-     * <code>repeated int32 declaration_id = 1 [packed = true];</code>
+     * <code>repeated int32 legacy_top_level_declaration_signatures = 1 [packed = true];</code>
+     *
+     * <pre>
+     * Deprecated in favor of `top_level_declaration_symbols`.
+     * </pre>
      */
-    public Builder clearDeclarationId() {
-      declarationId_ = java.util.Collections.emptyList();
+    public Builder clearLegacyTopLevelDeclarationSignatures() {
+      legacyTopLevelDeclarationSignatures_ = java.util.Collections.emptyList();
       bitField0_ = (bitField0_ & ~0x00000001);
+      
+      return this;
+    }
+
+    private java.util.List<java.lang.Long> topLevelDeclarationSymbols_ = java.util.Collections.emptyList();
+    private void ensureTopLevelDeclarationSymbolsIsMutable() {
+      if (!((bitField0_ & 0x00000002) == 0x00000002)) {
+        topLevelDeclarationSymbols_ = new java.util.ArrayList<java.lang.Long>(topLevelDeclarationSymbols_);
+        bitField0_ |= 0x00000002;
+       }
+    }
+    /**
+     * <code>repeated int64 top_level_declaration_symbols = 9 [packed = true];</code>
+     */
+    public java.util.List<java.lang.Long>
+        getTopLevelDeclarationSymbolsList() {
+      return java.util.Collections.unmodifiableList(topLevelDeclarationSymbols_);
+    }
+    /**
+     * <code>repeated int64 top_level_declaration_symbols = 9 [packed = true];</code>
+     */
+    public int getTopLevelDeclarationSymbolsCount() {
+      return topLevelDeclarationSymbols_.size();
+    }
+    /**
+     * <code>repeated int64 top_level_declaration_symbols = 9 [packed = true];</code>
+     */
+    public long getTopLevelDeclarationSymbols(int index) {
+      return topLevelDeclarationSymbols_.get(index);
+    }
+    /**
+     * <code>repeated int64 top_level_declaration_symbols = 9 [packed = true];</code>
+     */
+    public Builder setTopLevelDeclarationSymbols(
+        int index, long value) {
+      ensureTopLevelDeclarationSymbolsIsMutable();
+      topLevelDeclarationSymbols_.set(index, value);
+      
+      return this;
+    }
+    /**
+     * <code>repeated int64 top_level_declaration_symbols = 9 [packed = true];</code>
+     */
+    public Builder addTopLevelDeclarationSymbols(long value) {
+      ensureTopLevelDeclarationSymbolsIsMutable();
+      topLevelDeclarationSymbols_.add(value);
+      
+      return this;
+    }
+    /**
+     * <code>repeated int64 top_level_declaration_symbols = 9 [packed = true];</code>
+     */
+    public Builder addAllTopLevelDeclarationSymbols(
+        java.lang.Iterable<? extends java.lang.Long> values) {
+      ensureTopLevelDeclarationSymbolsIsMutable();
+      org.jetbrains.kotlin.protobuf.AbstractMessageLite.Builder.addAll(
+          values, topLevelDeclarationSymbols_);
+      
+      return this;
+    }
+    /**
+     * <code>repeated int64 top_level_declaration_symbols = 9 [packed = true];</code>
+     */
+    public Builder clearTopLevelDeclarationSymbols() {
+      topLevelDeclarationSymbols_ = java.util.Collections.emptyList();
+      bitField0_ = (bitField0_ & ~0x00000002);
       
       return this;
     }
@@ -776,7 +968,7 @@ public final class IrFile extends
      * </pre>
      */
     public boolean hasFileEntry() {
-      return ((bitField0_ & 0x00000002) == 0x00000002);
+      return ((bitField0_ & 0x00000004) == 0x00000004);
     }
     /**
      * <code>optional .org.jetbrains.kotlin.backend.common.serialization.proto.FileEntry file_entry = 2;</code>
@@ -801,7 +993,7 @@ public final class IrFile extends
       }
       fileEntry_ = value;
 
-      bitField0_ |= 0x00000002;
+      bitField0_ |= 0x00000004;
       return this;
     }
     /**
@@ -815,7 +1007,7 @@ public final class IrFile extends
         org.jetbrains.kotlin.backend.common.serialization.proto.FileEntry.Builder builderForValue) {
       fileEntry_ = builderForValue.build();
 
-      bitField0_ |= 0x00000002;
+      bitField0_ |= 0x00000004;
       return this;
     }
     /**
@@ -826,7 +1018,7 @@ public final class IrFile extends
      * </pre>
      */
     public Builder mergeFileEntry(org.jetbrains.kotlin.backend.common.serialization.proto.FileEntry value) {
-      if (((bitField0_ & 0x00000002) == 0x00000002) &&
+      if (((bitField0_ & 0x00000004) == 0x00000004) &&
           fileEntry_ != org.jetbrains.kotlin.backend.common.serialization.proto.FileEntry.getDefaultInstance()) {
         fileEntry_ =
           org.jetbrains.kotlin.backend.common.serialization.proto.FileEntry.newBuilder(fileEntry_).mergeFrom(value).buildPartial();
@@ -834,7 +1026,7 @@ public final class IrFile extends
         fileEntry_ = value;
       }
 
-      bitField0_ |= 0x00000002;
+      bitField0_ |= 0x00000004;
       return this;
     }
     /**
@@ -847,7 +1039,7 @@ public final class IrFile extends
     public Builder clearFileEntry() {
       fileEntry_ = org.jetbrains.kotlin.backend.common.serialization.proto.FileEntry.getDefaultInstance();
 
-      bitField0_ = (bitField0_ & ~0x00000002);
+      bitField0_ = (bitField0_ & ~0x00000004);
       return this;
     }
 
@@ -860,7 +1052,7 @@ public final class IrFile extends
      * </pre>
      */
     public boolean hasFileEntryId() {
-      return ((bitField0_ & 0x00000004) == 0x00000004);
+      return ((bitField0_ & 0x00000008) == 0x00000008);
     }
     /**
      * <code>optional int32 file_entry_id = 7;</code>
@@ -880,7 +1072,7 @@ public final class IrFile extends
      * </pre>
      */
     public Builder setFileEntryId(int value) {
-      bitField0_ |= 0x00000004;
+      bitField0_ |= 0x00000008;
       fileEntryId_ = value;
       
       return this;
@@ -893,7 +1085,7 @@ public final class IrFile extends
      * </pre>
      */
     public Builder clearFileEntryId() {
-      bitField0_ = (bitField0_ & ~0x00000004);
+      bitField0_ = (bitField0_ & ~0x00000008);
       fileEntryId_ = 0;
       
       return this;
@@ -901,9 +1093,9 @@ public final class IrFile extends
 
     private java.util.List<java.lang.Integer> fqName_ = java.util.Collections.emptyList();
     private void ensureFqNameIsMutable() {
-      if (!((bitField0_ & 0x00000008) == 0x00000008)) {
+      if (!((bitField0_ & 0x00000010) == 0x00000010)) {
         fqName_ = new java.util.ArrayList<java.lang.Integer>(fqName_);
-        bitField0_ |= 0x00000008;
+        bitField0_ |= 0x00000010;
        }
     }
     /**
@@ -960,7 +1152,7 @@ public final class IrFile extends
      */
     public Builder clearFqName() {
       fqName_ = java.util.Collections.emptyList();
-      bitField0_ = (bitField0_ & ~0x00000008);
+      bitField0_ = (bitField0_ & ~0x00000010);
       
       return this;
     }
@@ -968,9 +1160,9 @@ public final class IrFile extends
     private java.util.List<org.jetbrains.kotlin.backend.common.serialization.proto.IrAnnotation> annotation_ =
       java.util.Collections.emptyList();
     private void ensureAnnotationIsMutable() {
-      if (!((bitField0_ & 0x00000010) == 0x00000010)) {
+      if (!((bitField0_ & 0x00000020) == 0x00000020)) {
         annotation_ = new java.util.ArrayList<org.jetbrains.kotlin.backend.common.serialization.proto.IrAnnotation>(annotation_);
-        bitField0_ |= 0x00000010;
+        bitField0_ |= 0x00000020;
        }
     }
 
@@ -1076,7 +1268,7 @@ public final class IrFile extends
      */
     public Builder clearAnnotation() {
       annotation_ = java.util.Collections.emptyList();
-      bitField0_ = (bitField0_ & ~0x00000010);
+      bitField0_ = (bitField0_ & ~0x00000020);
 
       return this;
     }
@@ -1092,9 +1284,9 @@ public final class IrFile extends
 
     private java.util.List<java.lang.Long> explicitlyExportedToCompiler_ = java.util.Collections.emptyList();
     private void ensureExplicitlyExportedToCompilerIsMutable() {
-      if (!((bitField0_ & 0x00000020) == 0x00000020)) {
+      if (!((bitField0_ & 0x00000040) == 0x00000040)) {
         explicitlyExportedToCompiler_ = new java.util.ArrayList<java.lang.Long>(explicitlyExportedToCompiler_);
-        bitField0_ |= 0x00000020;
+        bitField0_ |= 0x00000040;
        }
     }
     /**
@@ -1151,7 +1343,7 @@ public final class IrFile extends
      */
     public Builder clearExplicitlyExportedToCompiler() {
       explicitlyExportedToCompiler_ = java.util.Collections.emptyList();
-      bitField0_ = (bitField0_ & ~0x00000020);
+      bitField0_ = (bitField0_ & ~0x00000040);
       
       return this;
     }

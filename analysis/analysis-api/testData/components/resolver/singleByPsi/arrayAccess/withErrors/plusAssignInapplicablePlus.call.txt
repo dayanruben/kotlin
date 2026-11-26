@@ -70,7 +70,7 @@ KtOperationReferenceExpression(167,169): '+='
               callableId = null)
           }
       ]
-      diagnostic = ERROR<ARGUMENT_TYPE_MISMATCH: Argument type mismatch: actual type is 'Int', but 'String' was expected.>
+      diagnostic = ERROR<ARGUMENT_TYPE_MISMATCH: Expression '1' of type 'Int' does not conform to value parameter 'other' of type 'String'.>
     setterCallAttempt = KaSimpleCallResolutionSuccess:
       call = KaSimpleFunctionCall:
         contextArgumentMapping = {}
@@ -105,10 +105,10 @@ KtOperationReferenceExpression(167,169): '+='
         typeArgumentsMapping = {}
         valueArgumentMapping = {
           0 -> (KaVariableSignature:
-            name = value
+            name = i
             receiverType = null
-            returnType = B
-            symbol = value: B
+            returnType = kotlin.Int
+            symbol = i: kotlin.Int
             contextParameters = []
             callableId = null)
         }

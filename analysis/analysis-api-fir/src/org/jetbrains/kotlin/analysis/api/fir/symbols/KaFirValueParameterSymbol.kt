@@ -39,7 +39,7 @@ internal class KaFirValueParameterSymbol private constructor(
 ) : KaValueParameterSymbol(), KaFirKtBasedSymbol<KtParameter, FirValueParameterSymbol> {
     constructor(declaration: KtParameter, session: KaFirSession) : this(
         backingPsi = declaration,
-        lazyFirSymbol = lazyFirSymbol(declaration, session),
+        lazyFirSymbol = lazyFirSymbol(declaration, analysisSession = session),
         analysisSession = session,
     )
 
@@ -83,7 +83,7 @@ internal class KaFirValueParameterSymbol private constructor(
 
     override val hasDefaultValue: Boolean
         get() = withValidityAssertion {
-            with(analysisSession) {
+            context(analysisSession) {
                 if (hasDeclaredDefaultValue) {
                     return true
                 }
@@ -129,14 +129,14 @@ internal class KaFirValueParameterSymbol private constructor(
         get() = withValidityAssertion {
             if (backingPsi != null) {
                 return if (backingPsi.hasValOrVar() && backingPsi.ownerFunction is KtPrimaryConstructor) {
-                    KaFirKotlinPropertySymbol.create(backingPsi, analysisSession)
+                    KaFirKotlinPropertySymbol.create(backingPsi, analysisSession = analysisSession)
                 } else {
                     null
                 }
             }
 
             val propertySymbol = firSymbol.fir.correspondingProperty?.symbol ?: return null
-            return KaFirKotlinPropertySymbol.create(propertySymbol, analysisSession)
+            return KaFirKotlinPropertySymbol.create(propertySymbol, analysisSession = analysisSession)
         }
 
     override fun createPointer(): KaSymbolPointer<KaValueParameterSymbol> = withValidityAssertion {
@@ -151,7 +151,7 @@ internal class KaFirValueParameterSymbol private constructor(
 
     private val index: Int
         get() {
-            val ownerSymbol = with(analysisSession) { containingDeclaration }
+            val ownerSymbol = context(analysisSession) { containingDeclaration }
                 ?: error("Containing function is expected for a value parameter symbol")
             requireIsInstance<KaFunctionSymbol>(ownerSymbol)
 

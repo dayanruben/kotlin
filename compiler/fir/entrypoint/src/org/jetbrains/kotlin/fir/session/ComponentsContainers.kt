@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.KtSourceFileLinesMapping
 import org.jetbrains.kotlin.config.JvmAnalysisFlags
 import org.jetbrains.kotlin.config.LanguageVersionSettings
-import org.jetbrains.kotlin.config.ParserMode
 import org.jetbrains.kotlin.config.toKotlinVersion
 import org.jetbrains.kotlin.diagnostics.KtRegisteredDiagnosticFactoriesStorage
 import org.jetbrains.kotlin.fir.*
@@ -78,6 +77,10 @@ import org.jetbrains.kotlin.load.java.JavaTypeEnhancementState
 import org.jetbrains.kotlin.resolve.jvm.JvmConstants
 import org.jetbrains.kotlin.resolve.jvm.JvmTypeSpecificityComparator
 import org.jetbrains.kotlin.resolve.jvm.modules.JavaModuleResolver
+import org.jetbrains.kotlin.syntax.KmpParseTreeKind
+import org.jetbrains.kotlin.syntax.LightTreeParseTreeKind
+import org.jetbrains.kotlin.syntax.ParseTreeKind
+import org.jetbrains.kotlin.syntax.PsiParseTreeKind
 
 // -------------------------- Required components --------------------------
 
@@ -266,20 +269,22 @@ fun FirSession.registerModuleData(moduleData: FirModuleData) {
 }
 
 /**
- * Registers the [org.jetbrains.kotlin.fir.syntax.FirSyntaxComponent] matching the raw FIR builder selected by [parserMode].
+ * Registers the [org.jetbrains.kotlin.fir.syntax.FirSyntaxComponent] matching the raw FIR builder selected by [parseTreeKind].
  *
  * The Analysis API doesn't use this function; it always registers [FirPsiSyntaxComponent] in `registerIdeComponents`.
  *
  * The set of implementations is expected to shrink:
- * - [ParserMode.Psi] will be removed from the CLI (KT-86283); [FirPsiSyntaxComponent] stays for the Analysis API only.
- * - [ParserMode.LightTree] and [FirLightTreeSyntaxComponent] will be dropped once [ParserMode.KmpTree] becomes the default;
+ * - The CLI doesn't use [PsiParseTreeKind] anymore (KT-86283), but PSI-based script compilation and some tests still do (KT-91411).
+ *   Once they're migrated, [FirPsiSyntaxComponent] stays for the Analysis API only.
+ * - [LightTreeParseTreeKind] and [FirLightTreeSyntaxComponent] will be dropped once [KmpParseTreeKind] becomes the default.
  */
 @OptIn(SessionConfiguration::class)
-fun FirSession.registerSyntaxComponent(parserMode: ParserMode) {
-    val syntaxComponent = when (parserMode) {
-        ParserMode.Psi -> FirPsiSyntaxComponent
-        ParserMode.LightTree -> FirLightTreeSyntaxComponent
-        ParserMode.KmpTree -> FirKmpSyntaxComponent
+fun FirSession.registerSyntaxComponent(parseTreeKind: ParseTreeKind) {
+    val syntaxComponent = when (parseTreeKind) {
+        PsiParseTreeKind -> FirPsiSyntaxComponent
+        LightTreeParseTreeKind -> FirLightTreeSyntaxComponent
+        KmpParseTreeKind -> FirKmpSyntaxComponent
+        else -> error("Unsupported parse tree kind: ${parseTreeKind::class.simpleName}")
     }
     register(FirSyntaxComponent::class, syntaxComponent)
 }

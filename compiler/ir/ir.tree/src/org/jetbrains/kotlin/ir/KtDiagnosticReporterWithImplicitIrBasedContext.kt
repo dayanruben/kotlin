@@ -19,12 +19,14 @@ import org.jetbrains.kotlin.ir.util.isAnnotationWithEqualFqName
 import org.jetbrains.kotlin.ir.util.sourceElement
 import org.jetbrains.kotlin.ir.visitors.IrVisitor
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.syntax.ParseTreeKind
 import java.io.File
 import java.util.*
 
 class KtDiagnosticReporterWithImplicitIrBasedContext(
     diagnosticReporter: DiagnosticReporter,
-    val languageVersionSettings: LanguageVersionSettings
+    val languageVersionSettings: LanguageVersionSettings,
+    val parseTreeKind: ParseTreeKind,
 ) : DiagnosticReporter(), IrDiagnosticReporter {
     val diagnosticReporter: DiagnosticReporter = diagnosticReporter.deduplicating()
 
@@ -64,14 +66,11 @@ class KtDiagnosticReporterWithImplicitIrBasedContext(
     }
 
     override fun report(factory: KtSourcelessDiagnosticFactory, message: String, location: CompilerMessageSourceLocation?) {
-        val context = object : DiagnosticContext {
-            override val containingFile: KtSourceFile?
-                get() = null
-
-            override fun isDiagnosticSuppressed(diagnostic: KtDiagnostic): Boolean = false
-            override val languageVersionSettings: LanguageVersionSettings
-                get() = this@KtDiagnosticReporterWithImplicitIrBasedContext.languageVersionSettings
-        }
+        val context = NonSuppressingDiagnosticContext(
+            containingFile = null,
+            languageVersionSettings = languageVersionSettings,
+            parseTreeKind = parseTreeKind,
+        )
         val diagnostic = factory.create(message, location, context) ?: return
         report(diagnostic, context)
     }
@@ -88,6 +87,8 @@ class KtDiagnosticReporterWithImplicitIrBasedContext(
         override val languageVersionSettings: LanguageVersionSettings
             get() = this@KtDiagnosticReporterWithImplicitIrBasedContext.languageVersionSettings
 
+        override val parseTreeKind: ParseTreeKind
+            get() = this@KtDiagnosticReporterWithImplicitIrBasedContext.parseTreeKind
 
         override fun isDiagnosticSuppressed(diagnostic: KtDiagnostic): Boolean {
             if (containingIrFile == null) return false

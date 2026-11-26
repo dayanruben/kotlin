@@ -62,19 +62,19 @@ internal fun <T : KaCallableSymbol> getDirectlyOverriddenSymbols(callableSymbol:
 context(relationProvider: KaFirSymbolRelationProvider)
 internal fun getAllOverriddenAccessorSymbols(accessorSymbol: KaPropertyAccessorSymbol): Sequence<KaCallableSymbol> =
     getOverriddenAccessorSymbols(accessorSymbol) { propertySymbol ->
-        with(analysisSession) { propertySymbol.allOverriddenSymbols }
+        context(analysisSession) { propertySymbol.allOverriddenSymbols }
     }
 
 context(relationProvider: KaFirSymbolRelationProvider)
 internal fun getDirectlyOverriddenAccessorSymbols(accessorSymbol: KaPropertyAccessorSymbol): Sequence<KaCallableSymbol> =
     getOverriddenAccessorSymbols(accessorSymbol) { propertySymbol ->
-        with(analysisSession) { propertySymbol.directlyOverriddenSymbols }
+        context(analysisSession) { propertySymbol.directlyOverriddenSymbols }
     }
 
 context(relationProvider: KaFirSymbolRelationProvider)
 internal fun getIntersectionOverriddenAccessorSymbols(accessorSymbol: KaPropertyAccessorSymbol): List<KaCallableSymbol> =
     getOverriddenAccessorSymbols(accessorSymbol) { propertySymbol ->
-        with(analysisSession) { propertySymbol.intersectionOverriddenSymbols.asSequence() }
+        context(analysisSession) { propertySymbol.intersectionOverriddenSymbols.asSequence() }
     }.toList()
 
 context(relationProvider: KaFirSymbolRelationProvider)
@@ -82,7 +82,7 @@ private inline fun getOverriddenAccessorSymbols(
     accessorSymbol: KaPropertyAccessorSymbol,
     overriddenProperties: (KaPropertySymbol) -> Sequence<KaCallableSymbol>,
 ): Sequence<KaCallableSymbol> {
-    val propertySymbol = with(analysisSession) { accessorSymbol.containingDeclaration } as? KaPropertySymbol ?: return emptySequence()
+    val propertySymbol = context(analysisSession) { accessorSymbol.containingDeclaration } as? KaPropertySymbol ?: return emptySequence()
     val overriddenProperties = overriddenProperties(propertySymbol)
     return if (accessorSymbol is KaPropertyGetterSymbol) {
         overriddenProperties
@@ -153,15 +153,15 @@ private inline fun <T> processOverrides(
     }
 
     val analysisSession = callableSymbol.analysisSession
-    val containingDeclaration = with(analysisSession) {
+    val containingDeclaration = context(analysisSession) {
         callableSymbol.containingDeclaration
     } as? KaClassSymbol ?: return
 
     when (containingDeclaration) {
         is KaFirNamedClassSymbolBase<*>, is KaFirAnonymousObjectSymbol -> processOverrides(containingDeclaration, callableSymbol, process)
         else -> errorWithAttachment("Expected the containing symbol to be a ${KaFirNamedClassSymbolBase::class.simpleName} or ${KaFirAnonymousObjectSymbol::class.simpleName}") {
-            withSymbolAttachment("callable", analysisSession, callableSymbol)
-            withSymbolAttachment("containingDeclaration", analysisSession, containingDeclaration)
+            withSymbolAttachment("callable", callableSymbol)
+            withSymbolAttachment("containingDeclaration", containingDeclaration)
         }
     }
 }

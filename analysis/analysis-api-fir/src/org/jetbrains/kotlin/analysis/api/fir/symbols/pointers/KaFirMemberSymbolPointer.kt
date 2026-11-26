@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.fir.utils.firSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaDeclarationContainerSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
+import org.jetbrains.kotlin.analysis.api.symbols.pointers.restoreSymbol
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.scopes.FirScope
 import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
@@ -23,20 +24,20 @@ internal abstract class KaFirMemberSymbolPointer<S : KaSymbol>(
     originalSymbol: S?,
 ) : KaFirCachedSymbolPointer<S>(originalSymbol) {
     @KaImplementationDetail
-    final override fun restoreIfNotCached(analysisSession: KaSession): S? {
-        require(analysisSession is KaFirSession)
-        return with(analysisSession) {
-            val ownerSymbol = ownerPointer.restoreSymbol() ?: return null
-            val owner = ownerSymbol.firSymbol as? FirClassSymbol ?: return null
-            val scope = getSearchScope(analysisSession, owner) ?: return null
-            chooseCandidateAndCreateSymbol(scope, owner)
-        }
+    context(session: KaSession)
+    final override fun restoreIfNotCached(): S? {
+        require(session is KaFirSession)
+        val ownerSymbol = ownerPointer.restoreSymbol() ?: return null
+        val owner = ownerSymbol.firSymbol as? FirClassSymbol ?: return null
+        val scope = getSearchScope(owner, analysisSession = session) ?: return null
+        return chooseCandidateAndCreateSymbol(scope, owner, analysisSession = session)
     }
 
     context(analysisSession: KaFirSession)
     protected abstract fun chooseCandidateAndCreateSymbol(candidates: FirScope, owner: FirClassSymbol<*>): S?
 
-    protected open fun getSearchScope(analysisSession: KaFirSession, owner: FirClassSymbol<*>): FirScope? {
+    context(analysisSession: KaFirSession)
+    protected open fun getSearchScope(owner: FirClassSymbol<*>): FirScope? {
         val firSession = analysisSession.firSession
         val scopeSession = analysisSession.getScopeSessionFor(firSession)
         return if (isStatic) {

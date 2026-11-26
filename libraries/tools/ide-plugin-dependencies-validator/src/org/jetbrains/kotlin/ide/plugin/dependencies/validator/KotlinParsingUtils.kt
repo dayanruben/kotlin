@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.syntax.PsiParseTreeKind
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.extension
@@ -44,6 +45,6 @@ private fun createProjectForParsing(): Project {
     @OptIn(CoreEnvironmentDeprecation::class)
     return KotlinCoreEnvironment.create(
         Disposer.newDisposable("Disposable for project of ${ExperimentalOptInUsageInSourceChecker::class.simpleName}"),
-        CompilerConfiguration.create()
+        CompilerConfiguration.create(parseTreeKind = PsiParseTreeKind) // Parses KT files, KT-91411
     ).project
 }

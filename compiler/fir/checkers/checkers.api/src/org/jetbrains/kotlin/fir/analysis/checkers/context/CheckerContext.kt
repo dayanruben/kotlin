@@ -21,6 +21,8 @@ import org.jetbrains.kotlin.fir.SessionAndScopeSessionHolder
 import org.jetbrains.kotlin.fir.resolve.transformers.ReturnTypeCalculator
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirFileSymbol
+import org.jetbrains.kotlin.fir.syntax.syntaxComponent
+import org.jetbrains.kotlin.syntax.ParseTreeKind
 import org.jetbrains.kotlin.utils.addToStdlib.shouldNotBeCalled
 
 /**
@@ -79,6 +81,9 @@ abstract class CheckerContext : DiagnosticContext, SessionAndScopeSessionHolder 
 
     override val languageVersionSettings: LanguageVersionSettings
         get() = session.languageVersionSettings
+
+    override val parseTreeKind: ParseTreeKind
+        get() = session.syntaxComponent.parseTreeKind
 
     abstract val containingFileSymbol: FirFileSymbol?
 

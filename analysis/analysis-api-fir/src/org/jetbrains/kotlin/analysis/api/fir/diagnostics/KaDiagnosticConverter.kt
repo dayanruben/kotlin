@@ -33,8 +33,13 @@ internal fun interface KaFirDiagnostic4Creator<A, B, C, D> : KaFirDiagnosticCrea
     fun KaFirSession.create(diagnostic: KtDiagnosticWithParameters4<A, B, C, D>): KaFirDiagnostic<*>
 }
 
+internal fun interface KaFirDiagnostic5Creator<A, B, C, D, E> : KaFirDiagnosticCreator {
+    fun KaFirSession.create(diagnostic: KtDiagnosticWithParameters5<A, B, C, D, E>): KaFirDiagnostic<*>
+}
+
 internal class KaDiagnosticConverter(private val conversions: Map<KtDiagnosticFactoryN, KaFirDiagnosticCreator>) {
-    fun convert(analysisSession: KaFirSession, diagnostic: KtDiagnostic): KaFirDiagnostic<*> {
+    context(analysisSession: KaFirSession)
+    fun convert(diagnostic: KtDiagnostic): KaFirDiagnostic<*> {
         val creator = conversions[diagnostic.factory] ?: buildCreatorForPluginDiagnostic(diagnostic.factory)
 
         @Suppress("UNCHECKED_CAST")
@@ -54,6 +59,9 @@ internal class KaDiagnosticConverter(private val conversions: Map<KtDiagnosticFa
                 }
                 is KaFirDiagnostic4Creator<*, *, *, *> -> with(creator as KaFirDiagnostic4Creator<Any?, Any?, Any?, Any?>) {
                     create(diagnostic as KtDiagnosticWithParameters4<Any?, Any?, Any?, Any?>)
+                }
+                is KaFirDiagnostic5Creator<*, *, *, *, *> -> with(creator as KaFirDiagnostic5Creator<Any?, Any?, Any?, Any?, Any?>) {
+                    create(diagnostic as KtDiagnosticWithParameters5<Any?, Any?, Any?, Any?, Any?>)
                 }
                 else -> error("Invalid KtFirDiagnosticCreator ${creator::class.simpleName}")
             }
@@ -103,6 +111,18 @@ internal class KaDiagnosticConverter(private val conversions: Map<KtDiagnosticFa
                 convertArgument(it.d, this)
             )
         }
+
+        is KtDiagnosticFactory5<*, *, *, *, *> -> KaFirDiagnostic5Creator<Any?, Any?, Any?, Any?, Any?> {
+            KaCompilerPluginDiagnostic5Impl(
+                it,
+                token,
+                convertArgument(it.a, this),
+                convertArgument(it.b, this),
+                convertArgument(it.c, this),
+                convertArgument(it.d, this),
+                convertArgument(it.e, this),
+            )
+        }
     }
 }
 
@@ -126,6 +146,10 @@ internal class KaDiagnosticConverterBuilder private constructor() {
     }
 
     fun <A, B, C, D> add(diagnostic: KtDiagnosticFactory4<A, B, C, D>, creator: KaFirDiagnostic4Creator<A, B, C, D>) {
+        conversions[diagnostic] = creator
+    }
+
+    fun <A, B, C, D, E> add(diagnostic: KtDiagnosticFactory5<A, B, C, D, E>, creator: KaFirDiagnostic5Creator<A, B, C, D, E>) {
         conversions[diagnostic] = creator
     }
 

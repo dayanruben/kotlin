@@ -53,6 +53,7 @@ import org.jetbrains.kotlin.resolve.calls.tower.CandidateApplicability
 import org.jetbrains.kotlin.resolve.calls.tower.isSuccess
 import org.jetbrains.kotlin.syntax.KotlinSyntaxNodeTypeIds
 import org.jetbrains.kotlin.syntax.KotlinSyntaxTokenIds
+import org.jetbrains.kotlin.syntax.ParseTreeKind
 import org.jetbrains.kotlin.types.EmptyIntersectionTypeKind
 import org.jetbrains.kotlin.types.model.K2Only
 import org.jetbrains.kotlin.util.ArrayLiteralResolution
@@ -163,6 +164,7 @@ private fun ConeInapplicableCandidateError.mapInapplicableCandidateError(
                         )
                     },
                     isMismatchDueToNullability = rootCause.isMismatchDueToNullability,
+                    parameter = candidate.argumentMapping.entries.find { it.key.expression.unwrapArgument() == rootCause.argument }?.value?.symbol,
                     candidate = candidate,
                     rootCause.anonymousFunctionIfReturnExpression,
                     argument = rootCause.argument,
@@ -183,6 +185,8 @@ private fun ConeInapplicableCandidateError.mapInapplicableCandidateError(
                         typeContext,
                     ),
                     false,
+                    candidate.argumentMapping.entries.find { it.key.expression.unwrapArgument() == rootCause.lambdaExpression }?.value?.symbol,
+                    rootCause.lambdaExpression,
                     session // not isMismatchDueToNullability
                 )
             }
@@ -708,6 +712,7 @@ private fun ConeDiagnostic.mapOtherDiagnostic(
     is ConeContractDescriptionError -> FirErrors.ERROR_IN_CONTRACT_DESCRIPTION.createOn(source, this.reason, session)
     is ConeTypeParameterSupertype -> FirErrors.SUPERTYPE_NOT_A_CLASS_OR_INTERFACE.createOn(source, this.reason, session)
     is ConeUnionTypeInSupertype -> FirErrors.SUPERTYPE_NOT_A_CLASS_OR_INTERFACE.createOn(source, this.reason, session)
+    is ConeIllegalProjectionInExpansion -> FirErrors.ILLEGAL_PROJECTION_IN_TYPEALIAS_EXPANSION.createOn(source, session)
     is ConeTypeParameterInQualifiedAccess -> runIf(forNoneApplicable) { // when not for NONE_APPLICABLE, reported in various checkers
         FirErrors.TYPE_PARAMETER_IS_NOT_AN_EXPRESSION.createOn(source, this.symbol, session)
     }
@@ -734,6 +739,11 @@ private fun ConeDiagnostic.mapOtherDiagnostic(
             session
         )
     is ConeAmbiguousFunctionTypeKinds -> FirErrors.AMBIGUOUS_FUNCTION_TYPE_KIND.createOn(source, kinds, session)
+    is ConeFunctionWithTooLargeArity -> FirErrors.FUNCTION_TYPE_OF_TOO_LARGE_ARITY.createOn(
+        source,
+        kind.numberedClassId(arity), kind.maxArity,
+        session
+    )
     is ConeUnsupportedClassLiteralsWithEmptyLhs -> FirErrors.UNSUPPORTED_CLASS_LITERALS_WITH_EMPTY_LHS.createOn(source, session)
     is ConeMultipleLabelsAreForbidden -> FirErrors.MULTIPLE_LABELS_ARE_FORBIDDEN.createOn(this.source, session)
     is ConeTypeMismatch -> FirErrors.TYPE_MISMATCH.createOn(source, lowerType, upperType, false, session)
@@ -849,12 +859,13 @@ private fun argumentTypeMismatch(
     expectedType: ConeKotlinType,
     actualType: ConeKotlinType,
     isMismatchDueToNullability: Boolean,
+    parameter: FirValueParameterSymbol?,
     candidate: AbstractCallCandidate<*>,
     /**
      * See [ArgumentTypeMismatch.anonymousFunctionIfReturnExpression]
      */
-    anonymousFunctionIfReturnExpression: FirAnonymousFunction?,
-    argument: FirElement,
+    anonymousFunctionIfReturnExpression: FirAnonymousFunctionExpression?,
+    argument: FirExpression,
     session: FirSession,
 ): List<KtDiagnostic> {
     val symbol = candidate.symbol as FirCallableSymbol
@@ -870,7 +881,7 @@ private fun argumentTypeMismatch(
     val diagnostic = when {
         anonymousFunctionIfReturnExpression != null ->
             FirErrors.RETURN_TYPE_MISMATCH.createOn(
-                source, expectedType, actualType, anonymousFunctionIfReturnExpression, isMismatchDueToNullability, session
+                source, expectedType, actualType, anonymousFunctionIfReturnExpression.anonymousFunction, isMismatchDueToNullability, session
             )
         expectedType is ConeCapturedType && expectedType.isBasedOnStarOrOut() && receiverType != null ->
             FirErrors.MEMBER_PROJECTED_OUT.createOn(
@@ -901,6 +912,8 @@ private fun argumentTypeMismatch(
                 actualType,
                 expectedType,
                 isMismatchDueToNullability,
+                parameter,
+                argument,
                 session
             )
         }
@@ -909,7 +922,9 @@ private fun argumentTypeMismatch(
             actualType,
             expectedType,
             isMismatchDueToNullability,
-            session
+            parameter,
+            argument,
+            session,
         )
     }
 
@@ -951,10 +966,10 @@ private fun ConstraintSystemError.mapConstraintSystemError(
     val diagnostic = when (this) {
         is NewConstraintError -> {
             val position = position.from
-            val [argument, reportOn] =
+            val [argumentExpression, reportOn] =
                 when (position) {
                     is ConeArgumentConstraintPosition -> position.argument to null
-                    is ConeLambdaArgumentConstraintPosition -> position.lambda to position.anonymousFunctionReturnExpression?.source
+                    is ConeLambdaArgumentConstraintPosition -> position.lambdaExpression to position.anonymousFunctionReturnExpression?.source
                     is ConeReceiverConstraintPosition -> position.argument to (position.argument.source.takeIf { it?.kind == KtRealSourceElementKind }
                         ?: position.source)
                     // ConeExpectedTypeConstraintPosition is processed below,
@@ -967,17 +982,22 @@ private fun ConstraintSystemError.mapConstraintSystemError(
                     // Finally, ConeDeclaredUpperBoundConstraintPosition never occurs here
                     else -> null to null
                 }
+            val argument = when (position) {
+                is ConeLambdaArgumentConstraintPosition -> position.lambda
+                else -> argumentExpression
+            }
 
             val typeMismatchDueToNullability = typeContext.isTypeMismatchDueToNullability(lowerConeType, upperConeType)
-            argument?.let {
+            argumentExpression?.let {
                 return argumentTypeMismatch(
                     source = reportOn ?: it.source ?: source,
                     expectedType = upperConeType.substituteTypeVariableTypes(candidate, typeContext),
                     actualType = lowerConeType.substituteTypeVariableTypes(candidate, typeContext),
                     isMismatchDueToNullability = typeMismatchDueToNullability,
+                    parameter = candidate.argumentMapping.entries.find { it.key.expression.unwrapArgument() == argument }?.value?.symbol,
                     candidate = candidate,
-                    anonymousFunctionIfReturnExpression = (position as? ConeLambdaArgumentConstraintPosition)?.lambda,
-                    argument = it,
+                    anonymousFunctionIfReturnExpression = (position as? ConeLambdaArgumentConstraintPosition)?.lambdaExpression,
+                    argument = argumentExpression,
                     session = session,
                 )
             }
@@ -1183,13 +1203,20 @@ private fun ConeSimpleDiagnostic.getFactory(source: KtSourceElement?): KtDiagnos
     }
 }
 
-private fun FirSession.toDiagnosticContext(): DiagnosticBaseContext {
-    // Data class is required to preserve structural equality of KtDiagnostics.
+private fun FirSession.toDiagnosticContext(): DiagnosticContext {
+    // Data class is required to preserve structural equality of KtDiagnostics, TODO: KT-91957
     data class SessionWrapper(
         override val session: FirSession
-    ) : DiagnosticBaseContext, SessionHolder {
+    ) : DiagnosticContext, SessionHolder {
         override val languageVersionSettings: LanguageVersionSettings
             get() = session.languageVersionSettings
+
+        override val containingFile: KtSourceFile? get() = null
+
+        override val parseTreeKind: ParseTreeKind
+            get() = session.syntaxComponent.parseTreeKind
+
+        override fun isDiagnosticSuppressed(diagnostic: KtDiagnostic): Boolean = false
     }
 
     return SessionWrapper(this)
@@ -1199,7 +1226,7 @@ private fun FirSession.toDiagnosticContext(): DiagnosticBaseContext {
 internal fun KtDiagnosticFactory0.createOn(
     element: KtSourceElement?,
     session: FirSession,
-    positioningStrategy: AbstractSourceElementPositioningStrategy? = null,
+    positioningStrategy: SourceElementPositioningStrategy? = null,
 ): KtDiagnostic? {
     return onOrFallback(element, positioningStrategy, session.toDiagnosticContext())
 }
@@ -1209,7 +1236,7 @@ internal fun <A> KtDiagnosticFactory1<A>.createOn(
     element: KtSourceElement?,
     a: A,
     session: FirSession,
-    positioningStrategy: AbstractSourceElementPositioningStrategy? = null,
+    positioningStrategy: SourceElementPositioningStrategy? = null,
 ): KtDiagnostic? {
     return onOrFallback(element, a, positioningStrategy, session.toDiagnosticContext())
 }
@@ -1220,7 +1247,7 @@ internal fun <A, B> KtDiagnosticFactory2<A, B>.createOn(
     a: A,
     b: B,
     session: FirSession,
-    positioningStrategy: AbstractSourceElementPositioningStrategy? = null,
+    positioningStrategy: SourceElementPositioningStrategy? = null,
 ): KtDiagnostic? {
     return onOrFallback(element, a, b, positioningStrategy, session.toDiagnosticContext())
 }
@@ -1232,7 +1259,7 @@ internal fun <A, B, C> KtDiagnosticFactory3<A, B, C>.createOn(
     b: B,
     c: C,
     session: FirSession,
-    positioningStrategy: AbstractSourceElementPositioningStrategy? = null,
+    positioningStrategy: SourceElementPositioningStrategy? = null,
 ): KtDiagnostic? {
     return onOrFallback(element, a, b, c, positioningStrategy, session.toDiagnosticContext())
 }
@@ -1245,7 +1272,21 @@ internal fun <A, B, C, D> KtDiagnosticFactory4<A, B, C, D>.createOn(
     c: C,
     d: D,
     session: FirSession,
-    positioningStrategy: AbstractSourceElementPositioningStrategy? = null,
+    positioningStrategy: SourceElementPositioningStrategy? = null,
 ): KtDiagnostic? {
     return onOrFallback(element, a, b, c, d, positioningStrategy, session.toDiagnosticContext())
+}
+
+@OptIn(InternalDiagnosticFactoryMethod::class)
+internal fun <A, B, C, D, E> KtDiagnosticFactory5<A, B, C, D, E>.createOn(
+    element: KtSourceElement?,
+    a: A,
+    b: B,
+    c: C,
+    d: D,
+    e: E,
+    session: FirSession,
+    positioningStrategy: SourceElementPositioningStrategy? = null,
+): KtDiagnostic? {
+    return onOrFallback(element, a, b, c, d, e, positioningStrategy, session.toDiagnosticContext())
 }

@@ -11,7 +11,8 @@ import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.diagnostics.reportOn
 import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
-import org.jetbrains.kotlin.fir.analysis.checkers.getModifierList
+import org.jetbrains.kotlin.fir.analysis.checkers.extractModifierList
+import org.jetbrains.kotlin.fir.analysis.checkers.tokenName
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.impl.FirPrimaryConstructor
@@ -20,7 +21,7 @@ import org.jetbrains.kotlin.fir.declarations.utils.nameOrSpecialName
 import org.jetbrains.kotlin.fir.isEnabled
 import org.jetbrains.kotlin.fir.symbols.impl.FirLocalPropertySymbol
 import org.jetbrains.kotlin.fir.syntax.withSyntax
-import org.jetbrains.kotlin.resolve.allowedInContextParameters
+import org.jetbrains.kotlin.resolve.KotlinModifierHelpers.allowedInContextParameters
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 object FirContextParametersDeclarationChecker : FirBasicDeclarationChecker(MppCheckerKind.Platform) {
@@ -90,9 +91,9 @@ object FirContextParametersDeclarationChecker : FirBasicDeclarationChecker(MppCh
                     reporter.reportOn(parameter.source, FirErrors.CONTEXT_PARAMETER_WITHOUT_NAME)
                 }
 
-                parameter.source?.getModifierList()?.modifiers?.forEach { modifier ->
-                    if (modifier.token !in allowedInContextParameters) {
-                        reporter.reportOn(modifier.source, FirErrors.WRONG_MODIFIER_TARGET, modifier.token, "context parameter")
+                parameter.source?.extractModifierList()?.modifiers?.forEach { modifier ->
+                    if (modifier.tokenId !in allowedInContextParameters) {
+                        reporter.reportOn(modifier.source, FirErrors.WRONG_MODIFIER_TARGET, modifier.tokenName, "context parameter")
                     }
                 }
 

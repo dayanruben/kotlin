@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2026 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.symbols.KaDestructuringDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.fir.psi
 import org.jetbrains.kotlin.fir.symbols.impl.FirVariableSymbol
 import org.jetbrains.kotlin.fir.utils.exceptions.withFirSymbolEntry
@@ -28,7 +29,7 @@ internal class KaFirDestructuringDeclarationSymbol private constructor(
 ) : KaDestructuringDeclarationSymbol(), KaFirKtBasedSymbol<KtDestructuringDeclaration, FirVariableSymbol<*>> {
     constructor(declaration: KtDestructuringDeclaration, session: KaFirSession) : this(
         backingPsi = declaration,
-        lazyFirSymbol = lazyFirSymbol(declaration, session),
+        lazyFirSymbol = lazyFirSymbol(declaration, analysisSession = session),
         analysisSession = session,
     )
 
@@ -53,7 +54,7 @@ internal class KaFirDestructuringDeclarationSymbol private constructor(
 
     override val entries: List<KaVariableSymbol>
         get() = withValidityAssertion {
-            with(analysisSession) {
+            context(analysisSession) {
                 psi.entries.map { entry ->
                     entry.symbol
                 }

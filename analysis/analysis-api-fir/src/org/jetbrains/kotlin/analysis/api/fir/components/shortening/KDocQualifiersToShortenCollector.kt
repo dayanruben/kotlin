@@ -68,7 +68,7 @@ internal class KDocQualifiersToShortenCollector(
         // KDocs are only shortened if they are available without imports, so `additionalImports` contain all the imports to add
         if (fqName.isInNewImports(additionalImports)) return true
 
-        with(analysisSession) {
+        context(analysisSession) {
             val shortFqName = FqName.topLevel(fqName.shortName())
             val owner = kDocName.getContainingDoc().owner
 
@@ -79,7 +79,6 @@ internal class KDocQualifiersToShortenCollector(
 
             val resolvedSymbolsByShortName =
                 KDocReferenceResolver.resolveKdocFqName(
-                    useSiteSession,
                     selectedFqName = shortFqName,
                     fullFqName = shortFqName,
                     contextElement,
@@ -87,7 +86,6 @@ internal class KDocQualifiersToShortenCollector(
                 )
             val resolvedSymbolsByFQN =
                 KDocReferenceResolver.resolveKdocFqName(
-                    useSiteSession,
                     selectedFqName = fqName,
                     fullFqName = fqName,
                     contextElement,

@@ -9,30 +9,49 @@ import org.jetbrains.kotlin.AbstractKtSourceElement
 import org.jetbrains.kotlin.KtSourceFile
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
+import org.jetbrains.kotlin.syntax.NoParseTreeKind
+import org.jetbrains.kotlin.syntax.ParseTreeKind
 
 /**
- * The diagnostic context is required for creating `KtDiagnostic` instances, and it is used for two purposes:
- * 1. To compute the proper diagnostic factory based on language features for [KtDiagnosticFactoryForDeprecation]
+ * The diagnostic context is required for creating and reporting `KtDiagnostic` instances, and it is used for the following purposes:
+ * 1. To compute the proper diagnostic factory based on language features for [KtDiagnosticFactoryForDeprecation].
  * 2. To be stored inside the diagnostic instances and later accessed by the implementations of the
- *    [org.jetbrains.kotlin.diagnostics.rendering.RenderingContext.Key]. To be precise, some fir-specific renderers
- *    downcast the [DiagnosticBaseContext] to context from the FIR to access the FIR session.
+ *    [org.jetbrains.kotlin.diagnostics.rendering.RenderingContext.Key]. To be precise, some FIR-specific renderers
+ *    downcast the [DiagnosticContext] to a context from the FIR to access the FIR session.
+ * 3. To provide the [parseTreeKind], whose positioning strategies are used to position the diagnostics on their source elements.
+ * 4. To provide the [containingFile] and check whether a diagnostic is suppressed ([isDiagnosticSuppressed]) when it's reported
+ *    by a [DiagnosticReporter]. Contexts that are only used to create diagnostics, or whose diagnostics can't be suppressed,
+ *    return `false` from [isDiagnosticSuppressed] (see [NonSuppressingDiagnosticContext]).
  */
-interface DiagnosticBaseContext {
+interface DiagnosticContext {
     val languageVersionSettings: LanguageVersionSettings
-}
-
-interface DiagnosticContext : DiagnosticBaseContext {
-    override val languageVersionSettings: LanguageVersionSettings
     val containingFile: KtSourceFile?
     val containingFilePath: String? get() = containingFile?.path
+    val parseTreeKind: ParseTreeKind
 
     fun isDiagnosticSuppressed(diagnostic: KtDiagnostic): Boolean
 
     object Default : DiagnosticContext {
         override val languageVersionSettings: LanguageVersionSettings get() = LanguageVersionSettingsImpl.DEFAULT
         override val containingFile: KtSourceFile? get() = null
+        override val parseTreeKind: ParseTreeKind = NoParseTreeKind
+
         override fun isDiagnosticSuppressed(diagnostic: KtDiagnostic): Boolean = false
     }
+}
+
+/**
+ * Used to create diagnostics outside of checkers (e.g., syntax errors, CLI and backend sourceless diagnostics)
+ * and to report diagnostics that can't be suppressed.
+ *
+ * It's a data class to preserve structural equality of the diagnostics created with it. TODO: KT-91957
+ */
+data class NonSuppressingDiagnosticContext(
+    override val containingFile: KtSourceFile?,
+    override val languageVersionSettings: LanguageVersionSettings,
+    override val parseTreeKind: ParseTreeKind,
+) : DiagnosticContext {
+    override fun isDiagnosticSuppressed(diagnostic: KtDiagnostic): Boolean = false
 }
 
 abstract class DiagnosticReporter {

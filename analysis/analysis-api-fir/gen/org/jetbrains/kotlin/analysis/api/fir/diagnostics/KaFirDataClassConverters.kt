@@ -451,6 +451,13 @@ private fun KaDiagnosticConverterBuilder.addConversions3() {
             token,
         )
     }
+    add(FirErrors.WILL_BECOME_VALUE_CLASS_HAS_INAPPLICABLE_PARAMETER_TYPE) { firDiagnostic ->
+        WillBecomeValueClassHasInapplicableParameterTypeImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
     add(FirErrors.COMPONENT_FUNCTION_RETURN_TYPE_MISMATCH) { firDiagnostic ->
         ComponentFunctionReturnTypeMismatchImpl(
             firDiagnostic.a,
@@ -1110,6 +1117,8 @@ private fun KaDiagnosticConverterBuilder.addConversions17() {
 private fun KaDiagnosticConverterBuilder.addConversions18() {
     add(FirErrors.NO_GET_METHOD) { firDiagnostic ->
         NoGetMethodImpl(
+            firDiagnostic.a?.source?.psi as? KtExpression,
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.b),
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -1879,6 +1888,8 @@ private fun KaDiagnosticConverterBuilder.addConversions35() {
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.b),
             firDiagnostic.c,
+            firDiagnostic.d?.let { firSymbolBuilder.buildSymbol(it) },
+            firDiagnostic.e.source!!.psi as KtExpression,
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -3073,7 +3084,6 @@ private fun KaDiagnosticConverterBuilder.addConversions62() {
     }
     add(FirErrors.VALUE_CLASS_NOT_FINAL) { firDiagnostic ->
         ValueClassNotFinalImpl(
-            firDiagnostic.a,
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -4697,6 +4707,8 @@ private fun KaDiagnosticConverterBuilder.addConversions94() {
     }
     add(FirErrors.NO_SET_METHOD) { firDiagnostic ->
         NoSetMethodImpl(
+            firDiagnostic.a?.source?.psi as? KtExpression,
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.b),
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -6647,6 +6659,12 @@ private fun KaDiagnosticConverterBuilder.addConversions131() {
         IncompatibleModifiersImpl(
             firDiagnostic.a,
             firDiagnostic.b,
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
+    add(FirErrors.ILLEGAL_PROJECTION_IN_TYPEALIAS_EXPANSION) { firDiagnostic ->
+        IllegalProjectionInTypealiasExpansionImpl(
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )
@@ -8989,6 +9007,12 @@ private fun KaDiagnosticConverterBuilder.addConversions182() {
             token,
         )
     }
+    add(FirErrors.WILL_BECOME_VALUE_CLASS_OPEN) { firDiagnostic ->
+        WillBecomeValueClassOpenImpl(
+            firDiagnostic as KtDiagnosticWithSource,
+            token,
+        )
+    }
     add(FirErrors.TAILREC_ON_VIRTUAL_MEMBER_ERROR) { firDiagnostic ->
         TailrecOnVirtualMemberErrorImpl(
             firDiagnostic as KtDiagnosticWithSource,
@@ -9219,8 +9243,8 @@ private fun KaDiagnosticConverterBuilder.addConversions188() {
     }
     add(FirErrors.VALUE_CLASS_HAS_INAPPLICABLE_PARAMETER_TYPE) { firDiagnostic ->
         ValueClassHasInapplicableParameterTypeImpl(
-            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
-            firDiagnostic.b,
+            firDiagnostic.a,
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.b),
             firDiagnostic as KtDiagnosticWithSource,
             token,
         )

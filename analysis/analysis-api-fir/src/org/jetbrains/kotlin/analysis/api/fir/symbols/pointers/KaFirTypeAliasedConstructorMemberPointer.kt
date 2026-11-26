@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2026 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
+import org.jetbrains.kotlin.analysis.api.symbols.pointers.restoreSymbol
 import org.jetbrains.kotlin.analysis.low.level.api.fir.providers.FirCallableSignature
 import org.jetbrains.kotlin.fir.declarations.FirConstructor
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
@@ -36,26 +37,26 @@ internal class KaFirTypeAliasedConstructorMemberPointer(
     private val signature: FirCallableSignature,
     originalSymbol: KaConstructorSymbol?,
 ) : KaFirCachedSymbolPointer<KaConstructorSymbol>(originalSymbol) {
-    override fun restoreIfNotCached(analysisSession: KaSession): KaConstructorSymbol? {
-        require(analysisSession is KaFirSession)
-        val scope = with(analysisSession) {
-            val ownerSymbol = ownerPointer.restoreSymbol() ?: return null
-            val owner = ownerSymbol.firSymbol
-            getSearchScope(analysisSession, owner)
-        } ?: return null
+    context(session: KaSession)
+    override fun restoreIfNotCached(): KaConstructorSymbol? {
+        require(session is KaFirSession)
+        val ownerSymbol = ownerPointer.restoreSymbol() ?: return null
+        val scope = getSearchScope(ownerSymbol.firSymbol, analysisSession = session) ?: return null
 
-        return analysisSession.chooseCandidateAndCreateSymbol(scope)
+        return chooseCandidateAndCreateSymbol(scope, analysisSession = session)
     }
 
-    private fun KaFirSession.chooseCandidateAndCreateSymbol(candidates: FirScope): KaConstructorSymbol? {
+    context(analysisSession: KaFirSession)
+    private fun chooseCandidateAndCreateSymbol(candidates: FirScope): KaConstructorSymbol? {
         val firConstructor = candidates.findDeclarationWithSignature<FirConstructor>(signature) {
             processDeclaredConstructors(it)
         } ?: return null
 
-        return firSymbolBuilder.functionBuilder.buildConstructorSymbol(firConstructor.symbol)
+        return analysisSession.firSymbolBuilder.functionBuilder.buildConstructorSymbol(firConstructor.symbol)
     }
 
-    private fun getSearchScope(analysisSession: KaFirSession, typeAlias: FirTypeAliasSymbol): FirScope? {
+    context(analysisSession: KaFirSession)
+    private fun getSearchScope(typeAlias: FirTypeAliasSymbol): FirScope? {
         val firSession = analysisSession.firSession
         val scopeSession = analysisSession.getScopeSessionFor(firSession)
 

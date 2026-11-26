@@ -7,12 +7,16 @@ package org.jetbrains.kotlin.analysis.api.fir.components
 
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.KtSourceElement
-import org.jetbrains.kotlin.analysis.api.components.KaSessionComponent
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.KaFirSession
 import org.jetbrains.kotlin.analysis.api.fir.KaSymbolByFirBuilder
 import org.jetbrains.kotlin.analysis.api.fir.asKaDiagnostic
-import org.jetbrains.kotlin.analysis.api.fir.utils.*
+import org.jetbrains.kotlin.analysis.api.fir.utils.asKaDiagnostic
+import org.jetbrains.kotlin.analysis.api.fir.utils.asKaType
+import org.jetbrains.kotlin.analysis.api.fir.utils.coneTypeProjection
+import org.jetbrains.kotlin.analysis.api.fir.utils.createTypeCheckerContext
+import org.jetbrains.kotlin.analysis.api.fir.utils.toKaSubstitutor
+import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.KaSubtypingErrorTypePolicy
@@ -30,7 +34,7 @@ import org.jetbrains.kotlin.fir.types.ConeTypeProjection
 import org.jetbrains.kotlin.fir.types.typeContext
 import org.jetbrains.kotlin.types.TypeCheckerState
 
-internal abstract class KaFirSessionComponent : KaSessionComponent {
+internal abstract class KaFirSessionComponent : KaLifetimeOwner {
     abstract val analysisSessionProvider: () -> KaFirSession
 
     val analysisSession: KaFirSession
@@ -65,26 +69,26 @@ internal val resolutionFacade: LLResolutionFacade
     get() = component.analysisSession.resolutionFacade
 
 context(component: KaFirSessionComponent)
-internal fun ConeKotlinType.asKaType(): KaType = asKaType(component.analysisSession)
+internal fun ConeKotlinType.asKaType(): KaType = asKaType(analysisSession = component.analysisSession)
 
 context(component: KaFirSessionComponent)
-internal fun KtDiagnosticWithSource.asKaDiagnostic(): KaDiagnosticWithPsi<*> = asKaDiagnostic(component.analysisSession)
+internal fun KtDiagnosticWithSource.asKaDiagnostic(): KaDiagnosticWithPsi<*> = asKaDiagnostic(analysisSession = component.analysisSession)
 
 context(component: KaFirSessionComponent)
-internal fun LLDiagnostic.asKaDiagnostic(): KaDiagnosticWithPsi<*> = asKaDiagnostic(component.analysisSession)
+internal fun LLDiagnostic.asKaDiagnostic(): KaDiagnosticWithPsi<*> = asKaDiagnostic(analysisSession = component.analysisSession)
 
 context(component: KaFirSessionComponent)
 internal fun ConeDiagnostic.asKaDiagnostic(
     source: KtSourceElement,
-): KaDiagnosticWithPsi<*>? = asKaDiagnostic(source = source, component.analysisSession)
+): KaDiagnosticWithPsi<*>? = asKaDiagnostic(source, analysisSession = component.analysisSession)
 
 context(component: KaFirSessionComponent)
 internal val KaTypeProjection.coneTypeProjection: ConeTypeProjection
-    get() = coneTypeProjection(component.analysisSession)
+    get() = context(component.analysisSession) { coneTypeProjection }
 
 context(component: KaFirSessionComponent)
 internal fun createTypeCheckerContext(errorTypePolicy: KaSubtypingErrorTypePolicy): TypeCheckerState =
-    createTypeCheckerContext(errorTypePolicy, component.analysisSession)
+    createTypeCheckerContext(errorTypePolicy, analysisSession = component.analysisSession)
 
 context(component: KaFirSessionComponent)
-internal fun ConeSubstitutor.toKaSubstitutor(): KaSubstitutor = toKaSubstitutor(component.analysisSession)
+internal fun ConeSubstitutor.toKaSubstitutor(): KaSubstitutor = toKaSubstitutor(analysisSession = component.analysisSession)

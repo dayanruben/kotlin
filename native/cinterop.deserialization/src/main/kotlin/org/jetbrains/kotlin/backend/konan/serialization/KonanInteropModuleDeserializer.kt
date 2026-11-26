@@ -11,6 +11,7 @@ import kotlinx.metadata.klib.fqName
 import org.jetbrains.kotlin.backend.common.serialization.CompatibilityMode
 import org.jetbrains.kotlin.backend.common.serialization.DeserializationStrategy
 import org.jetbrains.kotlin.backend.common.serialization.DeserializationStrategyResolver
+import org.jetbrains.kotlin.backend.common.serialization.IrLinkerInternalApi
 import org.jetbrains.kotlin.backend.common.serialization.IrModuleDeserializer
 import org.jetbrains.kotlin.backend.common.serialization.KotlinIrLinker
 import org.jetbrains.kotlin.backend.common.serialization.TopLevelCallableIdAndKind
@@ -75,6 +76,7 @@ class KonanInteropModuleDeserializer(
         if (isFullDeserializationRequested) {
             // Schedule the full deserialization, but don't run it right away: at this point the current module deserializer
             // is not yet registered in the linker, so references between declarations of this module would not be resolved.
+            @OptIn(IrLinkerInternalApi::class)
             linker.modulesWithReachableTopLevels.add(this)
         }
     }
@@ -146,7 +148,10 @@ class KonanInteropModuleDeserializer(
         declarationTracker = declarationTracker,
         getNestedKmClass = { classId -> metadataReader.retrieveDeclarationsById(classId.toDeclarationId(), removeMetadataRepresentation = true)?.first() as KmClass? },
         getOrCreateContainingPackageFragment = ::getOrCreateContainingPackageFragment,
-        getReferencedDeclarationSymbol = { signature, kind -> linker.deserializeOrReturnUnboundIrSymbolIfPartialLinkageEnabled(signature, kind, this) },
+        getReferencedDeclarationSymbol = { signature, kind ->
+            @OptIn(IrLinkerInternalApi::class)
+            linker.deserializeOrReturnUnboundIrSymbolIfPartialLinkageEnabled(signature, kind, this)
+        },
         irProviderForLazyAnnotations = linker,
     )
 
@@ -266,6 +271,7 @@ class KonanInteropModuleDeserializer(
         }
     }
 
+    @IrLinkerInternalApi
     override fun collectAllMatchingSignatures(
         topLevelCallableId: TopLevelCallableIdAndKind,
         output: MutableCollection<IdSignature>,
@@ -295,12 +301,13 @@ class KonanInteropModuleDeserializer(
     private fun deserializeTopLevelDeclarations(id: MetadataDeclarationId) {
         val kmDeclarations = metadataReader.retrieveDeclarationsById(id, removeMetadataRepresentation = true) ?: return
         for (kmDeclaration in kmDeclarations) {
-            when (kmDeclaration) {
+            val irDeclaration = when (kmDeclaration) {
                 is KmClass -> transformer.transformTopLevelClass(kmDeclaration)
                 is KmFunction -> transformer.transformTopLevelFunction(kmDeclaration)
                 is KmProperty -> transformer.transformTopLevelProperty(kmDeclaration)
                 else -> error(kmDeclaration.javaClass.name)
             }
+            linker.partialLinkageSupport.enqueueDeclaration(irDeclaration)
         }
     }
 
@@ -319,6 +326,8 @@ class KonanInteropModuleDeserializer(
                 // Ask linker about the class instead of deserializing it directly from metadata.
                 // This ensures that, if two interop Klibs define a class with the same ID, only one of them will be chosen, deterministically.
                 val classSig = ClassId.fromString(kmClass.name).toCInteropSignature(isCInterop = true)
+
+                @OptIn(IrLinkerInternalApi::class)
                 linker.deserializeOrReturnUnboundIrSymbolIfPartialLinkageEnabled(classSig, BinarySymbolData.SymbolKind.CLASS_SYMBOL, this)
             }
         }

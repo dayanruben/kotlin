@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
+import org.jetbrains.kotlin.syntax.NoParseTreeKind
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -271,7 +272,11 @@ abstract class IrSignatureClashTest {
                 }
             }
         }
-        return KtDiagnosticReporterWithImplicitIrBasedContext(diagnosticReporter, LanguageVersionSettingsImpl.DEFAULT)
+        return KtDiagnosticReporterWithImplicitIrBasedContext(
+            diagnosticReporter,
+            LanguageVersionSettingsImpl.DEFAULT,
+            NoParseTreeKind, // The IR in this test has no source elements, so it isn't linked to a parse tree
+        )
     }
 
     private fun assertNoClashes() {

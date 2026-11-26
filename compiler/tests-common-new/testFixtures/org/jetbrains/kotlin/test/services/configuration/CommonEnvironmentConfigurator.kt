@@ -11,12 +11,16 @@ import org.jetbrains.kotlin.cli.common.allowNoSourceFiles
 import org.jetbrains.kotlin.cli.common.testEnvironment
 import org.jetbrains.kotlin.cli.jvm.config.JvmClasspathRoot
 import org.jetbrains.kotlin.cli.jvm.config.addJvmClasspathRoot
+import org.jetbrains.kotlin.cli.parseTreeKind
 import org.jetbrains.kotlin.codegen.forTestCompile.ForTestCompileRuntime
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.config.AnalysisFlags.allowFullyQualifiedNameInKClass
 import org.jetbrains.kotlin.fir.session.FirAbstractSessionFactory
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.isMultiplatformWeb
+import org.jetbrains.kotlin.syntax.KmpParseTreeKind
+import org.jetbrains.kotlin.syntax.LightTreeParseTreeKind
+import org.jetbrains.kotlin.syntax.PsiParseTreeKind
 import org.jetbrains.kotlin.test.FirParser
 import org.jetbrains.kotlin.test.directives.ConfigurationDirectives
 import org.jetbrains.kotlin.test.directives.ConfigurationDirectives.DISABLE_TYPEALIAS_EXPANSION
@@ -65,9 +69,9 @@ class CommonEnvironmentConfigurator(testServices: TestServices) : EnvironmentCon
         }
 
         when (module.directives.singleOrZeroValue(FirDiagnosticsDirectives.FIR_PARSER)) {
-            FirParser.Psi -> configuration.parserMode = ParserMode.Psi
-            FirParser.LightTree -> configuration.parserMode = ParserMode.LightTree
-            FirParser.KmpTree -> configuration.parserMode = ParserMode.KmpTree
+            FirParser.Psi -> configuration.parseTreeKind = PsiParseTreeKind
+            FirParser.LightTree -> configuration.parseTreeKind = LightTreeParseTreeKind
+            FirParser.KmpTree -> configuration.parseTreeKind = KmpParseTreeKind
             null -> {}
         }
 

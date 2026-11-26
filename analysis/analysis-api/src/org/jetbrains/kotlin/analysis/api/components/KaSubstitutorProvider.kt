@@ -3,9 +3,15 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
+@file:Suppress("DEPRECATION")
+
 package org.jetbrains.kotlin.analysis.api.components
 
-import org.jetbrains.kotlin.analysis.api.*
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaIdeApi
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
+import org.jetbrains.kotlin.analysis.api.KaObsoleteComponentApi
+import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -13,10 +19,14 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.KaType
 
+@Deprecated(
+    message = "Session components are an implementation detail of the legacy 'KaSession' API. Use the context-parameter API instead.",
+    level = DeprecationLevel.WARNING,
+)
 @KaExperimentalApi
 @KaSessionComponentImplementationDetail
 @SubclassOptInRequired(KaSessionComponentImplementationDetail::class)
-public interface KaSubstitutorProvider : KaSessionComponent {
+public interface KaSubstitutorProvider : KaLifetimeOwner {
     /**
      * Creates a [KaSubstitutor] based on the given [mappings].
      *
@@ -24,6 +34,16 @@ public interface KaSubstitutorProvider : KaSessionComponent {
      *
      * @see KaSubstitutor
      */
+    @Deprecated(
+        message = "Use 'org.jetbrains.kotlin.analysis.api.types.createSubstitutor' from the context-parameter API instead.",
+        replaceWith = ReplaceWith(
+            expression = "createSubstitutor(mappings)",
+            imports = [
+                "org.jetbrains.kotlin.analysis.api.types.createSubstitutor",
+            ]
+        ),
+        level = DeprecationLevel.WARNING,
+    )
     @KaExperimentalApi
     public fun createSubstitutor(mappings: Map<KaTypeParameterSymbol, KaType>): KaSubstitutor
 
@@ -48,6 +68,16 @@ public interface KaSubstitutorProvider : KaSessionComponent {
      * - `createInheritanceTypeSubstitutor(B, C)` returns `KaSubstitutor { X -> T, Y -> Int }`
      * - `createInheritanceTypeSubstitutor(A, C)` returns `KaSubstitutor { X -> T, Y -> Int } and then KaSubstitutor { T -> String }`
      */
+    @Deprecated(
+        message = "Use 'org.jetbrains.kotlin.analysis.api.types.createInheritanceTypeSubstitutor' from the context-parameter API instead.",
+        replaceWith = ReplaceWith(
+            expression = "createInheritanceTypeSubstitutor(subClass, superClass)",
+            imports = [
+                "org.jetbrains.kotlin.analysis.api.types.createInheritanceTypeSubstitutor",
+            ]
+        ),
+        level = DeprecationLevel.WARNING,
+    )
     @KaExperimentalApi
     public fun createInheritanceTypeSubstitutor(subClass: KaClassSymbol, superClass: KaClassSymbol): KaSubstitutor?
 
@@ -72,6 +102,17 @@ public interface KaSubstitutorProvider : KaSessionComponent {
      * The constraint system will only adjust the values of these free type parameters,
      * and the produced substitutor will only contain mappings for these parameters.
      */
+    @Deprecated(
+        message = "Use 'org.jetbrains.kotlin.analysis.api.types.createSubtypingUnificationSubstitutor'" +
+                " from the context-parameter API instead.",
+        replaceWith = ReplaceWith(
+            expression = "createSubtypingUnificationSubstitutor(leftTypesToRightTypes, isFreeTypeParameter)",
+            imports = [
+                "org.jetbrains.kotlin.analysis.api.types.createSubtypingUnificationSubstitutor",
+            ]
+        ),
+        level = DeprecationLevel.WARNING,
+    )
     @KaIdeApi
     @OptIn(KaExperimentalApi::class)
     public fun createSubtypingUnificationSubstitutor(
@@ -125,6 +166,11 @@ public interface KaSubstitutorProvider : KaSessionComponent {
      * @see KaUnificationSubstitutorPolicy.ASSIGN_RIGHT
      * @see KaUnificationSubstitutorPolicy.ASSIGN_ALL
      */
+    @Deprecated(
+        message = "Use 'org.jetbrains.kotlin.analysis.api.types.createSubtypingUnificationSubstitutor'" +
+                " from the context-parameter API instead.",
+        level = DeprecationLevel.WARNING,
+    )
     @KaIdeApi
     @OptIn(KaExperimentalApi::class)
     public fun createSubtypingUnificationSubstitutor(
@@ -171,6 +217,11 @@ public interface KaSubstitutorProvider : KaSessionComponent {
      * @see KaUnificationSubstitutorPolicy.ASSIGN_RIGHT
      * @see KaUnificationSubstitutorPolicy.ASSIGN_ALL
      */
+    @Deprecated(
+        message = "Use 'org.jetbrains.kotlin.analysis.api.types.createSubtypingUnificationSubstitutor'" +
+                " from the context-parameter API instead.",
+        level = DeprecationLevel.WARNING,
+    )
     @KaIdeApi
     @OptIn(KaExperimentalApi::class)
     public fun createSubtypingUnificationSubstitutor(
@@ -185,6 +236,16 @@ public interface KaSubstitutorProvider : KaSessionComponent {
  * [KaUnificationSubstitutorPolicy] determines the way unification [KaSubstitutor]s are created in [KaSubstitutorProvider.createSubtypingUnificationSubstitutor].
  * Note that the policy only affects the construction when at least one of the involved types is generic, i.e., depends on a type parameter.
  */
+@Deprecated(
+    message = "Use 'org.jetbrains.kotlin.analysis.api.types.KaUnificationSubstitutorPolicy' instead.",
+    replaceWith = ReplaceWith(
+        expression = "KaUnificationSubstitutorPolicy",
+        imports = [
+            "org.jetbrains.kotlin.analysis.api.types.KaUnificationSubstitutorPolicy",
+        ]
+    ),
+    level = DeprecationLevel.WARNING,
+)
 @KaObsoleteComponentApi
 @KaIdeApi
 public enum class KaUnificationSubstitutorPolicy {
@@ -286,6 +347,16 @@ public enum class KaUnificationSubstitutorPolicy {
  *
  * @see KaSubstitutor
  */
+@Deprecated(
+    message = "Use 'org.jetbrains.kotlin.analysis.api.types.KaSubstitutorBuilder' instead.",
+    replaceWith = ReplaceWith(
+        expression = "KaSubstitutorBuilder",
+        imports = [
+            "org.jetbrains.kotlin.analysis.api.types.KaSubstitutorBuilder",
+        ]
+    ),
+    level = DeprecationLevel.WARNING,
+)
 @KaObsoleteComponentApi
 @KaExperimentalApi
 @OptIn(KaImplementationDetail::class)

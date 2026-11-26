@@ -61,8 +61,9 @@ import org.jetbrains.kotlin.analysis.api.standalone.fir.projectStructure.Standal
 import org.jetbrains.kotlin.analysis.api.standalone.projectStructure.StandaloneLibraryScopeConstructionMode
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProvider
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.ClsKotlinBinaryClassCache
+import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
+import org.jetbrains.kotlin.analysis.low.level.api.fir.util.createForAnalysisApi
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
-import org.jetbrains.kotlin.cli.create
 import org.jetbrains.kotlin.cli.jvm.compiler.*
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreApplicationEnvironment
 import org.jetbrains.kotlin.cli.jvm.index.JavaRoot
@@ -544,7 +545,8 @@ object StandaloneProjectFactory {
     private val latestLanguageVersionSettings: LanguageVersionSettings =
         LanguageVersionSettingsImpl(LanguageVersion.LATEST_STABLE, ApiVersion.LATEST)
 
+    @OptIn(LLFirInternals::class)
     private fun createStubConfigurationForReporting(): CompilerConfiguration {
-        return CompilerConfiguration.create(BaseDiagnosticsCollector.DoNothing, MessageCollector.NONE)
+        return CompilerConfiguration.createForAnalysisApi(BaseDiagnosticsCollector.DoNothing, MessageCollector.NONE)
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2025 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2026 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.analysis.api.fir.contracts.description.booleans.*
 import org.jetbrains.kotlin.analysis.api.fir.symbols.KaFirNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.fir.utils.withSymbolAttachment
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.contracts.description.*
 import org.jetbrains.kotlin.fir.contracts.description.*
 import org.jetbrains.kotlin.fir.diagnostics.ConeDiagnostic
@@ -159,14 +160,14 @@ private class ConeContractDescriptionElementToAnalysisApi(
     private fun visitValueParameterReference(valueParameterReference: ConeValueParameterReference): KaContractParameterValue {
         val parameterSymbol = when (val index = valueParameterReference.parameterIndex) {
             -1 -> firFunctionSymbol.receiverParameter
-                ?: with(firFunctionSymbol.analysisSession) {
+                ?: context(firFunctionSymbol.analysisSession) {
                     val containingClass = firFunctionSymbol.containingDeclaration
                     requireWithAttachment(containingClass is KaClassSymbol, { "Unexpected containing class" }) {
                         if (containingClass != null) {
-                            withSymbolAttachment("containingDeclaration", this@with, containingClass)
+                            withSymbolAttachment("containingDeclaration", containingClass)
                         }
 
-                        withSymbolAttachment("functionSymbol", this@with, firFunctionSymbol)
+                        withSymbolAttachment("functionSymbol", firFunctionSymbol)
                     }
 
                     return KaFirContractOwnerParameterValue(containingClass)

@@ -1,0 +1,1 @@
+/noSetMethod.kt:7:8: error: No 'set' operator method found for receiver 'map' of type 'Map<String, Boolean>'.

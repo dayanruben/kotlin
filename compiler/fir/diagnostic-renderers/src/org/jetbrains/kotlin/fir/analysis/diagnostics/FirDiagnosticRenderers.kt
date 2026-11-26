@@ -5,12 +5,13 @@
 
 package org.jetbrains.kotlin.fir.analysis.diagnostics
 
+import org.jetbrains.kotlin.KtRealSourceElementKind
 import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.builtins.functions.FunctionTypeKind
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
-import org.jetbrains.kotlin.diagnostics.DiagnosticBaseContext
+import org.jetbrains.kotlin.diagnostics.DiagnosticContext
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticRenderers
 import org.jetbrains.kotlin.diagnostics.WhenMissingCase
 import org.jetbrains.kotlin.diagnostics.rendering.*
@@ -64,6 +65,13 @@ object FirDiagnosticRenderers {
     val SYMBOL = symbolRenderer(
         modifierRenderer = { FirPartialModifierRenderer(DiagnosticStaticPolicy) }
     )
+
+    val OPTIONAL_SYMBOL_NAME_OF = Renderer { symbol: FirBasedSymbol<*>? ->
+        when (symbol) {
+            is FirValueParameterSymbol -> " value parameter '${symbol.name}' of"
+            else -> ""
+        }
+    }
 
     val SYMBOL_WITH_ALL_MODIFIERS = symbolRenderer()
 
@@ -369,6 +377,13 @@ object FirDiagnosticRenderers {
         renderOptionalSource(s)?.let { " for expression $it" } ?: ""
     }
 
+    val RENDER_OPTIONAL_EXPRESSION = Renderer { e: FirExpression? ->
+        e?.source?.takeIf { it.kind == KtRealSourceElementKind }
+            ?.let(::renderOptionalSource)
+            ?.let { " $it" }
+            ?: ""
+    }
+
     private val INDENT_WHITESPACE = """^\s+""".toRegex()
     private const val EXPRESSION_RENDERING_LIMIT = 50
 
@@ -549,7 +564,7 @@ object FirDiagnosticRenderers {
     private object FirUnsafeKindKey : RenderingContext.Key<Map<ConeKotlinType, UnsafeKind>>("UNSAFE_KIND") {
         override fun compute(
             objectsToRender: Collection<Any?>,
-            diagnosticContext: DiagnosticBaseContext,
+            diagnosticContext: DiagnosticContext,
         ): Map<ConeKotlinType, UnsafeKind> = context(diagnosticContext as SessionHolder) {
             objectsToRender
                 .filterIsInstance<ConeKotlinType>()

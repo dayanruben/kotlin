@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2026 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -9,6 +9,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.file.PsiPackageImpl
 import org.jetbrains.kotlin.analysis.api.fir.KaFirSession
 import org.jetbrains.kotlin.analysis.api.platform.utils.forEachNonKotlinPsiElementFinder
+import org.jetbrains.kotlin.analysis.api.session.analysisScope
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.extensions.ExperimentalTopLevelDeclarationsGenerationApi
 import org.jetbrains.kotlin.fir.extensions.declarationGenerators
@@ -37,10 +38,11 @@ import org.jetbrains.kotlin.platform.jvm.isJvm
  */
 @OptIn(ExperimentalTopLevelDeclarationsGenerationApi::class)
 internal object DeclarationsInPackageProvider {
-    internal fun getTopLevelClassifierNamesInPackageProvider(packageFqName: FqName, analysisSession: KaFirSession): Set<Name> {
+    context(analysisSession: KaFirSession)
+    internal fun getTopLevelClassifierNamesInPackageProvider(packageFqName: FqName): Set<Name> {
         return buildSet {
             addAll(
-                analysisSession.symbolNamesProvider.getTopLevelClassifierNamesInPackage(packageFqName)
+                symbolNamesProvider.getTopLevelClassifierNamesInPackage(packageFqName)
                     ?: analysisSession.useSiteScopeDeclarationProvider.getTopLevelKotlinClassLikeDeclarationNamesInPackage(packageFqName)
             )
 
@@ -48,7 +50,7 @@ internal object DeclarationsInPackageProvider {
                 analysisSession.targetPlatform.isJvm() -> {
                     val psiPackage = PsiPackageImpl(PsiManager.getInstance(analysisSession.project), packageFqName.asString())
                     forEachNonKotlinPsiElementFinder(analysisSession.project) { finder ->
-                        finder.getClassNames(psiPackage, analysisSession.analysisScope)
+                        finder.getClassNames(psiPackage, analysisScope)
                             .mapNotNullTo(this, Name::identifier)
                     }
                 }
@@ -58,18 +60,20 @@ internal object DeclarationsInPackageProvider {
         }
     }
 
-    internal fun getTopLevelCallableNamesInPackageProvider(packageFqName: FqName, analysisSession: KaFirSession): Set<Name> {
+    context(analysisSession: KaFirSession)
+    internal fun getTopLevelCallableNamesInPackageProvider(packageFqName: FqName): Set<Name> {
         return buildSet {
             addAll(
-                analysisSession.symbolNamesProvider.getTopLevelCallableNamesInPackage(packageFqName)
+                symbolNamesProvider.getTopLevelCallableNamesInPackage(packageFqName)
                     ?: analysisSession.useSiteScopeDeclarationProvider.getTopLevelCallableNamesInPackage(packageFqName)
             )
             addAll(collectGeneratedTopLevelCallables(packageFqName, analysisSession.firSession))
         }
     }
 
-    private val KaFirSession.symbolNamesProvider: FirSymbolNamesProvider
-        get() = firSession.symbolProvider.symbolNamesProvider
+    context(analysisSession: KaFirSession)
+    private val symbolNamesProvider: FirSymbolNamesProvider
+        get() = analysisSession.firSession.symbolProvider.symbolNamesProvider
 
     private fun collectGeneratedTopLevelClassifiers(packageFqName: FqName, session: FirSession): Set<Name> {
         val declarationGenerators = session.extensionService.declarationGenerators

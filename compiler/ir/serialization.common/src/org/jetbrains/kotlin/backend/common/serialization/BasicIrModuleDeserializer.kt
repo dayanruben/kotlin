@@ -15,10 +15,10 @@ import org.jetbrains.kotlin.library.KotlinAbiVersion
 import org.jetbrains.kotlin.library.KotlinLibrary
 import org.jetbrains.kotlin.library.components.KlibIrComponent
 import org.jetbrains.kotlin.library.components.irOrFail
-import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.protobuf.CodedInputStream
 import org.jetbrains.kotlin.protobuf.ExtensionRegistryLite
+import org.jetbrains.kotlin.utils.pollFirst
 import org.jetbrains.kotlin.utils.putToMultiMap
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrFile as ProtoFile
 
@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.backend.common.serialization.proto.IrFile as ProtoFi
  *   Type aliases don't need to be (de)serialized anymore. See KT-86632.
  *   The only case for enabling it is the klib tool and its ability to dump (even older) KLIBs.
  */
+@OptIn(IrLinkerInternalApi::class)
 abstract class BasicIrModuleDeserializer(
     val linker: KotlinIrLinker,
     moduleFragment: IrModuleFragment,
@@ -59,7 +60,8 @@ abstract class BasicIrModuleDeserializer(
 
     protected val fileDeserializationStates: List<FileDeserializationState>
 
-    protected val moduleReversedFileIndex = hashMapOf<IdSignature, FileDeserializationState>()
+    protected val moduleReversedFileIndex: Map<IdSignature, FileDeserializationState>
+        field = hashMapOf()
 
     protected val ir: KlibIrComponent get() = klib.irOrFail
 
@@ -142,9 +144,8 @@ abstract class BasicIrModuleDeserializer(
         fileDeserializers[file] = fileDeserializationState.fileDeserializer
         fileDeserializersByPackage.putToMultiMap(file.packageFqName, fileDeserializationState.fileDeserializer)
 
-        val topLevelDeclarations = fileDeserializationState.fileDeserializer.reversedSignatureIndex.keys
-        topLevelDeclarations.forEach {
-            moduleReversedFileIndex[it] = fileDeserializationState
+        for ([signature, _] in fileDeserializationState.fileDeserializer.topLevelDeclarationIndex.keys) {
+            moduleReversedFileIndex[signature] = fileDeserializationState
         }
 
         if (fileStrategy.theWholeWorld) {
@@ -213,8 +214,8 @@ abstract class BasicIrModuleDeserializer(
          * Run deserialization of top-level declarations previously scheduled for deserialization in the current module.
          */
         fun deserializeReachableDeclarations() {
-            while (filesWithPendingTopLevels.isNotEmpty()) {
-                val pendingFileDeserializationState = filesWithPendingTopLevels.first()
+            while (true) {
+                val pendingFileDeserializationState = filesWithPendingTopLevels.pollFirst() ?: break
 
                 if (pendingFileDeserializationState.fileDeserializer.deserializeFileImplicitDataIfFirstUse()) {
                     // Schedule the IR file for processing by the PL engine only when the implicit file data
@@ -225,8 +226,6 @@ abstract class BasicIrModuleDeserializer(
                     linker.partialLinkageSupport.enqueueFile(pendingFileDeserializationState.file)
                 }
                 pendingFileDeserializationState.deserializeAllFileReachableTopLevel()
-
-                filesWithPendingTopLevels.remove(pendingFileDeserializationState)
             }
         }
     }

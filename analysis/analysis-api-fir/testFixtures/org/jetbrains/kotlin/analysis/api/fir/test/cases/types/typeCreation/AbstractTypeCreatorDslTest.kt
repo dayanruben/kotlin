@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDebugRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
+import org.jetbrains.kotlin.analysis.api.types.typeCreation.KaTypeCreator
 import org.jetbrains.kotlin.analysis.test.framework.base.AbstractAnalysisApiBasedTest
 import org.jetbrains.kotlin.analysis.test.framework.projectStructure.KtTestModule
 import org.jetbrains.kotlin.analysis.test.framework.services.expressionMarkerProvider
@@ -111,7 +112,7 @@ object TypeCreatorDslTestRenderer {
             this.capturedTypeRenderer = KaCapturedTypeRenderer.AS_CAPTURED_TYPE_WITH_PROJECTION
         }
 
-        fun debug(type: KaType): String = KaDebugRenderer(renderTypeByProperties = true).renderType(session, type)
+        fun debug(type: KaType): String = KaDebugRenderer(renderTypeByProperties = true).renderType(type)
 
         return buildString {
             fun appendDebugPart(vararg lines: String) {
@@ -198,6 +199,9 @@ object TypeCreatorDslTestRenderer {
 }
 
 sealed class DslTypeCreationTestCases(protected val session: KaSession, private val caretToType: Map<String, KaType>) {
+    protected val typeCreator: KaTypeCreator
+        get() = context(session) { org.jetbrains.kotlin.analysis.api.types.typeCreation.typeCreator }
+
     protected fun getTypeByCaret(label: String): KaType {
         return caretToType[label]?.abbreviationOrSelf ?: error("No type for `$label`")
     }

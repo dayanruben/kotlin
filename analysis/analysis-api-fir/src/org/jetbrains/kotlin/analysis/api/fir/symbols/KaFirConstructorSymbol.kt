@@ -42,7 +42,7 @@ internal class KaFirConstructorSymbol private constructor(
 ) : KaConstructorSymbol(), KaFirKtBasedSymbol<KtConstructor<*>, FirConstructorSymbol> {
     constructor(declaration: KtConstructor<*>, session: KaFirSession) : this(
         backingPsi = declaration,
-        lazyFirSymbol = lazyFirSymbol(declaration, session),
+        lazyFirSymbol = lazyFirSymbol(declaration, analysisSession = session),
         analysisSession = session,
     )
 
@@ -124,7 +124,7 @@ internal class KaFirConstructorSymbol private constructor(
 
     override val typeParameters: List<KaTypeParameterSymbol>
         get() = withValidityAssertion {
-            with(analysisSession) {
+            context(analysisSession) {
                 backingPsi?.getContainingClassOrObject()?.symbol?.typeParameters ?: firSymbol.createKtTypeParameters(builder)
             }
         }

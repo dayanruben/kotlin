@@ -18,9 +18,7 @@ import org.jetbrains.kotlin.cli.jvm.index.JvmDependenciesIndex
 import org.jetbrains.kotlin.cli.jvm.index.JvmDependenciesIndexImpl
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
-import org.jetbrains.kotlin.config.ParserMode
 import org.jetbrains.kotlin.config.languageVersionSettings
-import org.jetbrains.kotlin.config.parserMode
 import org.jetbrains.kotlin.config.scriptingHostConfiguration
 import org.jetbrains.kotlin.diagnostics.impl.BaseDiagnosticsCollector
 import org.jetbrains.kotlin.fir.FirModuleData
@@ -54,6 +52,7 @@ import org.jetbrains.kotlin.scripting.compiler.plugin.FirScriptingCompilerExtens
 import org.jetbrains.kotlin.scripting.compiler.plugin.definitions.SingleScriptCompilationConfigurationProvider
 import org.jetbrains.kotlin.scripting.compiler.plugin.definitions.withCompilationConfigurationProvider
 import org.jetbrains.kotlin.scripting.resolve.KtFileScriptSource
+import org.jetbrains.kotlin.syntax.PsiParseTreeKind
 import java.io.File
 import java.nio.file.Path
 import kotlin.script.experimental.api.ResultWithDiagnostics
@@ -139,9 +138,9 @@ private fun createAnnotationResolutionSession(
     classpath: List<Path>,
     hostConfiguration: ScriptingHostConfiguration,
 ): FirSession {
-    val configuration = CompilerConfiguration.create().apply {
+    // The annotations are resolved from the PSI of the script (`KtFileScriptSource`), KT-91411
+    val configuration = CompilerConfiguration.create(parseTreeKind = PsiParseTreeKind).apply {
         put(JVMConfigurationKeys.NO_JDK, true)
-        parserMode = ParserMode.Psi // The annotations are resolved from the PSI of the script (`KtFileScriptSource`), KT-91411
         scriptingHostConfiguration = hostConfiguration
     }
     val fileManager = VirtualFileManager.getInstance()

@@ -32,8 +32,6 @@ import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.fir.FirModuleData
 import org.jetbrains.kotlin.fir.declarations.FirDeprecationInfo
 import org.jetbrains.kotlin.fir.expressions.FirAnnotation
-import org.jetbrains.kotlin.lexer.KtKeywordToken
-import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.metadata.deserialization.VersionRequirement.Version
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
@@ -344,7 +342,7 @@ public interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass: KClass<ValOrVarOnLoopParameter>
             get() = ValOrVarOnLoopParameter::class
 
-        public val valOrVar: KtKeywordToken
+        public val valOrVar: String
     }
 
     @KaUnstableDiagnosticApi
@@ -353,7 +351,7 @@ public interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass: KClass<ValOrVarOnFunParameter>
             get() = ValOrVarOnFunParameter::class
 
-        public val valOrVar: KtKeywordToken
+        public val valOrVar: String
     }
 
     @KaUnstableDiagnosticApi
@@ -362,7 +360,7 @@ public interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass: KClass<ValOrVarOnCatchParameter>
             get() = ValOrVarOnCatchParameter::class
 
-        public val valOrVar: KtKeywordToken
+        public val valOrVar: String
     }
 
     @KaUnstableDiagnosticApi
@@ -371,7 +369,7 @@ public interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass: KClass<ValOrVarOnSecondaryConstructorParameter>
             get() = ValOrVarOnSecondaryConstructorParameter::class
 
-        public val valOrVar: KtKeywordToken
+        public val valOrVar: String
     }
 
     @KaUnstableDiagnosticApi
@@ -2584,7 +2582,7 @@ public interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass: KClass<RepeatedModifier>
             get() = RepeatedModifier::class
 
-        public val modifier: KtModifierKeywordToken
+        public val modifier: String
     }
 
     @KaUnstableDiagnosticApi
@@ -2593,7 +2591,7 @@ public interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass: KClass<WrongModifierTarget>
             get() = WrongModifierTarget::class
 
-        public val modifier: KtModifierKeywordToken
+        public val modifier: String
         public val target: String
     }
 
@@ -2603,7 +2601,7 @@ public interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass: KClass<WrongModifierContainingDeclaration>
             get() = WrongModifierContainingDeclaration::class
 
-        public val modifier: KtModifierKeywordToken
+        public val modifier: String
         public val target: String
     }
 
@@ -2613,8 +2611,8 @@ public interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass: KClass<DeprecatedModifier>
             get() = DeprecatedModifier::class
 
-        public val deprecatedModifier: KtModifierKeywordToken
-        public val actualModifier: KtModifierKeywordToken
+        public val deprecatedModifier: String
+        public val actualModifier: String
     }
 
     @KaUnstableDiagnosticApi
@@ -2623,7 +2621,7 @@ public interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass: KClass<DeprecatedModifierForTarget>
             get() = DeprecatedModifierForTarget::class
 
-        public val deprecatedModifier: KtModifierKeywordToken
+        public val deprecatedModifier: String
         public val target: String
     }
 
@@ -2633,7 +2631,7 @@ public interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass: KClass<DeprecatedModifierContainingDeclaration>
             get() = DeprecatedModifierContainingDeclaration::class
 
-        public val modifier: KtModifierKeywordToken
+        public val modifier: String
         public val target: String
     }
 
@@ -2643,8 +2641,8 @@ public interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass: KClass<IncompatibleModifiers>
             get() = IncompatibleModifiers::class
 
-        public val modifier1: KtModifierKeywordToken
-        public val modifier2: KtModifierKeywordToken
+        public val modifier1: String
+        public val modifier2: String
     }
 
     @KaUnstableDiagnosticApi
@@ -2653,8 +2651,8 @@ public interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass: KClass<DeprecatedModifierPair>
             get() = DeprecatedModifierPair::class
 
-        public val deprecatedModifier: KtModifierKeywordToken
-        public val conflictingModifier: KtModifierKeywordToken
+        public val deprecatedModifier: String
+        public val conflictingModifier: String
     }
 
     @KaUnstableDiagnosticApi
@@ -2663,8 +2661,8 @@ public interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass: KClass<RedundantModifier>
             get() = RedundantModifier::class
 
-        public val redundantModifier: KtModifierKeywordToken
-        public val conflictingModifier: KtModifierKeywordToken
+        public val redundantModifier: String
+        public val conflictingModifier: String
     }
 
     @KaUnstableDiagnosticApi
@@ -2673,7 +2671,7 @@ public interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass: KClass<RedundantModifierForTarget>
             get() = RedundantModifierForTarget::class
 
-        public val redundantModifier: KtModifierKeywordToken
+        public val redundantModifier: String
         public val target: String
     }
 
@@ -2886,8 +2884,6 @@ public interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
     public interface ValueClassNotFinal : KaFirDiagnostic<KtDeclaration> {
         override val diagnosticClass: KClass<ValueClassNotFinal>
             get() = ValueClassNotFinal::class
-
-        public val prefix: String
     }
 
     @KaUnstableDiagnosticApi
@@ -2976,8 +2972,8 @@ public interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         override val diagnosticClass: KClass<ValueClassHasInapplicableParameterType>
             get() = ValueClassHasInapplicableParameterType::class
 
-        public val type: KaType
         public val prefix: String
+        public val type: KaType
     }
 
     @KaUnstableDiagnosticApi
@@ -3118,6 +3114,13 @@ public interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
 
     @KaUnstableDiagnosticApi
     @SubclassOptInRequired(KaImplementationDetail::class)
+    public interface WillBecomeValueClassOpen : KaFirDiagnostic<KtDeclaration> {
+        override val diagnosticClass: KClass<WillBecomeValueClassOpen>
+            get() = WillBecomeValueClassOpen::class
+    }
+
+    @KaUnstableDiagnosticApi
+    @SubclassOptInRequired(KaImplementationDetail::class)
     public interface AbsenceOfPrimaryConstructorForWillBecomeValueClass : KaFirDiagnostic<KtDeclaration> {
         override val diagnosticClass: KClass<AbsenceOfPrimaryConstructorForWillBecomeValueClass>
             get() = AbsenceOfPrimaryConstructorForWillBecomeValueClass::class
@@ -3156,6 +3159,15 @@ public interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
     public interface SealedWillBecomeValueClassConstructorPropertyParameter : KaFirDiagnostic<KtParameter> {
         override val diagnosticClass: KClass<SealedWillBecomeValueClassConstructorPropertyParameter>
             get() = SealedWillBecomeValueClassConstructorPropertyParameter::class
+    }
+
+    @KaUnstableDiagnosticApi
+    @SubclassOptInRequired(KaImplementationDetail::class)
+    public interface WillBecomeValueClassHasInapplicableParameterType : KaFirDiagnostic<KtElement> {
+        override val diagnosticClass: KClass<WillBecomeValueClassHasInapplicableParameterType>
+            get() = WillBecomeValueClassHasInapplicableParameterType::class
+
+        public val type: KaType
     }
 
     @KaUnstableDiagnosticApi
@@ -3500,6 +3512,8 @@ public interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
         public val actualType: KaType
         public val expectedType: KaType
         public val isMismatchDueToNullability: Boolean
+        public val declaration: KaSymbol?
+        public val argument: KtExpression
     }
 
     @KaUnstableDiagnosticApi
@@ -4061,6 +4075,13 @@ public interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
             get() = ConflictingProjectionInTypealiasExpansion::class
 
         public val type: KaType
+    }
+
+    @KaUnstableDiagnosticApi
+    @SubclassOptInRequired(KaImplementationDetail::class)
+    public interface IllegalProjectionInTypealiasExpansion : KaFirDiagnostic<KtElement> {
+        override val diagnosticClass: KClass<IllegalProjectionInTypealiasExpansion>
+            get() = IllegalProjectionInTypealiasExpansion::class
     }
 
     @KaUnstableDiagnosticApi
@@ -7400,6 +7421,9 @@ public interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
     public interface NoGetMethod : KaFirDiagnostic<KtArrayAccessExpression> {
         override val diagnosticClass: KClass<NoGetMethod>
             get() = NoGetMethod::class
+
+        public val receiver: KtExpression?
+        public val receiverType: KaType
     }
 
     @KaUnstableDiagnosticApi
@@ -7407,6 +7431,9 @@ public interface KaFirDiagnostic<PSI : PsiElement> : KaDiagnosticWithPsi<PSI> {
     public interface NoSetMethod : KaFirDiagnostic<KtArrayAccessExpression> {
         override val diagnosticClass: KClass<NoSetMethod>
             get() = NoSetMethod::class
+
+        public val receiver: KtExpression?
+        public val receiverType: KaType
     }
 
     @KaUnstableDiagnosticApi

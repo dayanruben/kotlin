@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.analysis.api.fir.components
 
 import com.intellij.openapi.progress.ProgressManager
 import org.jetbrains.kotlin.KtPsiSourceFile
-import org.jetbrains.kotlin.KtSourceFile
 import org.jetbrains.kotlin.analysis.api.compilation.KaCodeCompilationException
 import org.jetbrains.kotlin.analysis.api.compilation.KaCompilationOptions
 import org.jetbrains.kotlin.analysis.api.compilation.KaCompilationOptionsBuilder
@@ -24,23 +23,22 @@ import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinModuleO
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.baseContextModuleOrSelf
+import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.DiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.diagnostics
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getModule
 import org.jetbrains.kotlin.analysis.low.level.api.fir.compile.CompilationPeerCollector
 import org.jetbrains.kotlin.analysis.low.level.api.fir.compile.CompilationPeerData
+import org.jetbrains.kotlin.analysis.low.level.api.fir.util.createForAnalysisApi
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.jvm.JvmBackendContext
 import org.jetbrains.kotlin.backend.jvm.JvmEvaluatorData
-import org.jetbrains.kotlin.cli.create
 import org.jetbrains.kotlin.codegen.state.CompiledCodeProvider
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
-import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.diagnostics.*
 import org.jetbrains.kotlin.diagnostics.impl.DiagnosticsCollectorImpl
-import org.jetbrains.kotlin.fir.FirElement
-import org.jetbrains.kotlin.fir.FirTargetElement
+import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.fir.backend.Fir2IrCommonMemberStorage
 import org.jetbrains.kotlin.fir.backend.FirMetadataSource
@@ -51,9 +49,7 @@ import org.jetbrains.kotlin.fir.declarations.FirFunction
 import org.jetbrains.kotlin.fir.expressions.FirAnonymousFunctionExpression
 import org.jetbrains.kotlin.fir.expressions.FirLoop
 import org.jetbrains.kotlin.fir.expressions.FirReturnExpression
-import org.jetbrains.kotlin.fir.languageVersionSettings
 import org.jetbrains.kotlin.fir.pipeline.IrGenerationExtensionException
-import org.jetbrains.kotlin.fir.psi
 import org.jetbrains.kotlin.fir.visitors.FirDefaultVisitorVoid
 import org.jetbrains.kotlin.ir.PsiIrFileEntry
 import org.jetbrains.kotlin.ir.declarations.IrClass
@@ -61,6 +57,7 @@ import org.jetbrains.kotlin.ir.declarations.IrConstructor
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.syntax.PsiParseTreeKind
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.rethrowIntellijPlatformExceptionIfNeeded
@@ -76,8 +73,9 @@ internal class KaFirCompilerFacility(
         }
     }
 
+    @OptIn(LLFirInternals::class)
     override fun createCompilationOptions(init: KaCompilationOptionsBuilder.() -> Unit): KaCompilationOptions = withValidityAssertion {
-        return KaFirCompilationOptionsBuilder(token, CompilerConfiguration.create()).apply(init).build()
+        return KaFirCompilationOptionsBuilder(token, CompilerConfiguration.createForAnalysisApi()).apply(init).build()
     }
 
     override fun modify(options: KaCompilationOptions, init: KaCompilationOptionsBuilder.() -> Unit): KaCompilationOptions = withValidityAssertion {
@@ -259,15 +257,11 @@ internal class KaFirCompilerFacility(
 
             val lambda = it.expr as? FirAnonymousFunctionExpression ?: return@forEach
 
-            val context = object : DiagnosticContext {
-                override val containingFile: KtSourceFile?
-                    get() = lambda.psi?.containingFile?.let(::KtPsiSourceFile)
-
-                override fun isDiagnosticSuppressed(diagnostic: KtDiagnostic) = false
-
-                override val languageVersionSettings: LanguageVersionSettings
-                    get() = analysisSession.firSession.languageVersionSettings
-            }
+            val context = NonSuppressingDiagnosticContext(
+                containingFile = lambda.psi?.containingFile?.let(::KtPsiSourceFile),
+                languageVersionSettings = analysisSession.firSession.languageVersionSettings,
+                parseTreeKind = PsiParseTreeKind,
+            )
 
             lambda.accept(object : FirDefaultVisitorVoid() {
 
@@ -336,6 +330,7 @@ internal class KaFirCompilerFacility(
         val configuration = options.configuration.copy().apply {
             put(CommonConfigurationKeys.USE_FIR, true)
             put(CommonConfigurationKeys.LANGUAGE_VERSION_SETTINGS, session.languageVersionSettings)
+            putIfAbsent(CommonConfigurationKeys.MODULE_NAME, session.moduleData.name.asStringStripSpecialMarkers())
         }
 
         val baseFir2IrExtensions = JvmFir2IrExtensions()

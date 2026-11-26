@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.parsing.KotlinLightParser
 import org.jetbrains.kotlin.readSourceFileWithMapping
+import org.jetbrains.kotlin.syntax.LightTreeParseTreeKind
 import org.jetbrains.kotlin.test.testFramework.runWithDisposable
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
@@ -91,7 +92,7 @@ class LightTreeParsingTest {
         runWithDisposable { testRootDisposable ->
             // environment is needed to setup the parser
             @OptIn(CoreEnvironmentDeprecation::class)
-            KotlinCoreEnvironment.create(testRootDisposable, CompilerConfiguration.create())
+            KotlinCoreEnvironment.create(testRootDisposable, CompilerConfiguration.create(parseTreeKind = LightTreeParseTreeKind))
             block()
         }
     }

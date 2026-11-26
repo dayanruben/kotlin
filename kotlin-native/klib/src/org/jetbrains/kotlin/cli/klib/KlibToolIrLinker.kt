@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.backend.common.linkage.partial.PartiallyLinkedDeclar
 import org.jetbrains.kotlin.backend.common.overrides.IrLinkerFakeOverrideProvider
 import org.jetbrains.kotlin.backend.common.serialization.BasicIrModuleDeserializer
 import org.jetbrains.kotlin.backend.common.serialization.DeserializationStrategyResolver
+import org.jetbrains.kotlin.backend.common.serialization.IrLinkerInternalApi
 import org.jetbrains.kotlin.backend.common.serialization.IrModuleDeserializer
 import org.jetbrains.kotlin.backend.common.serialization.KotlinIrLinker
 import org.jetbrains.kotlin.backend.common.serialization.TopLevelCallableIdAndKind
@@ -200,6 +201,7 @@ internal class KlibToolIrLinker(
             }
         }
 
+        @IrLinkerInternalApi
         override fun collectAllMatchingSignatures(topLevelCallableId: TopLevelCallableIdAndKind, output: MutableCollection<IdSignature>) = error("Not supported")
     }
 

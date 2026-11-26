@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2026 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaFileSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaScriptSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
+import org.jetbrains.kotlin.analysis.api.symbols.pointers.restoreSymbol
 import org.jetbrains.kotlin.fir.declarations.DirectDeclarationsAccess
 import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.declarations.FirScript
@@ -22,15 +23,14 @@ internal class KaFirScriptSymbolPointer(
     originalSymbol: KaScriptSymbol?,
 ) : KaFirCachedSymbolPointer<KaScriptSymbol>(originalSymbol) {
     @KaImplementationDetail
-    override fun restoreIfNotCached(analysisSession: KaSession): KaScriptSymbol? {
-        require(analysisSession is KaFirSession)
-        val file = with(analysisSession) {
-            filePointer.restoreSymbol()?.firSymbol?.fir as? FirFile
-        } ?: return null
+    context(session: KaSession)
+    override fun restoreIfNotCached(): KaScriptSymbol? {
+        require(session is KaFirSession)
+        val file = filePointer.restoreSymbol()?.firSymbol?.fir as? FirFile ?: return null
 
         @OptIn(DirectDeclarationsAccess::class)
         val script = file.declarations.singleOrNull() as? FirScript ?: return null
-        return analysisSession.firSymbolBuilder.buildScriptSymbol(script.symbol)
+        return session.firSymbolBuilder.buildScriptSymbol(script.symbol)
     }
 
     override fun pointsToTheSameSymbolAs(other: KaSymbolPointer<KaSymbol>): Boolean = this === other ||

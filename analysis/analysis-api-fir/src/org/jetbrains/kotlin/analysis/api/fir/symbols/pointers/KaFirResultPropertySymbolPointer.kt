@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2026 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaKotlinPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaScriptSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
+import org.jetbrains.kotlin.analysis.api.symbols.pointers.restoreSymbol
 import org.jetbrains.kotlin.fir.declarations.DirectDeclarationsAccess
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
 import org.jetbrains.kotlin.fir.declarations.FirProperty
@@ -23,16 +24,15 @@ internal class KaFirResultPropertySymbolPointer(
     originalSymbol: KaKotlinPropertySymbol?,
 ) : KaFirCachedSymbolPointer<KaKotlinPropertySymbol>(originalSymbol) {
     @KaImplementationDetail
-    override fun restoreIfNotCached(analysisSession: KaSession): KaKotlinPropertySymbol? {
-        require(analysisSession is KaFirSession)
-        val script = with(analysisSession) {
-            scriptPointer.restoreSymbol()?.firSymbol?.fir as? FirScript
-        } ?: return null
+    context(session: KaSession)
+    override fun restoreIfNotCached(): KaKotlinPropertySymbol? {
+        require(session is KaFirSession)
+        val script = scriptPointer.restoreSymbol()?.firSymbol?.fir as? FirScript ?: return null
 
         @OptIn(DirectDeclarationsAccess::class)
         val lastProperty = script.declarations.lastOrNull() as? FirProperty ?: return null
         if (lastProperty.origin !is FirDeclarationOrigin.ScriptCustomization.ResultProperty) return null
-        return analysisSession.firSymbolBuilder.variableBuilder.buildPropertySymbol(lastProperty.symbol) as? KaKotlinPropertySymbol
+        return session.firSymbolBuilder.variableBuilder.buildPropertySymbol(lastProperty.symbol) as? KaKotlinPropertySymbol
     }
 
     override fun pointsToTheSameSymbolAs(other: KaSymbolPointer<KaSymbol>): Boolean = this === other ||

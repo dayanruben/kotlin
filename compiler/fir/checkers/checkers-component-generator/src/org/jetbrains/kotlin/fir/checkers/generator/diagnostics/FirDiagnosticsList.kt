@@ -107,16 +107,16 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val DIVISION_BY_ZERO by warning<KtExpression>()
         val TRIM_MARGIN_BLANK_PREFIX by warning<KtExpression>()
         val VAL_OR_VAR_ON_LOOP_PARAMETER by error<KtParameter>(PositioningStrategy.VAL_OR_VAR_NODE) {
-            parameter<KtKeywordToken>("valOrVar")
+            parameter<String>("valOrVar")
         }
         val VAL_OR_VAR_ON_FUN_PARAMETER by error<KtParameter>(PositioningStrategy.VAL_OR_VAR_NODE) {
-            parameter<KtKeywordToken>("valOrVar")
+            parameter<String>("valOrVar")
         }
         val VAL_OR_VAR_ON_CATCH_PARAMETER by error<KtParameter>(PositioningStrategy.VAL_OR_VAR_NODE) {
-            parameter<KtKeywordToken>("valOrVar")
+            parameter<String>("valOrVar")
         }
         val VAL_OR_VAR_ON_SECONDARY_CONSTRUCTOR_PARAMETER by error<KtParameter>(PositioningStrategy.VAL_OR_VAR_NODE) {
-            parameter<KtKeywordToken>("valOrVar")
+            parameter<String>("valOrVar")
         }
         val INNER_ON_TOP_LEVEL_SCRIPT_CLASS by deprecationError<PsiElement>(LanguageFeature.ProhibitScriptTopLevelInnerClasses)
         val ERROR_SUPPRESSION by warning<PsiElement> {
@@ -656,46 +656,46 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
 
     val MODIFIERS by object : DiagnosticGroup("Modifiers") {
         val REPEATED_MODIFIER by error<PsiElement> {
-            parameter<KtModifierKeywordToken>("modifier")
+            parameter<String>("modifier")
         }
 
         val WRONG_MODIFIER_TARGET by error<PsiElement> {
-            parameter<KtModifierKeywordToken>("modifier")
+            parameter<String>("modifier")
             parameter<String>("target")
         }
         val WRONG_MODIFIER_CONTAINING_DECLARATION by error<PsiElement> {
-            parameter<KtModifierKeywordToken>("modifier")
+            parameter<String>("modifier")
             parameter<String>("target")
         }
 
         val DEPRECATED_MODIFIER by error<PsiElement> {
-            parameter<KtModifierKeywordToken>("deprecatedModifier")
-            parameter<KtModifierKeywordToken>("actualModifier")
+            parameter<String>("deprecatedModifier")
+            parameter<String>("actualModifier")
         }
         val DEPRECATED_MODIFIER_FOR_TARGET by warning<PsiElement> {
-            parameter<KtModifierKeywordToken>("deprecatedModifier")
+            parameter<String>("deprecatedModifier")
             parameter<String>("target")
         }
         val DEPRECATED_MODIFIER_CONTAINING_DECLARATION by warning<PsiElement> {
-            parameter<KtModifierKeywordToken>("modifier")
+            parameter<String>("modifier")
             parameter<String>("target")
         }
 
         val INCOMPATIBLE_MODIFIERS by error<PsiElement> {
-            parameter<KtModifierKeywordToken>("modifier1")
-            parameter<KtModifierKeywordToken>("modifier2")
+            parameter<String>("modifier1")
+            parameter<String>("modifier2")
         }
         val DEPRECATED_MODIFIER_PAIR by warning<PsiElement> {
-            parameter<KtModifierKeywordToken>("deprecatedModifier")
-            parameter<KtModifierKeywordToken>("conflictingModifier")
+            parameter<String>("deprecatedModifier")
+            parameter<String>("conflictingModifier")
         }
 
         val REDUNDANT_MODIFIER by warning<PsiElement> {
-            parameter<KtModifierKeywordToken>("redundantModifier")
-            parameter<KtModifierKeywordToken>("conflictingModifier")
+            parameter<String>("redundantModifier")
+            parameter<String>("conflictingModifier")
         }
         val REDUNDANT_MODIFIER_FOR_TARGET by warning<PsiElement> {
-            parameter<KtModifierKeywordToken>("redundantModifier")
+            parameter<String>("redundantModifier")
             parameter<String>("target")
         }
 
@@ -764,9 +764,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
 
     val VALUE_CLASSES by object : DiagnosticGroup("Value classes") {
         val VALUE_CLASS_NOT_TOP_LEVEL by error<KtDeclaration>(PositioningStrategy.INLINE_OR_VALUE_MODIFIER)
-        val VALUE_CLASS_NOT_FINAL by error<KtDeclaration>(PositioningStrategy.MODALITY_MODIFIER) {
-            parameter<String>("prefix")
-        }
+        val VALUE_CLASS_NOT_FINAL by error<KtDeclaration>(PositioningStrategy.MODALITY_MODIFIER)
         val VALUE_CLASS_OPEN by error<KtDeclaration>(PositioningStrategy.MODALITY_MODIFIER)
         val ABSENCE_OF_PRIMARY_CONSTRUCTOR_FOR_VALUE_CLASS by error<KtDeclaration>(PositioningStrategy.INLINE_OR_VALUE_MODIFIER) {
             parameter<String>("modifier")
@@ -788,8 +786,8 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val PROPERTY_WITH_BACKING_FIELD_INSIDE_VALUE_CLASS by error<KtProperty>(PositioningStrategy.CALLABLE_DECLARATION_SIGNATURE_NO_MODIFIERS)
         val DELEGATED_PROPERTY_INSIDE_VALUE_CLASS by error<PsiElement>()
         val VALUE_CLASS_HAS_INAPPLICABLE_PARAMETER_TYPE by error<KtElement> {
-            parameter<ConeKotlinType>("type")
             parameter<String>("prefix")
+            parameter<ConeKotlinType>("type")
         }
         val VALUE_CLASS_CANNOT_IMPLEMENT_INTERFACE_BY_DELEGATION by error<PsiElement>()
         val VALUE_CLASS_CANNOT_EXTEND_CLASSES by error<KtElement> {
@@ -827,12 +825,16 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<ConeKotlinType>("type")
         }
         val WILL_BECOME_VALUE_CLASS_NOT_TOP_LEVEL by error<KtDeclaration>(PositioningStrategy.INLINE_OR_VALUE_MODIFIER)
+        val WILL_BECOME_VALUE_CLASS_OPEN by error<KtDeclaration>(PositioningStrategy.MODALITY_MODIFIER)
         val ABSENCE_OF_PRIMARY_CONSTRUCTOR_FOR_WILL_BECOME_VALUE_CLASS by error<KtDeclaration>(PositioningStrategy.INLINE_OR_VALUE_MODIFIER)
         val EXPECT_WILL_BECOME_VALUE_CLASS_WITH_NO_PRIMARY_CONSTRUCTOR_HAS_SECONDARY by error<KtDeclaration>()
         val WILL_BECOME_VALUE_CLASS_EMPTY_CONSTRUCTOR by error<KtElement>()
         val WILL_BECOME_VALUE_CLASS_CONSTRUCTOR_NOT_FINAL_READ_ONLY_PARAMETER by error<KtParameter>()
         val ABSTRACT_WILL_BECOME_VALUE_CLASS_CONSTRUCTOR_PROPERTY_PARAMETER by error<KtParameter>()
         val SEALED_WILL_BECOME_VALUE_CLASS_CONSTRUCTOR_PROPERTY_PARAMETER by error<KtParameter>()
+        val WILL_BECOME_VALUE_CLASS_HAS_INAPPLICABLE_PARAMETER_TYPE by error<KtElement> {
+            parameter<ConeKotlinType>("type")
+        }
         val PROPERTY_WITH_BACKING_FIELD_INSIDE_WILL_BECOME_VALUE_CLASS by error<KtProperty>(PositioningStrategy.CALLABLE_DECLARATION_SIGNATURE_NO_MODIFIERS)
         val DELEGATED_PROPERTY_INSIDE_WILL_BECOME_VALUE_CLASS by error<PsiElement>()
         val WILL_BECOME_VALUE_CLASS_CANNOT_IMPLEMENT_INTERFACE_BY_DELEGATION by error<PsiElement>()
@@ -936,6 +938,8 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<ConeKotlinType>("actualType")
             parameter<ConeKotlinType>("expectedType")
             parameter<Boolean>("isMismatchDueToNullability")
+            parameter<FirValueParameterSymbol?>("declaration")
+            parameter<FirExpression>("argument")
         }
         val RETURN_TYPE_MISMATCH by error<KtExpression>(PositioningStrategy.WHOLE_ELEMENT) {
             parameter<ConeKotlinType>("expectedType")
@@ -1122,6 +1126,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val CONFLICTING_PROJECTION_IN_TYPEALIAS_EXPANSION by error<KtElement>(PositioningStrategy.VARIANCE_MODIFIER) {
             parameter<ConeKotlinType>("type")
         }
+        val ILLEGAL_PROJECTION_IN_TYPEALIAS_EXPANSION by error<KtElement>()
         val CONFLICTING_PROJECTION_IN_CALLABLE_REFERENCE_WARNING by warning<KtTypeProjection>(PositioningStrategy.VARIANCE_MODIFIER) {
             parameter<ConeKotlinType>("type")
         }
@@ -2143,8 +2148,14 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
     }
 
     val CONVENTIONS by object : DiagnosticGroup("Conventions") {
-        val NO_GET_METHOD by error<KtArrayAccessExpression>(PositioningStrategy.ARRAY_ACCESS)
-        val NO_SET_METHOD by error<KtArrayAccessExpression>(PositioningStrategy.ARRAY_ACCESS)
+        val NO_GET_METHOD by error<KtArrayAccessExpression>(PositioningStrategy.ARRAY_ACCESS) {
+            parameter<FirExpression?>("receiver")
+            parameter<ConeKotlinType>("receiverType")
+        }
+        val NO_SET_METHOD by error<KtArrayAccessExpression>(PositioningStrategy.ARRAY_ACCESS) {
+            parameter<FirExpression?>("receiver")
+            parameter<ConeKotlinType>("receiverType")
+        }
         val ITERATOR_MISSING by error<KtExpression>()
         val HAS_NEXT_MISSING by error<KtExpression>()
         val NEXT_MISSING by error<KtExpression>()
