@@ -5,11 +5,12 @@
 
 package org.jetbrains.kotlin.fir.analysis.checkers.syntax
 
-import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.diagnostics.reportOn
 import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
+import org.jetbrains.kotlin.fir.analysis.checkers.declaration.FirFileChecker
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.fir.analysis.getSourceForImportSegment
 import org.jetbrains.kotlin.fir.declarations.FirFile
@@ -23,15 +24,13 @@ import org.jetbrains.kotlin.fir.resolve.transformers.resolveToPackageOrClass
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.fir.syntax.withSyntax
 import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.psi.KtFile
 
-object FirUnresolvedInMiddleOfImportChecker : FirDeclarationSyntaxChecker<FirFile, KtFile>() {
+object FirUnresolvedInMiddleOfImportChecker : FirFileChecker(MppCheckerKind.Common) {
     context(context: CheckerContext, reporter: DiagnosticReporter)
-    override fun checkPsiOrLightTree(
-        element: FirFile,
-        source: KtSourceElement,
-    ) {
-        for (import in element.imports) {
+    override fun check(declaration: FirFile) {
+        if (declaration.source == null) return
+
+        for (import in declaration.imports) {
             if (import is FirResolvedImport) processPossiblyUnresolvedImport(import)
         }
     }

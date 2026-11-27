@@ -1,0 +1,17 @@
+STEP 0:
+    dependencies: lib1
+    modifications:
+        U : w.kt -> w.kt
+    added cache: w.kt
+
+// lib2 is not in the link, so its cache is removed: w.kt's cached bitcode holds
+// the when dispatch over E's step-0 ordinals, and nothing would update it.
+STEP 1:
+    dependencies: lib1
+    removed cache: w.kt
+
+// E changed while lib2 was absent. lib2 is back, and its cache is built from scratch,
+// with the when dispatch over E's current ordinals.
+STEP 2:
+    dependencies: lib1
+    added cache: w.kt

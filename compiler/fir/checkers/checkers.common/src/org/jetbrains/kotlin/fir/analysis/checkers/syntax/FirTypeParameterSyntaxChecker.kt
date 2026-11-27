@@ -5,44 +5,26 @@
 
 package org.jetbrains.kotlin.fir.analysis.checkers.syntax
 
-import org.jetbrains.kotlin.KtPsiSourceElement
-import org.jetbrains.kotlin.KtSourceElement
-import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
-import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.diagnostics.reportOn
+import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
+import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
+import org.jetbrains.kotlin.fir.analysis.checkers.declaration.FirTypeParameterChecker
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.fir.declarations.FirTypeParameter
 import org.jetbrains.kotlin.fir.declarations.utils.isDangling
-import org.jetbrains.kotlin.fir.psi
 import org.jetbrains.kotlin.fir.syntax.withSyntax
-import org.jetbrains.kotlin.psi.KtTypeConstraint
-import org.jetbrains.kotlin.psi.KtTypeParameter
 
-object FirTypeParameterSyntaxChecker : FirDeclarationSyntaxChecker<FirTypeParameter, KtTypeParameter>() {
-
-    // A dangling type parameter has no KtTypeParameter, and all its bounds come from constraints
-    override fun isApplicable(element: FirTypeParameter, source: KtSourceElement): Boolean =
-        element.bounds.size >= 2 && !element.isDangling
-
+object FirTypeParameterSyntaxChecker : FirTypeParameterChecker(MppCheckerKind.Common) {
     context(context: CheckerContext, reporter: DiagnosticReporter)
-    override fun checkPsi(
-        element: FirTypeParameter,
-        source: KtPsiSourceElement,
-        psi: KtTypeParameter,
-    ) {
-        val [constraint, params] = element.bounds.partition { it.psi?.parent is KtTypeConstraint }
-        if (params.isNotEmpty() && constraint.isNotEmpty()) {
-            reporter.reportOn(source, FirErrors.MISPLACED_TYPE_PARAMETER_CONSTRAINTS)
-        }
-    }
+    override fun check(declaration: FirTypeParameter) {
+        val source = declaration.source ?: return
 
-    context(context: CheckerContext, reporter: DiagnosticReporter)
-    override fun checkPsiOrLightTree(
-        element: FirTypeParameter,
-        source: KtSourceElement,
-    ) {
+        // A dangling type parameter has no KtTypeParameter, and all its bounds come from constraints
+        if (declaration.bounds.size < 2 || declaration.isDangling) return
+
         val [constraint, params] = withSyntax {
-            element.bounds.partition { it.source?.isInTypeConstraint() == true }
+            declaration.bounds.partition { it.source?.isInTypeConstraint() == true }
         }
         if (params.isNotEmpty() && constraint.isNotEmpty()) {
             reporter.reportOn(source, FirErrors.MISPLACED_TYPE_PARAMETER_CONSTRAINTS)

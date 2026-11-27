@@ -1,0 +1,15 @@
+STEP 0:
+    dependencies: y
+    modifications:
+        U : x.kt -> x.kt
+    added cache: x.kt
+
+// x is not in the link, so its cache is removed.
+STEP 1:
+    dependencies: y
+    removed cache: x.kt
+
+// x is back, and its cache is built from scratch, with the new y.yv() inlined.
+STEP 2:
+    dependencies: y
+    added cache: x.kt

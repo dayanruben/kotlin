@@ -17,9 +17,10 @@ import org.jetbrains.kotlin.diagnostics.reportOn
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.SessionHolder
 import org.jetbrains.kotlin.fir.analysis.checkers.*
+import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.context.findClosest
-import org.jetbrains.kotlin.fir.analysis.checkers.syntax.FirDeclarationSyntaxChecker
+import org.jetbrains.kotlin.fir.analysis.checkers.declaration.FirBasicDeclarationChecker
 import org.jetbrains.kotlin.fir.analysis.checkers.syntax.FirExplicitApiDeclarationChecker.isExplicitVisibilityRequired
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.fir.declarations.*
@@ -33,28 +34,26 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.fir.toEffectiveVisibility
 import org.jetbrains.kotlin.fir.types.typeContext
-import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.syntax.KotlinSyntaxNodeTypeIds
 
-object RedundantVisibilityModifierSyntaxChecker : FirDeclarationSyntaxChecker<FirDeclaration, KtDeclaration>() {
-
+object RedundantVisibilityModifierSyntaxChecker : FirBasicDeclarationChecker(MppCheckerKind.Common) {
     context(context: CheckerContext, reporter: DiagnosticReporter)
-    override fun checkPsiOrLightTree(
-        element: FirDeclaration,
-        source: KtSourceElement,
-    ) {
-        if (element is FirPropertyAccessor || element is FirValueParameter) {
+    override fun check(declaration: FirDeclaration) {
+        if (declaration.source == null) return
+
+        if (declaration is FirPropertyAccessor || declaration is FirValueParameter) {
             return
         }
 
-        if (element is FirConstructor && element.source?.kind is KtFakeSourceElementKind) {
+        if (declaration is FirConstructor && declaration.source?.kind is KtFakeSourceElementKind) {
             return
         }
 
-        when (element) {
-            is FirProperty -> checkPropertyAndReport(element)
+        when (declaration) {
+            is FirProperty -> checkPropertyAndReport(declaration)
             else -> {
-                val defaultVisibility = element.symbol.resolvedStatus?.defaultVisibility ?: Visibilities.DEFAULT_VISIBILITY
-                checkElementAndReport(element, defaultVisibility)
+                val defaultVisibility = declaration.symbol.resolvedStatus?.defaultVisibility ?: Visibilities.DEFAULT_VISIBILITY
+                checkElementAndReport(declaration, defaultVisibility)
             }
         }
     }
@@ -179,13 +178,10 @@ object RedundantVisibilityModifierSyntaxChecker : FirDeclarationSyntaxChecker<Fi
     private val FirProperty.hasSetterWithImplicitVisibility: Boolean
         get() {
             val theSetter = setter ?: return false
-
-            if (source?.lighterASTNode == theSetter.source?.lighterASTNode) {
-                return true
-            }
-
-            val theSource = theSetter.source ?: return true
-            return theSource.explicitVisibility == null
+            val setterSource = theSetter.source ?: return true
+            // The setter isn't declared explicitly (its source is the property itself, a constructor parameter, etc.)
+            if (setterSource.syntaxId != KotlinSyntaxNodeTypeIds.PROPERTY_ACCESSOR) return true
+            return setterSource.explicitVisibility == null
         }
 
     context(context: CheckerContext)

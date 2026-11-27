@@ -1,0 +1,19 @@
+// lib2 is compiled only at step 0; in the later steps its klib stays on disk.
+
+STEP 0:
+    dependencies: lib1
+    modifications:
+        U : use.kt -> use.kt
+    added cache: use.kt
+
+// lib2 is not in the link at step 1, so its cache is removed: the recorded edge to the
+// now-removed lib1|pub.kt file id would never be walked.
+STEP 1:
+    dependencies: lib1
+    removed cache: use.kt
+
+// lib2 returns unrecompiled, and its cache is built from scratch, with the dependency
+// on lib1|pub2.kt.
+STEP 2:
+    dependencies: lib1
+    added cache: use.kt

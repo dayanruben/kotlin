@@ -1,0 +1,24 @@
+STEP 0:
+    dependencies: y
+    arguments: -opt-in=kotlin.native.internal.InternalForKotlinNative
+    modifications:
+        U : x.kt -> x.kt
+    added cache: x.kt
+
+// x is not in the link, so its cache is removed: the adapter that imports _kclass:y.Bound
+// is baked into x.kt's cached bitcode, and nothing would update it.
+STEP 1:
+    dependencies: y
+    arguments: -opt-in=kotlin.native.internal.InternalForKotlinNative
+    modifications:
+        U : x.kt -> x.kt
+    removed cache: x.kt
+
+// Bound changed files (it moved to y2.kt) while x was absent. x is back, and its cache
+// is built from scratch, with the dependency on y2.kt.
+STEP 2:
+    dependencies: y
+    arguments: -opt-in=kotlin.native.internal.InternalForKotlinNative
+    modifications:
+        U : x.kt -> x.kt
+    added cache: x.kt

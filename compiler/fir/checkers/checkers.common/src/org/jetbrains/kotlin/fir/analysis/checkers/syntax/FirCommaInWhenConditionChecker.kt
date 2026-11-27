@@ -5,31 +5,26 @@
 
 package org.jetbrains.kotlin.fir.analysis.checkers.syntax
 
-import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.fir.syntax.withSyntax
-import org.jetbrains.kotlin.syntax.KotlinSyntaxNodeTypeIds
-import org.jetbrains.kotlin.KtSourceElement
-import org.jetbrains.kotlin.syntax.KotlinSyntaxTokenIds
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.diagnostics.reportOn
+import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
+import org.jetbrains.kotlin.fir.analysis.checkers.expression.FirWhenExpressionChecker
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.fir.analysis.getChild
 import org.jetbrains.kotlin.fir.expressions.FirWhenBranch
 import org.jetbrains.kotlin.fir.expressions.FirWhenExpression
 import org.jetbrains.kotlin.fir.expressions.impl.FirElseIfTrueCondition
+import org.jetbrains.kotlin.fir.syntax.withSyntax
+import org.jetbrains.kotlin.syntax.KotlinSyntaxNodeTypeIds
+import org.jetbrains.kotlin.syntax.KotlinSyntaxTokenIds
 
-object FirCommaInWhenConditionChecker : FirExpressionSyntaxChecker<FirWhenExpression, PsiElement>() {
-    override fun isApplicable(element: FirWhenExpression, source: KtSourceElement): Boolean {
-        return element.subjectVariable == null
-    }
-
+object FirCommaInWhenConditionChecker : FirWhenExpressionChecker(MppCheckerKind.Common) {
     context(context: CheckerContext, reporter: DiagnosticReporter)
-    override fun checkPsiOrLightTree(
-        element: FirWhenExpression,
-        source: KtSourceElement,
-    ) {
-        for (branch in element.branches) {
+    override fun check(expression: FirWhenExpression) {
+        if (expression.source == null || expression.subjectVariable != null) return
+
+        for (branch in expression.branches) {
             if (branch.condition is FirElseIfTrueCondition) continue
             checkCommaInBranchCondition(branch)
         }

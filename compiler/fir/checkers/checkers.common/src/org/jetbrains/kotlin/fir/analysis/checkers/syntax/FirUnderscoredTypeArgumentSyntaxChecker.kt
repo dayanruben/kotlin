@@ -5,76 +5,28 @@
 
 package org.jetbrains.kotlin.fir.analysis.checkers.syntax
 
-import com.intellij.lang.LighterASTNode
-import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.*
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
-import org.jetbrains.kotlin.diagnostics.annotations
 import org.jetbrains.kotlin.diagnostics.reportOn
-import org.jetbrains.kotlin.diagnostics.userType
+import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
-import org.jetbrains.kotlin.fir.analysis.checkers.isUnderscore
+import org.jetbrains.kotlin.fir.analysis.checkers.expression.FirFunctionCallChecker
 import org.jetbrains.kotlin.fir.analysis.diagnostics.*
 import org.jetbrains.kotlin.fir.expressions.FirFunctionCall
-import org.jetbrains.kotlin.psi.KtTypeProjection
+import org.jetbrains.kotlin.fir.syntax.withSyntax
 
-object FirUnderscoredTypeArgumentSyntaxChecker : FirExpressionSyntaxChecker<FirFunctionCall, PsiElement>() {
-    override fun isApplicable(element: FirFunctionCall, source: KtSourceElement): Boolean =
-        element.typeArguments.isNotEmpty()
-
-    private const val MESSAGE = "Underscore type arguments cannot be annotated."
-
+object FirUnderscoredTypeArgumentSyntaxChecker : FirFunctionCallChecker(MppCheckerKind.Common) {
     context(context: CheckerContext, reporter: DiagnosticReporter)
-    override fun checkPsi(
-        element: FirFunctionCall,
-        source: KtPsiSourceElement,
-        psi: PsiElement,
-    ) {
-        for (typeProjection in element.typeArguments) {
-            val psiTypeArgument = typeProjection.source?.psi as? KtTypeProjection ?: continue
-            val typeReference = psiTypeArgument.typeReference ?: continue
+    override fun check(expression: FirFunctionCall) {
+        val source = expression.source ?: return
+        if (expression.typeArguments.isEmpty()) return
 
-            if (!typeReference.isPlaceholder) continue
-
-            for (annotation in typeReference.annotationEntries) {
-                reporter.reportOn(
-                    annotation.toKtPsiSourceElement(), FirErrors.UNSUPPORTED,
-                    MESSAGE
-                )
+        withSyntax {
+            for (typeProjection in expression.typeArguments) {
+                val typeArgumentSource = typeProjection.source ?: continue
+                for (annotationSource in source.findUnderscoreTypeArgumentAnnotationSources(typeArgumentSource)) {
+                    reporter.reportOn(annotationSource, FirErrors.UNSUPPORTED, "Underscore type arguments cannot be annotated.")
+                }
             }
         }
-    }
-
-    context(context: CheckerContext, reporter: DiagnosticReporter)
-    override fun checkLightTree(
-        element: FirFunctionCall,
-        source: KtLightSourceElement,
-    ) {
-        for (typeProjection in element.typeArguments) {
-            val lightTreeTypeArgument = typeProjection.source?.lighterASTNode ?: continue
-
-            if (!source.treeStructure.userType(lightTreeTypeArgument).toString().isUnderscore) continue
-
-            val annotations = source.treeStructure.annotations(lightTreeTypeArgument) ?: continue
-
-            for (annotation in annotations) {
-                reporter.reportOn(
-                    source.buildChildSourceElement(annotation), FirErrors.UNSUPPORTED,
-                    MESSAGE
-                )
-            }
-        }
-    }
-
-    /**
-     * Keeps 'padding' of parent node in child node
-     */
-    private fun KtLightSourceElement.buildChildSourceElement(childNode: LighterASTNode): KtLightSourceElement {
-        val offsetDelta = startOffset - lighterASTNode.startOffset
-        return childNode.toKtLightSourceElement(
-            treeStructure,
-            startOffset = childNode.startOffset + offsetDelta,
-            endOffset = childNode.endOffset + offsetDelta
-        )
     }
 }

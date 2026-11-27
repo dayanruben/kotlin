@@ -5,21 +5,21 @@
 
 package org.jetbrains.kotlin.fir.analysis.checkers.type
 
+import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.fir.FirFunctionTypeParameter
 import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
-import org.jetbrains.kotlin.fir.analysis.checkers.syntax.FirSyntaxChecker
 import org.jetbrains.kotlin.fir.types.FirFunctionTypeRef
-import org.jetbrains.kotlin.psi.KtParameter
 
-abstract class FirFunctionalTypeParameterSyntaxChecker : FirFunctionTypeRefChecker(
-    MppCheckerKind.Common
-), FirSyntaxChecker<FirFunctionTypeParameter, KtParameter> {
+abstract class FirFunctionalTypeParameterSyntaxChecker : FirFunctionTypeRefChecker(MppCheckerKind.Common) {
     context(context: CheckerContext, reporter: DiagnosticReporter)
-    override fun check(typeRef: FirFunctionTypeRef) {
+    final override fun check(typeRef: FirFunctionTypeRef) {
         for (parameter in typeRef.parameters) {
-            checkSyntax(parameter)
+            checkParameter(parameter, parameter.source)
         }
     }
+
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    protected abstract fun checkParameter(parameter: FirFunctionTypeParameter, source: KtSourceElement)
 }

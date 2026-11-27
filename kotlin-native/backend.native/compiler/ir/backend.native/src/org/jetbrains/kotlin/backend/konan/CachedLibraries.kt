@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.cli.report
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.io.canonicalPathString
 import org.jetbrains.kotlin.io.listDirectoryEntriesIfDirectoryExists
-import org.jetbrains.kotlin.konan.config.filesToCache
 import org.jetbrains.kotlin.konan.target.CompilerOutputKind
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.library.KotlinLibrary
@@ -53,7 +52,7 @@ class CachedLibraries(
         implicitCacheDirectories: List<Path>,
         autoCacheDirectory: Path,
         autoCacheableFrom: List<Path>,
-        private val libraryToCache: KotlinLibrary?,
+        private val filesBeingCached: Map<KotlinLibrary, List<String>>,
 ) {
     enum class Kind { DYNAMIC, STATIC, HEADER }
 
@@ -241,16 +240,18 @@ class CachedLibraries(
                 // during which the main dir does not exist. A sibling fragment iterating existingFileDirs to read
                 // ir/{class_fields,inline_bodies,eager_init} would then throw NoSuchFileException. The cached data
                 // for those files is stale anyway (the dirty file is loaded as IR), so skip them entirely.
-                val filesToCache = configuration.filesToCache
-                val fileIdsToCache = libraryToCache?.takeIf { it == library }?.getFileFqNames(filesToCache)?.let { fqNames ->
-                    filesToCache.zip(fqNames) { filePath, fqName -> cacheFileId(fqName, filePath) }.toSet()
-                } ?: emptySet()
+                // A batched build may rebuild files of several libraries at once, so each member's files being rebuilt are skipped.
+                val filesToCache = filesBeingCached[library].orEmpty().toSet()
                 val libraryFileDirs = library.getFilesWithFqNames().map { (filePath, fqName) ->
-                    resolve(cacheFileId(fqName, filePath))
+                    filePath to resolve(cacheFileId(fqName, filePath))
                 }
-                Cache.PerFile(target, Kind.STATIC, absolutePathString(),
-                        libraryFileDirs.filterNot { it.name in fileIdsToCache },
-                        complete = cacheDirContents.containsAll(libraryFileDirs.map { it.absolutePathString() }))
+                Cache.PerFile(
+                        target,
+                        Kind.STATIC,
+                        absolutePathString(),
+                        libraryFileDirs.mapNotNull { [filePath, dir] -> dir.takeUnless { filePath in filesToCache } },
+                        complete = cacheDirContents.containsAll(libraryFileDirs.map { [_, dir] -> dir.absolutePathString() }),
+                )
             }
         }
     }
