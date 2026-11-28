@@ -16,11 +16,11 @@
 package org.jetbrains.kotlin.parcelize.fir.diagnostics
 
 import org.jetbrains.kotlin.diagnostics.*
-import org.jetbrains.kotlin.diagnostics.SourceElementPositioningStrategies.ABSTRACT_MODIFIER
-import org.jetbrains.kotlin.diagnostics.SourceElementPositioningStrategies.DELEGATED_SUPERTYPE_BY_KEYWORD
-import org.jetbrains.kotlin.diagnostics.SourceElementPositioningStrategies.INNER_MODIFIER
-import org.jetbrains.kotlin.diagnostics.SourceElementPositioningStrategies.NAME_IDENTIFIER
-import org.jetbrains.kotlin.diagnostics.SourceElementPositioningStrategies.OVERRIDE_MODIFIER
+import org.jetbrains.kotlin.diagnostics.PositioningStrategyKinds.ABSTRACT_MODIFIER
+import org.jetbrains.kotlin.diagnostics.PositioningStrategyKinds.DELEGATED_SUPERTYPE_BY_KEYWORD
+import org.jetbrains.kotlin.diagnostics.PositioningStrategyKinds.INNER_MODIFIER
+import org.jetbrains.kotlin.diagnostics.PositioningStrategyKinds.NAME_IDENTIFIER
+import org.jetbrains.kotlin.diagnostics.PositioningStrategyKinds.OVERRIDE_MODIFIER
 import org.jetbrains.kotlin.diagnostics.rendering.BaseDiagnosticRendererFactory
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
@@ -54,6 +54,7 @@ object KtErrorsParcelize : KtDiagnosticsContainer() {
     val DEPRECATED_PARCELER by error0()
     val INAPPLICABLE_IGNORED_ON_PARCEL by warning0()
     val INAPPLICABLE_IGNORED_ON_PARCEL_CONSTRUCTOR_PROPERTY by error0()
+    val INAPPLICABLE_DATA_CLASS by warning0()
     val VALUE_PARAMETER_USED_IN_CLASS_BODY by error0()
 
     val POLYMORPHIC_SEALED_MUST_BE_SEALED by error0(NAME_IDENTIFIER)

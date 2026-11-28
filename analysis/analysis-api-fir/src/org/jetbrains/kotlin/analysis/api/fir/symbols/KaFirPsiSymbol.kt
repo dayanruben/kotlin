@@ -12,11 +12,12 @@ import org.jetbrains.kotlin.analysis.api.base.KaContextReceiver
 import org.jetbrains.kotlin.analysis.api.fir.KaFirSession
 import org.jetbrains.kotlin.analysis.api.fir.annotations.KaFirAnnotationListForDeclaration
 import org.jetbrains.kotlin.analysis.api.fir.annotations.KaFirEmptyAnnotationList
+import org.jetbrains.kotlin.analysis.api.fir.components.firSymbolBuilder
+import org.jetbrains.kotlin.analysis.api.fir.entryPointImplementation
 import org.jetbrains.kotlin.analysis.api.fir.symbols.pointers.KaFirPsiSymbolPointer
 import org.jetbrains.kotlin.analysis.api.fir.utils.inferReturnTypeByPsi
 import org.jetbrains.kotlin.analysis.api.fir.utils.withSymbolAttachment
 import org.jetbrains.kotlin.analysis.api.fir.visibilityByModifiers
-import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.kaModule
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -89,7 +90,7 @@ internal val FirBasedSymbol<*>.backingPsiIfApplicable: PsiElement?
     }
 
 internal interface KaFirKtBasedSymbol<out P : KtElement, out S : FirBasedSymbol<*>> : KaFirPsiSymbol<P, S> {
-    override val origin: KaSymbolOrigin get() = withValidityAssertion { psiOrSymbolOrigin() }
+    override val origin: KaSymbolOrigin get() = entryPointImplementation { psiOrSymbolOrigin() }
 }
 
 internal fun KaFirPsiSymbol<*, *>.psiOrSymbolHashCode(): Int = backingPsi?.hashCode() ?: symbolHashCode()
@@ -137,12 +138,13 @@ internal fun KaFirPsiSymbol<*, *>.psiOrSymbolEquals(other: Any?): Boolean {
  * Then, this PSI parent should be provided as [anchorPsi].
  * See [KaFirAnonymousObjectSymbol.annotations] and [KaFirAnonymousFunctionSymbol.annotations] as examples.
  */
+context(analysisSession: KaFirSession)
 internal fun KaFirKtBasedSymbol<*, *>.psiOrSymbolAnnotationList(anchorPsi: KtElement? = backingPsi): KaAnnotationList {
     if (anchorPsi?.hasAnnotations == false) {
-        return KaFirEmptyAnnotationList(token)
+        return KaFirEmptyAnnotationList(this.token)
     }
 
-    return KaFirAnnotationListForDeclaration.create(firSymbol, builder)
+    return KaFirAnnotationListForDeclaration.create(firSymbol)
 }
 
 /**
@@ -176,11 +178,12 @@ private val KtElement.hasAnnotations: Boolean
         }
     }
 
+context(analysisSession: KaFirSession)
 internal fun KaFirKtBasedSymbol<KtCallableDeclaration, FirCallableSymbol<*>>.createContextReceivers(): List<KaContextReceiver> {
     val psi = backingPsi
     if (psi != null && psi.modifierList?.contextParameterList == null) return emptyList()
 
-    return firSymbol.createContextReceivers(builder)
+    return firSymbol.createContextReceivers()
 }
 
 /**
@@ -270,6 +273,7 @@ internal fun KtCallableDeclaration.psiBasedDefaultKaModality(
     }
 }
 
+context(analysisSession: KaFirSession)
 internal fun KaFirKtBasedSymbol<KtClassOrObject, FirClassSymbol<*>>.createSuperTypes(): List<KaType> {
     /**
      * There is no so much profit to analyze PSI from libraries, but it requires additional logic
@@ -279,27 +283,25 @@ internal fun KaFirKtBasedSymbol<KtClassOrObject, FirClassSymbol<*>>.createSuperT
     val backingPsi = ifSource { backingPsi }
 
     if (backingPsi?.superTypeListEntries?.isNotEmpty() != false || hasCompilerPluginForSupertypes(backingPsi, analysisSession = analysisSession)) {
-        return firSymbol.superTypesList(builder)
+        return firSymbol.superTypesList()
     }
 
     val specialSuperType = when {
         backingPsi !is KtClass || this !is KaNamedClassSymbol -> null
-        backingPsi.isAnnotation() -> context(analysisSession) { builtinTypes.annotationType }
-        backingPsi.isEnum() -> context(analysisSession) {
+        backingPsi.isAnnotation() -> builtinTypes.annotationType
+        backingPsi.isEnum() -> {
             val enumFirSymbol = analysisSession.firSession.builtinTypes.enumType.toRegularClassSymbol(analysisSession.firSession)
-                ?: return firSymbol.superTypesList(builder) // something goes wrong here
+                ?: return firSymbol.superTypesList() // something goes wrong here
 
-            val enumKaSymbol = builder.classifierBuilder.buildNamedClassSymbol(enumFirSymbol)
+            val enumKaSymbol = firSymbolBuilder.classifierBuilder.buildNamedClassSymbol(enumFirSymbol)
             typeCreator.classType(enumKaSymbol) {
                 invariantTypeArgument(defaultType)
             }
         }
 
         backingPsi.isData() && JvmStandardClassIds.Annotations.JvmRecord in annotations -> {
-            context(analysisSession) {
-                val jvmRecordSymbol = findClass(JvmStandardClassIds.Java.Record)
-                jvmRecordSymbol?.defaultType
-            }
+            val jvmRecordSymbol = findClass(JvmStandardClassIds.Java.Record)
+            jvmRecordSymbol?.defaultType
         }
 
         else -> when (classId) {
@@ -308,7 +310,7 @@ internal fun KaFirKtBasedSymbol<KtClassOrObject, FirClassSymbol<*>>.createSuperT
         }
     }
 
-    return listOf(specialSuperType ?: context(analysisSession) { builtinTypes.any })
+    return listOf(specialSuperType ?: builtinTypes.any)
 }
 
 /**
@@ -378,13 +380,13 @@ internal inline fun <R> KaFirPsiSymbol<*, *>.ifNotLibrarySource(action: () -> R)
     return if (analysisSession.useSiteModule is KaLibrarySourceModule) null else action()
 }
 
+context(analysisSession: KaFirSession)
 internal fun KaFirKtBasedSymbol<KtCallableDeclaration, *>.createKaValueParameters(): List<KaValueParameterSymbol>? =
     ifNotLibrarySource {
-        context(analysisSession) {
-            backingPsi?.valueParameters?.map { it.symbol as KaValueParameterSymbol }
-        }
+        backingPsi?.valueParameters?.map { it.symbol as KaValueParameterSymbol }
     }
 
+context(analysisSession: KaFirSession)
 internal fun KaFirKtBasedSymbol<KtCallableDeclaration, *>.createKaContextParameters(): List<KaContextParameterSymbol>? =
     ifNotLibrarySource {
         val psi = backingPsi as? KtTypeParameterListOwnerStub<*> ?: return null // no psi
@@ -393,24 +395,21 @@ internal fun KaFirKtBasedSymbol<KtCallableDeclaration, *>.createKaContextParamet
             ?.takeIf { it.isNotEmpty() }
             ?: return emptyList() // no context receivers/parameters
 
-        context(analysisSession) {
-            lists.flatMap { list ->
-                val contextParameters = list.contextParameters
-                if (contextParameters.isNotEmpty()) {
-                    contextParameters.map { it.symbol as KaContextParameterSymbol }
-                } else {
-                    list.contextReceivers().map { it.symbol }
-                }
+        lists.flatMap { list ->
+            val contextParameters = list.contextParameters
+            if (contextParameters.isNotEmpty()) {
+                contextParameters.map { it.symbol as KaContextParameterSymbol }
+            } else {
+                list.contextReceivers().map { it.symbol }
             }
         }
     }
 
+context(analysisSession: KaFirSession)
 internal fun KaFirKtBasedSymbol<KtTypeParameterListOwner, *>.createKaTypeParameters(): List<KaTypeParameterSymbol>? =
     ifNotLibrarySource {
         val backingPsi = backingPsi ?: return@ifNotLibrarySource null
-        val typeParameters = context(analysisSession) {
-            backingPsi.typeParameters.map { it.symbol }
-        }
+        val typeParameters = backingPsi.typeParameters.map { it.symbol }
 
         val danglingTypeConstraintSubjects = backingPsi.danglingTypeConstraintSubjects()
         if (danglingTypeConstraintSubjects.isEmpty()) {
@@ -423,12 +422,14 @@ internal fun KaFirKtBasedSymbol<KtTypeParameterListOwner, *>.createKaTypeParamet
 /**
  * Returns the return type of the declaration, inferred from its PSI if possible.
  */
+context(analysisSession: KaFirSession)
 internal fun KaFirKtBasedSymbol<KtDeclaration, FirCallableSymbol<*>>.createReturnType(): KaType =
-    backingPsi?.inferReturnTypeByPsi(analysisSession = analysisSession) ?: firSymbol.returnType(builder)
+    backingPsi?.inferReturnTypeByPsi(analysisSession = analysisSession) ?: firSymbol.returnType()
 
 /**
  * Callable from libraries don't have the override flag as it is not preserved in the metadata
  */
+context(analysisSession: KaFirSession)
 internal val KaFirKtBasedSymbol<KtCallableDeclaration, FirCallableSymbol<*>>.isOverrideWithWorkaround: Boolean
     get() {
         require(this is KaCallableSymbol)
@@ -445,8 +446,6 @@ internal val KaFirKtBasedSymbol<KtCallableDeclaration, FirCallableSymbol<*>>.isO
             }
         } ?: firSymbol.isOverride // Resolved status is needed as compiler plugins might add the modifier
 
-        return isOverride || origin == KaSymbolOrigin.LIBRARY && context(analysisSession) {
-            // A workaround for the case when the library declaration is analyzed as sources
-            directlyOverriddenSymbols.any()
-        }
+        // A workaround for the case when the library declaration is analyzed as sources
+        return isOverride || origin == KaSymbolOrigin.LIBRARY && directlyOverriddenSymbols.any()
     }

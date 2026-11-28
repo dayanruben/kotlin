@@ -87,6 +87,16 @@ class K2JSCompilerArguments : K2WasmCompilerArguments() {
         }
 
     @Argument(
+        value = "-Xes-default-parameters",
+        description = "Compile functions with default arguments using the ES2015 default parameter syntax. Enabled by default in case of ES2015 target usage",
+    )
+    var useEsDefaultParameters: Boolean? = null
+        set(value) {
+            checkFrozen()
+            field = value
+        }
+
+    @Argument(
         value = "-Xes-generators",
         description = "Enable ES2015 generator functions usage inside the compiled code. Enabled by default in case of ES2015 target usage",
     )
@@ -173,6 +183,16 @@ class K2JSCompilerArguments : K2WasmCompilerArguments() {
         description = "Minimize the names of members.",
     )
     var irMinimizedMemberNames: Boolean = false
+        set(value) {
+            checkFrozen()
+            field = value
+        }
+
+    @Argument(
+        value = "-Xir-per-class",
+        description = "Generate one .js file per class and per top-level declaration set.",
+    )
+    var irPerClass: Boolean = false
         set(value) {
             checkFrozen()
             field = value

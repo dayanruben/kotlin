@@ -1286,36 +1286,48 @@ If you cannot make the declaration internal, mark it with `@KaImplementationDeta
 
 All API implementations must validate lifetime ownership and fail fast on invalid access.
 
-Lifetime safety is critical for preventing memory leaks and ensuring correctness:
+Lifetime safety is critical for preventing memory leaks and ensuring correctness.
+
+Symbols and session components of the FIR implementation are `KaFirSessionBoundOwner`s and wrap the implementation of
+each API in `entryPointImplementation`. It asserts that the session is valid and accessible and passes the session to
+its block as a context parameter, so the block can call the context-parameter API and the FIR helpers directly:
 
 ```kotlin
 internal class KaFirNamedClassSymbol(
     override val firSymbol: FirClassSymbol,
     override val analysisSession: KaFirSession
-) : KaNamedClassSymbol {
+) : KaNamedClassSymbol, KaFirSymbol<FirClassSymbol> {
     override val name: Name
-        // Either use 'withValidityAssertion' (preferred) or 'assertIsValidAndAccessible()'
-        get() = withValidityAssertion {
+        get() = entryPointImplementation {
             firSymbol.name
         }
 
     override val typeParameters: List<KaTypeParameterSymbol>
-        get() = withValidityAssertion {
+        get() = entryPointImplementation {
             firSymbol.typeParameters.map { it.toKaSymbol() }
         }
 }
 ```
 
-For endpoints consuming `PsiElement`s, use `withPsiValidityAssertion()` instead:
+For APIs consuming `PsiElement`s, pass them to `entryPointImplementation`, which also checks that they can be analyzed
+in the session:
 
 ```kotlin
-override val KtFile.symbol: KaFileSymbol
-    get() = withPsiValidityAssertion {
-        KaFirFileSymbol(this, analysisSession)
-    }
+override fun symbol(file: KtFile): KaFileSymbol = entryPointImplementation(file) {
+    KaFirFileSymbol(file, analysisSession)
+}
 ```
 
-Remember to guard properties you declare in the primary constructor: 
+A class of the FIR implementation that takes the session as a parameter implements `KaFirSessionBoundOwner` and keeps
+the session itself, not a `KaSymbolByFirBuilder`: the builder is available as `firSymbolBuilder` wherever the session is
+in context. Helpers take the session as `context(analysisSession: KaFirSession)` instead of a session or builder
+parameter. Where no session is in context, as in lazy initializers, visitor callbacks and pointer constructors (pointers
+must not keep the session), pass it as an explicit context argument:
+`annotations(firSymbol, analysisSession = analysisSession)`. `context(analysisSession) { … }` is left for property reads
+there, in the legacy bridges, which only delegate, and where a different session is required explicitly.
+
+Other lifetime owners use `withValidityAssertion` (or `assertIsValidAndAccessible()`). Remember to guard properties you
+declare in the primary constructor: 
 
 ```kotlin
 class KaScopeWithKindImpl(

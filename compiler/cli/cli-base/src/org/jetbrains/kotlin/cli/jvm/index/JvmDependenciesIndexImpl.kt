@@ -5,7 +5,9 @@
 
 package org.jetbrains.kotlin.cli.jvm.index
 
+import org.jetbrains.kotlin.load.java.structure.impl.classFiles.BinaryClassFileHandle
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.resolve.jvm.JvmClassFileNameUtils
 import kotlin.concurrent.withLock
 
 /**
@@ -17,24 +19,24 @@ import kotlin.concurrent.withLock
 class JvmDependenciesIndexImpl(roots: List<JavaRoot>) : JvmDependenciesIndexBase(roots) {
     // holds the request and the result last time we searched for class
     // helps improve several scenarios, LazyJavaResolverContext.findClassInJava being the most important
-    private var lastClassFileSearch: Pair<ClassSearchRequest, Collection<IndexedClassFile>>? = null
+    private var lastClassFileSearch: Pair<ClassSearchRequest, Collection<BinaryClassFileHandle>>? = null
 
     override fun findClassFiles(
         classId: ClassId,
         acceptedExtensions: JavaFileExtensions,
-    ): Collection<IndexedClassFile> = findClassFilesWithFilter(classId, acceptedExtensions, filter = null)
+    ): Collection<BinaryClassFileHandle> = findClassFilesWithFilter(classId, acceptedExtensions, filter = null)
 
     override fun findClassFiles(
         classId: ClassId,
         acceptedExtensions: JavaFileExtensions,
         filter: ClassFileFilter,
-    ): Collection<IndexedClassFile> = findClassFilesWithFilter(classId, acceptedExtensions, filter)
+    ): Collection<BinaryClassFileHandle> = findClassFilesWithFilter(classId, acceptedExtensions, filter)
 
     private fun findClassFilesWithFilter(
         classId: ClassId,
         acceptedExtensions: JavaFileExtensions,
         filter: ClassFileFilter?,
-    ): Collection<IndexedClassFile> {
+    ): Collection<BinaryClassFileHandle> {
         lock.withLock {
             // TODO: KT-58327 probably should be changed to thread local to fix fast-path
             // make a decision based on information saved from last class search
@@ -71,21 +73,24 @@ class JvmDependenciesIndexImpl(roots: List<JavaRoot>) : JvmDependenciesIndexBase
         classId: ClassId,
         acceptedExtensions: JavaFileExtensions,
         filter: ClassFileFilter?,
-    ): Collection<IndexedClassFile> {
-        val fileNameWithoutExtension = classId.relativeClassName.asString().replace('.', '$')
-        val results = mutableListOf<IndexedClassFile>()
+    ): Collection<BinaryClassFileHandle> {
+        val results = mutableListOf<BinaryClassFileHandle>()
+        val fileNameWithoutExtension = JvmClassFileNameUtils.fileNameWithoutExtension(classId.relativeClassName)
+        val extensions = acceptedExtensions.extensions.toList()
+        val fileNames = extensions.map { JvmClassFileNameUtils.fileName(fileNameWithoutExtension, it.extension) }
 
         traverseIndex(classId.packageFqName, acceptedExtensions.rootTypes) { directoryInRoot, root ->
-            for (ext in acceptedExtensions) {
-                if (ext.rootType != root.type) continue
+            for (i in extensions.indices) {
+                if (extensions[i].rootType != root.type) continue
 
                 val file = directoryInRoot
-                    .findChild("$fileNameWithoutExtension.${ext.extension}")
+                    .findChild(fileNames[i])
                     ?.takeIf { it.isValid }
 
                 if (file != null) {
-                    if (filter == null || filter.accepts(root.file, file)) {
-                        results.add(IndexedClassFile(file, root))
+                    val classFile = VfsClassFileHandle(file, root)
+                    if (filter == null || filter.accepts(classFile)) {
+                        results.add(classFile)
 
                         // Stop the search. We've found the first accepted class virtual file.
                         return@traverseIndex false

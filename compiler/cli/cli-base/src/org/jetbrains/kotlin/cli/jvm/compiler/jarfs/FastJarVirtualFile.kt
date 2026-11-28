@@ -23,15 +23,9 @@ internal class FastJarVirtualFile(
 ) : VirtualFile(), LibraryContainerAwareVirtualFile {
 
     private var myChildrenArray = EMPTY_ARRAY
-    private val myChildrenList: MutableList<VirtualFile> = mutableListOf()
 
-    init {
-        parent?.myChildrenList?.add(this)
-    }
-
-    fun initChildrenArrayFromList() {
-        myChildrenArray = myChildrenList.toTypedArray()
-        myChildrenList.clear()
+    fun initChildren(children: List<FastJarVirtualFile>) {
+        if (children.isNotEmpty()) myChildrenArray = children.toTypedArray<VirtualFile>()
     }
 
     override fun getName(): String {
@@ -47,12 +41,12 @@ internal class FastJarVirtualFile(
     }
 
     override fun getContainingLibraryPath(): Path {
-        return handler.file.toPath()
+        return handler.path
     }
 
     override fun getPath(): String {
         if (parent == null) {
-            return FileUtil.toSystemIndependentName(handler.file.path) + "!/"
+            return FileUtil.toSystemIndependentName(handler.path.toString()) + "!/"
         }
         val parentPath = parent.path
         val answer = StringBuilder(parentPath.length + 1 + name.length)

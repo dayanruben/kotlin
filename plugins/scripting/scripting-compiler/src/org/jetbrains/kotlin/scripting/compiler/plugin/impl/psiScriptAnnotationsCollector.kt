@@ -9,13 +9,13 @@ import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.io.URLUtil
 import org.jetbrains.kotlin.cli.create
-import org.jetbrains.kotlin.cli.jvm.compiler.CliVirtualFileFinder
 import org.jetbrains.kotlin.cli.jvm.compiler.JvmPackagePartProvider
 import org.jetbrains.kotlin.cli.jvm.index.JavaFileExtension
 import org.jetbrains.kotlin.cli.jvm.index.JavaFileExtensions
 import org.jetbrains.kotlin.cli.jvm.index.JavaRoot
 import org.jetbrains.kotlin.cli.jvm.index.JvmDependenciesIndex
 import org.jetbrains.kotlin.cli.jvm.index.JvmDependenciesIndexImpl
+import org.jetbrains.kotlin.cli.jvm.index.JvmIndexKotlinClassFinder
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.languageVersionSettings
@@ -203,7 +203,7 @@ private class AnnotationResolutionProjectEnvironment(
     override fun getJavaModuleResolver(): JavaModuleResolver = NoJavaModulesResolver
 
     override fun getKotlinClassFinder(classpath: JvmClasspath): KotlinClassFinder =
-        CliVirtualFileFinder(index, classpath, enableSearchInCtSym = false, perfManager = null)
+        JvmIndexKotlinClassFinder(index, classpath, enableSearchInCtSym = false, perfManager = null)
 
     override fun getPackagePartProvider(classpath: JvmClasspath): PackagePartProvider =
         getPackagePartProviderFn(classpath)
@@ -220,19 +220,13 @@ private class AnnotationResolutionProjectEnvironment(
 private class ClassNamesOnlyJavaClassFinder(private val index: JvmDependenciesIndex) : JavaClassFinder {
     override fun findClass(request: JavaClassFinder.Request): JavaClass? = null
     override fun findClasses(request: JavaClassFinder.Request): List<JavaClass> = emptyList()
-    override fun findPackage(fqName: FqName, mayHaveAnnotations: Boolean): JavaPackage? {
-        var found = false
-        index.traverseDirectoriesInPackage(fqName) { _, _ ->
-            found = true
-            false
-        }
-        return if (found) ClassNamesOnlyJavaPackage(fqName) else null
-    }
+    override fun findPackage(fqName: FqName, mayHaveAnnotations: Boolean): JavaPackage? =
+        if (index.hasPackage(fqName)) ClassNamesOnlyJavaPackage(fqName) else null
 
     override fun canComputeKnownClassNamesInPackage(): Boolean = true
     override fun knownClassNamesInPackage(packageFqName: FqName): Set<String> {
         val result = HashSet<String>()
-        index.traverseClassVirtualFilesInPackage(packageFqName, JavaFileExtensions(JavaFileExtension.CLASS)) { file ->
+        index.traverseFilesInPackage(packageFqName, JavaFileExtensions(JavaFileExtension.CLASS)) { file ->
             result.add(file.nameWithoutExtension)
             true
         }

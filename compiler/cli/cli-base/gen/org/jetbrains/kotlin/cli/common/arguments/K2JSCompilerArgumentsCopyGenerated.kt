@@ -22,6 +22,7 @@ fun copyK2JSCompilerArguments(from: K2JSCompilerArguments, to: K2JSCompilerArgum
     to.irGenerateInlineAnonymousFunctions = from.irGenerateInlineAnonymousFunctions
     to.irKeep = from.irKeep
     to.irMinimizedMemberNames = from.irMinimizedMemberNames
+    to.irPerClass = from.irPerClass
     to.irPerFile = from.irPerFile
     to.irPerModule = from.irPerModule
     to.irSafeExternalBoolean = from.irSafeExternalBoolean
@@ -33,6 +34,7 @@ fun copyK2JSCompilerArguments(from: K2JSCompilerArguments, to: K2JSCompilerArgum
     to.useEs6ConstLet = from.useEs6ConstLet
     to.useEsArrowFunctions = from.useEsArrowFunctions
     to.useEsClasses = from.useEsClasses
+    to.useEsDefaultParameters = from.useEsDefaultParameters
     to.useEsGenerators = from.useEsGenerators
     to.useUnknownInsteadAny = from.useUnknownInsteadAny
 

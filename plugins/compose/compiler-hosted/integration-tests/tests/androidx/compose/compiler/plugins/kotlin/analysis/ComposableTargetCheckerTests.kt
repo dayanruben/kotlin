@@ -208,6 +208,30 @@ class ComposableTargetCheckerTests : AbstractComposeDiagnosticsTest() {
     )
 
     @Test
+    fun testReportFailureOnGenericAndQualifiedCalls() = check(
+        """
+        import androidx.compose.runtime.*
+
+        @Composable
+        @ComposableTarget("N")
+        fun T() {
+            <!COMPOSE_APPLIER_CALL_MISMATCH!>G<!><Int>()
+            O.<!COMPOSE_APPLIER_CALL_MISMATCH!>M<!>()
+        }
+
+        @Composable
+        @ComposableTarget("M")
+        fun <X> G() {}
+
+        object O {
+            @Composable
+            @ComposableTarget("M")
+            fun M() {}
+        }
+        """
+    )
+
+    @Test
     fun testGenericDisagreement() = check(
         """
         import androidx.compose.runtime.*
@@ -449,6 +473,24 @@ class ComposableTargetCheckerTests : AbstractComposeDiagnosticsTest() {
           @Composable override fun Compose() {
             N()
           }
+        }
+        """
+    )
+
+    @Test
+    fun testOpenOverrideAccessorTargetsMustAgree() = check(
+        """
+        import androidx.compose.runtime.Composable
+        import androidx.compose.runtime.ComposableTarget
+
+        abstract class Base {
+          abstract val p: Int
+            @Composable @ComposableTarget("N") get
+        }
+
+        class Invalid : Base() {
+          override val p: Int
+            @Composable @ComposableTarget("M") <!COMPOSE_APPLIER_DECLARATION_MISMATCH!>get<!>() = 1
         }
         """
     )

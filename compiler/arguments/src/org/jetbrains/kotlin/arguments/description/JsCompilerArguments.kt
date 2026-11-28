@@ -121,6 +121,17 @@ val actualJsArguments by compilerArgumentsLevel(CompilerArgumentsLevelNames.jsAr
     }
 
     compilerArgument {
+        name = "Xir-per-class"
+        description = "Generate one .js file per class and per top-level declaration set.".asReleaseDependent()
+        valueType = BooleanType.defaultFalse
+
+        lifecycle(
+            introducedVersion = KotlinReleaseVersion.v2_5_20,
+        )
+        restrictedToCompilerPhase = KotlinCompilerPhase.BACKEND_COMPILATION
+    }
+
+    compilerArgument {
         name = "Xir-generate-inline-anonymous-functions"
         description =
             "Lambda expressions that capture values are translated into in-line anonymous JavaScript functions.".asReleaseDependent()
@@ -232,6 +243,19 @@ val actualJsArguments by compilerArgumentsLevel(CompilerArgumentsLevelNames.jsAr
 
         lifecycle(
             introducedVersion = KotlinReleaseVersion.v2_1_0,
+        )
+        restrictedToCompilerPhase = KotlinCompilerPhase.BACKEND_COMPILATION
+    }
+
+    compilerArgument {
+        name = "Xes-default-parameters"
+        compilerName = "useEsDefaultParameters"
+        description =
+            "Compile functions with default arguments using the ES2015 default parameter syntax. Enabled by default in case of ES2015 target usage".asReleaseDependent()
+        valueType = BooleanType.defaultNull
+
+        lifecycle(
+            introducedVersion = KotlinReleaseVersion.v2_5_20,
         )
         restrictedToCompilerPhase = KotlinCompilerPhase.BACKEND_COMPILATION
     }

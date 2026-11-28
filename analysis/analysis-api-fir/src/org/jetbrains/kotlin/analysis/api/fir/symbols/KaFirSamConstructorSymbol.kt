@@ -9,9 +9,9 @@ import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationList
 import org.jetbrains.kotlin.analysis.api.base.KaContextReceiver
 import org.jetbrains.kotlin.analysis.api.fir.KaFirSession
 import org.jetbrains.kotlin.analysis.api.fir.annotations.KaFirAnnotationListForDeclaration
+import org.jetbrains.kotlin.analysis.api.fir.components.firSymbolBuilder
+import org.jetbrains.kotlin.analysis.api.fir.entryPointImplementation
 import org.jetbrains.kotlin.analysis.api.fir.symbols.pointers.KaFirSamConstructorSymbolPointer
-import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
-import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -25,50 +25,49 @@ internal class KaFirSamConstructorSymbol(
     override val firSymbol: FirNamedFunctionSymbol,
     override val analysisSession: KaFirSession,
 ) : KaSamConstructorSymbol(), KaFirSymbol<FirNamedFunctionSymbol> {
-    override val token: KaLifetimeToken get() = builder.token
 
     override val annotations: KaAnnotationList
-        get() = withValidityAssertion {
-            KaFirAnnotationListForDeclaration.create(firSymbol, builder)
+        get() = entryPointImplementation {
+            KaFirAnnotationListForDeclaration.create(firSymbol)
         }
 
-    override val name: Name get() = withValidityAssertion { firSymbol.name }
+    override val name: Name get() = entryPointImplementation { firSymbol.name }
 
-    override val returnType: KaType get() = withValidityAssertion { firSymbol.returnType(builder) }
-    override val isActual: Boolean get() = withValidityAssertion { firSymbol.isActual }
-    override val isExpect: Boolean get() = withValidityAssertion { firSymbol.isExpect }
+    override val returnType: KaType get() = entryPointImplementation { firSymbol.returnType() }
+    override val isActual: Boolean get() = entryPointImplementation { firSymbol.isActual }
+    override val isExpect: Boolean get() = entryPointImplementation { firSymbol.isExpect }
 
-    override val contextReceivers: List<KaContextReceiver> get() = withValidityAssertion { firSymbol.createContextReceivers(builder) }
-    override val modality: KaSymbolModality get() = withValidityAssertion { firSymbol.kaSymbolModality }
-    override val visibility: KaSymbolVisibility get() = withValidityAssertion { firSymbol.visibility.asKaSymbolVisibility }
+    override val contextReceivers: List<KaContextReceiver> get() = entryPointImplementation { firSymbol.createContextReceivers() }
+    override val modality: KaSymbolModality get() = entryPointImplementation { firSymbol.kaSymbolModality }
+    override val visibility: KaSymbolVisibility get() = entryPointImplementation { firSymbol.visibility.asKaSymbolVisibility }
 
     override val valueParameters: List<KaValueParameterSymbol>
-        get() = withValidityAssertion {
-            firSymbol.createKtValueParameters(builder)
+        get() = entryPointImplementation {
+            firSymbol.createKtValueParameters()
         }
 
     override val hasStableParameterNames: Boolean
-        get() = withValidityAssertion {
+        get() = entryPointImplementation {
             firSymbol.fir.hasStableParameterNames
         }
 
-    override val isExtension: Boolean get() = withValidityAssertion { firSymbol.isExtension }
+    override val isExtension: Boolean get() = entryPointImplementation { firSymbol.isExtension }
 
-    override val callableId: CallableId? get() = withValidityAssertion { firSymbol.getCallableId() }
+    override val callableId: CallableId? get() = entryPointImplementation { firSymbol.getCallableId() }
 
     override val typeParameters: List<KaTypeParameterSymbol>
-        get() = withValidityAssertion { firSymbol.createKtTypeParameters(builder) }
+        get() = entryPointImplementation { firSymbol.createKtTypeParameters() }
 
-    override fun createPointer(): KaSymbolPointer<KaSamConstructorSymbol> = withValidityAssertion {
+    override fun createPointer(): KaSymbolPointer<KaSamConstructorSymbol> = entryPointImplementation {
         val typeAlias = firSymbol.fir.typeAliasConstructorInfo?.typeAliasSymbol
         val ownerPointer: KaSymbolPointer<KaClassLikeSymbol> = if (typeAlias != null) {
             // `functionalInterface` expands typealiased SAM interfaces.
             // To get the typealias symbol, we need to extract it from the FIR
             // See KT-91764
-            builder.classifierBuilder.buildTypeAliasSymbol(typeAlias).createPointer()
+            firSymbolBuilder.classifierBuilder.buildTypeAliasSymbol(typeAlias).createPointer()
         } else {
             // Could be replaced with `containingDeclaration` after KT-91765
-            context(analysisSession) { functionalInterface.createPointer() }
+            functionalInterface.createPointer()
         }
         return KaFirSamConstructorSymbolPointer(ownerPointer, this)
     }

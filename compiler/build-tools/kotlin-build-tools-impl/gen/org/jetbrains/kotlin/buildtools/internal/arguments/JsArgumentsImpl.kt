@@ -79,6 +79,9 @@ internal class JsArgumentsImpl() : CommonJsAndWasmArgumentsImpl(), JsCompilerArg
   @SerialName("X_ES_CONST_LET")
   internal var useEs6ConstLet: Boolean = defaultArguments.useEs6ConstLet
 
+  @SerialName("X_ES_DEFAULT_PARAMETERS")
+  internal var useEsDefaultParameters: Boolean? = defaultArguments.useEsDefaultParameters
+
   @SerialName("X_ES_GENERATORS")
   internal var useEsGenerators: Boolean? = defaultArguments.useEsGenerators
 
@@ -106,6 +109,9 @@ internal class JsArgumentsImpl() : CommonJsAndWasmArgumentsImpl(), JsCompilerArg
 
   @SerialName("X_IR_MINIMIZED_MEMBER_NAMES")
   internal var irMinimizedMemberNames: Boolean = defaultArguments.irMinimizedMemberNames
+
+  @SerialName("X_IR_PER_CLASS")
+  internal var irPerClass: Boolean = defaultArguments.irPerClass
 
   @SerialName("X_IR_PER_FILE")
   internal var irPerFile: Boolean = defaultArguments.irPerFile
@@ -160,6 +166,7 @@ internal class JsArgumentsImpl() : CommonJsAndWasmArgumentsImpl(), JsCompilerArg
     "X_ES_ARROW_FUNCTIONS" -> useEsArrowFunctions
     "X_ES_CLASSES" -> useEsClasses
     "X_ES_CONST_LET" -> useEs6ConstLet
+    "X_ES_DEFAULT_PARAMETERS" -> useEsDefaultParameters
     "X_ES_GENERATORS" -> useEsGenerators
     "X_ES_LONG_AS_BIGINT" -> compileLongAsBigInt
     "X_EXPORT_KDOC" -> exportKDoc
@@ -169,6 +176,7 @@ internal class JsArgumentsImpl() : CommonJsAndWasmArgumentsImpl(), JsCompilerArg
     "X_IR_GENERATE_INLINE_ANONYMOUS_FUNCTIONS" -> irGenerateInlineAnonymousFunctions
     "X_IR_KEEP" -> irKeep
     "X_IR_MINIMIZED_MEMBER_NAMES" -> irMinimizedMemberNames
+    "X_IR_PER_CLASS" -> irPerClass
     "X_IR_PER_FILE" -> irPerFile
     "X_IR_PER_MODULE" -> irPerModule
     "X_IR_SAFE_EXTERNAL_BOOLEAN" -> irSafeExternalBoolean
@@ -198,6 +206,7 @@ internal class JsArgumentsImpl() : CommonJsAndWasmArgumentsImpl(), JsCompilerArg
       "X_ES_ARROW_FUNCTIONS" -> useEsArrowFunctions = JsArgumentValueAdapter.toImpl(value)
       "X_ES_CLASSES" -> useEsClasses = JsArgumentValueAdapter.toImpl(value)
       "X_ES_CONST_LET" -> useEs6ConstLet = JsArgumentValueAdapter.toImpl(value)
+      "X_ES_DEFAULT_PARAMETERS" -> useEsDefaultParameters = JsArgumentValueAdapter.toImpl(value)
       "X_ES_GENERATORS" -> useEsGenerators = JsArgumentValueAdapter.toImpl(value)
       "X_ES_LONG_AS_BIGINT" -> compileLongAsBigInt = JsArgumentValueAdapter.toImpl(value)
       "X_EXPORT_KDOC" -> exportKDoc = JsArgumentValueAdapter.toImpl(value)
@@ -207,6 +216,7 @@ internal class JsArgumentsImpl() : CommonJsAndWasmArgumentsImpl(), JsCompilerArg
       "X_IR_GENERATE_INLINE_ANONYMOUS_FUNCTIONS" -> irGenerateInlineAnonymousFunctions = JsArgumentValueAdapter.toImpl(value)
       "X_IR_KEEP" -> irKeep = JsArgumentValueAdapter.toImpl(value)
       "X_IR_MINIMIZED_MEMBER_NAMES" -> irMinimizedMemberNames = JsArgumentValueAdapter.toImpl(value)
+      "X_IR_PER_CLASS" -> irPerClass = JsArgumentValueAdapter.toImpl(value)
       "X_IR_PER_FILE" -> irPerFile = JsArgumentValueAdapter.toImpl(value)
       "X_IR_PER_MODULE" -> irPerModule = JsArgumentValueAdapter.toImpl(value)
       "X_IR_SAFE_EXTERNAL_BOOLEAN" -> irSafeExternalBoolean = JsArgumentValueAdapter.toImpl(value)
@@ -232,6 +242,7 @@ internal class JsArgumentsImpl() : CommonJsAndWasmArgumentsImpl(), JsCompilerArg
     "X_ES_ARROW_FUNCTIONS" -> useEsArrowFunctions
     "X_ES_CLASSES" -> useEsClasses
     "X_ES_CONST_LET" -> useEs6ConstLet
+    "X_ES_DEFAULT_PARAMETERS" -> useEsDefaultParameters
     "X_ES_GENERATORS" -> useEsGenerators
     "X_ES_LONG_AS_BIGINT" -> compileLongAsBigInt
     "X_EXPORT_KDOC" -> exportKDoc
@@ -241,6 +252,7 @@ internal class JsArgumentsImpl() : CommonJsAndWasmArgumentsImpl(), JsCompilerArg
     "X_IR_GENERATE_INLINE_ANONYMOUS_FUNCTIONS" -> irGenerateInlineAnonymousFunctions
     "X_IR_KEEP" -> irKeep
     "X_IR_MINIMIZED_MEMBER_NAMES" -> irMinimizedMemberNames
+    "X_IR_PER_CLASS" -> irPerClass
     "X_IR_PER_FILE" -> irPerFile
     "X_IR_PER_MODULE" -> irPerModule
     "X_IR_SAFE_EXTERNAL_BOOLEAN" -> irSafeExternalBoolean
@@ -270,6 +282,7 @@ internal class JsArgumentsImpl() : CommonJsAndWasmArgumentsImpl(), JsCompilerArg
       "X_ES_ARROW_FUNCTIONS" -> useEsArrowFunctions = JsArgumentValueAdapter.toImpl(value)
       "X_ES_CLASSES" -> useEsClasses = JsArgumentValueAdapter.toImpl(value)
       "X_ES_CONST_LET" -> useEs6ConstLet = JsArgumentValueAdapter.toImpl(value)
+      "X_ES_DEFAULT_PARAMETERS" -> useEsDefaultParameters = JsArgumentValueAdapter.toImpl(value)
       "X_ES_GENERATORS" -> useEsGenerators = JsArgumentValueAdapter.toImpl(value)
       "X_ES_LONG_AS_BIGINT" -> compileLongAsBigInt = JsArgumentValueAdapter.toImpl(value)
       "X_EXPORT_KDOC" -> exportKDoc = JsArgumentValueAdapter.toImpl(value)
@@ -279,6 +292,7 @@ internal class JsArgumentsImpl() : CommonJsAndWasmArgumentsImpl(), JsCompilerArg
       "X_IR_GENERATE_INLINE_ANONYMOUS_FUNCTIONS" -> irGenerateInlineAnonymousFunctions = JsArgumentValueAdapter.toImpl(value)
       "X_IR_KEEP" -> irKeep = JsArgumentValueAdapter.toImpl(value)
       "X_IR_MINIMIZED_MEMBER_NAMES" -> irMinimizedMemberNames = JsArgumentValueAdapter.toImpl(value)
+      "X_IR_PER_CLASS" -> irPerClass = JsArgumentValueAdapter.toImpl(value)
       "X_IR_PER_FILE" -> irPerFile = JsArgumentValueAdapter.toImpl(value)
       "X_IR_PER_MODULE" -> irPerModule = JsArgumentValueAdapter.toImpl(value)
       "X_IR_SAFE_EXTERNAL_BOOLEAN" -> irSafeExternalBoolean = JsArgumentValueAdapter.toImpl(value)
@@ -304,6 +318,7 @@ internal class JsArgumentsImpl() : CommonJsAndWasmArgumentsImpl(), JsCompilerArg
     "X_ES_ARROW_FUNCTIONS" -> useEsArrowFunctions
     "X_ES_CLASSES" -> useEsClasses
     "X_ES_CONST_LET" -> useEs6ConstLet
+    "X_ES_DEFAULT_PARAMETERS" -> useEsDefaultParameters
     "X_ES_GENERATORS" -> useEsGenerators
     "X_ES_LONG_AS_BIGINT" -> compileLongAsBigInt
     "X_EXPORT_KDOC" -> exportKDoc
@@ -313,6 +328,7 @@ internal class JsArgumentsImpl() : CommonJsAndWasmArgumentsImpl(), JsCompilerArg
     "X_IR_GENERATE_INLINE_ANONYMOUS_FUNCTIONS" -> irGenerateInlineAnonymousFunctions
     "X_IR_KEEP" -> irKeep
     "X_IR_MINIMIZED_MEMBER_NAMES" -> irMinimizedMemberNames
+    "X_IR_PER_CLASS" -> irPerClass
     "X_IR_PER_FILE" -> irPerFile
     "X_IR_PER_MODULE" -> irPerModule
     "X_IR_SAFE_EXTERNAL_BOOLEAN" -> irSafeExternalBoolean
@@ -342,6 +358,7 @@ internal class JsArgumentsImpl() : CommonJsAndWasmArgumentsImpl(), JsCompilerArg
       "X_ES_ARROW_FUNCTIONS" -> useEsArrowFunctions = JsArgumentValueAdapter.toImpl(value)
       "X_ES_CLASSES" -> useEsClasses = JsArgumentValueAdapter.toImpl(value)
       "X_ES_CONST_LET" -> useEs6ConstLet = JsArgumentValueAdapter.toImpl(value)
+      "X_ES_DEFAULT_PARAMETERS" -> useEsDefaultParameters = JsArgumentValueAdapter.toImpl(value)
       "X_ES_GENERATORS" -> useEsGenerators = JsArgumentValueAdapter.toImpl(value)
       "X_ES_LONG_AS_BIGINT" -> compileLongAsBigInt = JsArgumentValueAdapter.toImpl(value)
       "X_EXPORT_KDOC" -> exportKDoc = JsArgumentValueAdapter.toImpl(value)
@@ -351,6 +368,7 @@ internal class JsArgumentsImpl() : CommonJsAndWasmArgumentsImpl(), JsCompilerArg
       "X_IR_GENERATE_INLINE_ANONYMOUS_FUNCTIONS" -> irGenerateInlineAnonymousFunctions = JsArgumentValueAdapter.toImpl(value)
       "X_IR_KEEP" -> irKeep = JsArgumentValueAdapter.toImpl(value)
       "X_IR_MINIMIZED_MEMBER_NAMES" -> irMinimizedMemberNames = JsArgumentValueAdapter.toImpl(value)
+      "X_IR_PER_CLASS" -> irPerClass = JsArgumentValueAdapter.toImpl(value)
       "X_IR_PER_FILE" -> irPerFile = JsArgumentValueAdapter.toImpl(value)
       "X_IR_PER_MODULE" -> irPerModule = JsArgumentValueAdapter.toImpl(value)
       "X_IR_SAFE_EXTERNAL_BOOLEAN" -> irSafeExternalBoolean = JsArgumentValueAdapter.toImpl(value)
@@ -391,6 +409,7 @@ internal class JsArgumentsImpl() : CommonJsAndWasmArgumentsImpl(), JsCompilerArg
     arguments.useEsArrowFunctions = useEsArrowFunctions
     arguments.useEsClasses = useEsClasses
     arguments.useEs6ConstLet = useEs6ConstLet
+    arguments.useEsDefaultParameters = useEsDefaultParameters
     arguments.useEsGenerators = useEsGenerators
     arguments.compileLongAsBigInt = compileLongAsBigInt
     arguments.exportKDoc = exportKDoc
@@ -400,6 +419,7 @@ internal class JsArgumentsImpl() : CommonJsAndWasmArgumentsImpl(), JsCompilerArg
     arguments.irGenerateInlineAnonymousFunctions = irGenerateInlineAnonymousFunctions
     arguments.irKeep = irKeep
     arguments.irMinimizedMemberNames = irMinimizedMemberNames
+    arguments.irPerClass = irPerClass
     arguments.irPerFile = irPerFile
     arguments.irPerModule = irPerModule
     arguments.irSafeExternalBoolean = irSafeExternalBoolean
@@ -424,6 +444,7 @@ internal class JsArgumentsImpl() : CommonJsAndWasmArgumentsImpl(), JsCompilerArg
     useEsArrowFunctions = arguments.useEsArrowFunctions
     useEsClasses = arguments.useEsClasses
     useEs6ConstLet = arguments.useEs6ConstLet
+    useEsDefaultParameters = arguments.useEsDefaultParameters
     useEsGenerators = arguments.useEsGenerators
     compileLongAsBigInt = arguments.compileLongAsBigInt
     exportKDoc = arguments.exportKDoc
@@ -433,6 +454,7 @@ internal class JsArgumentsImpl() : CommonJsAndWasmArgumentsImpl(), JsCompilerArg
     irGenerateInlineAnonymousFunctions = arguments.irGenerateInlineAnonymousFunctions
     irKeep = arguments.irKeep
     irMinimizedMemberNames = arguments.irMinimizedMemberNames
+    irPerClass = arguments.irPerClass
     irPerFile = arguments.irPerFile
     irPerModule = arguments.irPerModule
     irSafeExternalBoolean = arguments.irSafeExternalBoolean
@@ -455,6 +477,7 @@ internal class JsArgumentsImpl() : CommonJsAndWasmArgumentsImpl(), JsCompilerArg
     arguments.useEsArrowFunctions = useEsArrowFunctions
     arguments.useEsClasses = useEsClasses
     arguments.useEs6ConstLet = useEs6ConstLet
+    arguments.useEsDefaultParameters = useEsDefaultParameters
     arguments.useEsGenerators = useEsGenerators
     arguments.compileLongAsBigInt = compileLongAsBigInt
     arguments.exportKDoc = exportKDoc
@@ -464,6 +487,7 @@ internal class JsArgumentsImpl() : CommonJsAndWasmArgumentsImpl(), JsCompilerArg
     arguments.irGenerateInlineAnonymousFunctions = irGenerateInlineAnonymousFunctions
     arguments.irKeep = irKeep
     arguments.irMinimizedMemberNames = irMinimizedMemberNames
+    arguments.irPerClass = irPerClass
     arguments.irPerFile = irPerFile
     arguments.irPerModule = irPerModule
     arguments.irSafeExternalBoolean = irSafeExternalBoolean
@@ -515,6 +539,6 @@ internal class JsArgumentsImpl() : CommonJsAndWasmArgumentsImpl(), JsCompilerArg
 
   public companion object {
     private val knownOptionIds: List<String> =
-        listOf("X_DTS_USE_UNKNOWN_INSTEAD_ANY","X_ENABLE_EXTENSION_FUNCTIONS_IN_EXTERNALS","X_ENABLE_IMPLEMENTING_INTERFACES_FROM_TYPESCRIPT","X_ENABLE_SUSPEND_FUNCTION_EXPORTING","X_ES_ARROW_FUNCTIONS","X_ES_CLASSES","X_ES_CONST_LET","X_ES_GENERATORS","X_ES_LONG_AS_BIGINT","X_EXPORT_KDOC","X_GENERATE_POLYFILLS","X_INTEGER_DIVISION_CHECK","X_IR_BUILD_CACHE","X_IR_GENERATE_INLINE_ANONYMOUS_FUNCTIONS","X_IR_KEEP","X_IR_MINIMIZED_MEMBER_NAMES","X_IR_PER_FILE","X_IR_PER_MODULE","X_IR_SAFE_EXTERNAL_BOOLEAN","X_IR_SAFE_EXTERNAL_BOOLEAN_DIAGNOSTIC","X_OPTIMIZE_GENERATED_JS","X_PLATFORM_ARGUMENTS_IN_MAIN_FUNCTION","X_SUSPEND_LAMBDA_EXPORTING","MODULE_KIND","TARGET",)
+        listOf("X_DTS_USE_UNKNOWN_INSTEAD_ANY","X_ENABLE_EXTENSION_FUNCTIONS_IN_EXTERNALS","X_ENABLE_IMPLEMENTING_INTERFACES_FROM_TYPESCRIPT","X_ENABLE_SUSPEND_FUNCTION_EXPORTING","X_ES_ARROW_FUNCTIONS","X_ES_CLASSES","X_ES_CONST_LET","X_ES_DEFAULT_PARAMETERS","X_ES_GENERATORS","X_ES_LONG_AS_BIGINT","X_EXPORT_KDOC","X_GENERATE_POLYFILLS","X_INTEGER_DIVISION_CHECK","X_IR_BUILD_CACHE","X_IR_GENERATE_INLINE_ANONYMOUS_FUNCTIONS","X_IR_KEEP","X_IR_MINIMIZED_MEMBER_NAMES","X_IR_PER_CLASS","X_IR_PER_FILE","X_IR_PER_MODULE","X_IR_SAFE_EXTERNAL_BOOLEAN","X_IR_SAFE_EXTERNAL_BOOLEAN_DIAGNOSTIC","X_OPTIMIZE_GENERATED_JS","X_PLATFORM_ARGUMENTS_IN_MAIN_FUNCTION","X_SUSPEND_LAMBDA_EXPORTING","MODULE_KIND","TARGET",)
   }
 }

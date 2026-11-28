@@ -513,15 +513,9 @@ public class KaDebugRenderer(
     public companion object {
         private val ignoredPropertyNames = setOf(
             "token",
-            "builder",
+            "analysisSession",
             "coneType",
             "analysisContext",
-
-            // These properties are made obsolete by their counterparts without `*IfNonLocal` (e.g. `classId`), which contain the same
-            // values.
-            "classIdIfNonLocal",
-            "containingClassIdIfNonLocal",
-            "callableIdIfNonLocal",
         )
     }
 }

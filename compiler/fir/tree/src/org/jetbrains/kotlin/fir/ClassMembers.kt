@@ -66,9 +66,10 @@ var FirClassLikeDeclaration.containingReplSymbolAttr: FirReplSnippetSymbol? by F
 private object HasNoEnumEntriesKey : FirDeclarationDataKey()
 var FirClass.hasNoEnumEntriesAttr: Boolean? by FirDeclarationDataRegistry.data(HasNoEnumEntriesKey)
 
-// Must be true iff the class metadata contains the hasEnumEntries flag
+// For a deserialized enum class, must be true iff the class metadata contains the hasEnumEntries flag
 val FirClass.hasEnumEntries: Boolean get() = hasNoEnumEntriesAttr != true
 
+// Only set to `true`, so that classes deserialized from metadata and classes built from stubs agree. An unset value means `false`.
 private object IsNewPlaceForBodyGeneration : FirDeclarationDataKey()
 var FirRegularClass.isNewPlaceForBodyGeneration: Boolean? by FirDeclarationDataRegistry.data(IsNewPlaceForBodyGeneration)
 

@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.gradle.plugin.diagnostics.KotlinToolingDiagnosticsSe
 import org.jetbrains.kotlin.gradle.plugin.diagnostics.checkers.NpmDependencyInGradleScopeUsage
 import org.jetbrains.kotlin.gradle.plugin.diagnostics.checkers.UnresolvedKmpDependency.ResolvedVariant
 import org.jetbrains.kotlin.gradle.plugin.diagnostics.checkers.UnresolvedKmpDependency.UnresolvedComponent
+import org.jetbrains.kotlin.gradle.plugin.internal.KOTLIN_ECOSYSTEM_PLUGIN_ID
 import org.jetbrains.kotlin.gradle.plugin.mpp.uklibs.Uklib
 import org.jetbrains.kotlin.gradle.targets.jvm.JAVA_TEST_FIXTURES_PLUGIN_ID
 import org.jetbrains.kotlin.gradle.targets.wasm.WasmCompilationMode
@@ -453,6 +454,20 @@ internal object KotlinToolingDiagnostics {
                         "Make sure the Kotlin/Native distribution is installed and provides the standard library."
                     }
                 }
+        }
+    }
+
+    object MavenPublicationIgnoredForTargetInKotlinArchive : ToolingDiagnosticFactory(WARNING, DiagnosticGroup.Kgp.Misconfiguration) {
+        operator fun invoke(targetName: String, trace: Throwable) = build(throwable = trace) {
+            title("Target Maven Publication Configuration Is Ignored")
+                .description(
+                    """
+                            |Target '$targetName' is published as part of Kotlin archive (.kar). 
+                            |Kotlin Gradle Plugin does not create a dedicated Maven publication for this target.
+                            |The 'mavenPublication {}' call for this target has no effect. 
+                            """.trimMargin()
+                )
+                .solution("Configure the root 'kotlinMultiplatform' publication, or remove the 'mavenPublication {}' call.")
         }
     }
 
@@ -2661,6 +2676,26 @@ internal object KotlinToolingDiagnostics {
         }
     }
 
+    internal object KotlinCompilerVersionWithoutBuildToolsApi : ToolingDiagnosticFactory(FATAL, DiagnosticGroup.Kgp.Misconfiguration) {
+        operator fun invoke(taskPath: String, compilerVersion: String, pluginVersion: String, propertyName: String) = build {
+            title { "Kotlin compiler version cannot be applied without the Build Tools API" }
+                .description {
+                    "Task '$taskPath' cannot use Kotlin compiler version '$compilerVersion' set via 'kotlin.compilerVersion' " +
+                            "because '$propertyName=false' disables the Build Tools API.\n" +
+                            "Such a task can only use version '$pluginVersion', which matches the Kotlin Gradle Plugin."
+                }
+                .solutions {
+                    listOf(
+                        "To use Kotlin compiler version '$compilerVersion', remove '$propertyName=false'.",
+                        "To keep the Build Tools API disabled, remove 'kotlin.compilerVersion'.",
+                    )
+                }
+                .documentationLink(URI("https://kotl.in/build-tools-api-compiler-versions")) { url ->
+                    "Learn more about using a different Kotlin compiler version: $url"
+                }
+        }
+    }
+
     internal object DuplicateJsBrowserTestFrameworkConfiguration : ToolingDiagnosticFactory(
         predefinedSeverity = ERROR,
         predefinedGroup = DiagnosticGroup.Kgp.Misconfiguration,
@@ -2909,6 +2944,45 @@ internal object KotlinToolingDiagnostics {
                             files.joinToString("\n") { "  - $it" }
                 }
                 .solution { "Rebuild the projects that produced them, declared on the 'kotlinNpmSharedDependenciesJs' / 'kotlinNpmSharedDependenciesWasmJs' configurations." }
+        }
+    }
+
+    internal object SharedNpmProjectRegisteredTooLate : ToolingDiagnosticFactory(
+        WARNING,
+        DiagnosticGroup.Kgp.Misconfiguration,
+    ) {
+        operator fun invoke(projectPath: String) = build {
+            title { "Project is not added to the shared npm project" }
+                .description {
+                    "Project '$projectPath' has a JS or WasmJS target, but it was configured after the shared npm project collected its projects. " +
+                            "Its npm dependencies are not added to the shared npm project."
+                }
+                .solution {
+                    "Do not resolve the shared npm project's dependencies before all projects are configured."
+                }
+        }
+    }
+
+    // TODO KT-91654 The RFC asks the remedy to name the exact settings change, e.g. a `plugins { id("org.jetbrains.kotlin.ecosystem") }` snippet. Say "settings script", not settings.gradle.kts, to include Groovy users. The message names the class 'KotlinSharedNpmProjectPlugin', which users never see; consider a user-facing term.
+    internal object SharedNpmProjectEcosystemPluginMissing : ToolingDiagnosticFactory(
+        WARNING,
+        DiagnosticGroup.Kgp.Misconfiguration,
+    ) {
+        operator fun invoke(isolatedProjectsEnabled: Boolean) = build(severity = if (isolatedProjectsEnabled) ERROR else WARNING) {
+            title { "Kotlin ecosystem plugin is not applied" }
+                .description {
+                    if (isolatedProjectsEnabled) {
+                        "The shared npm project requires the '$KOTLIN_ECOSYSTEM_PLUGIN_ID' settings plugin when Isolated Projects is enabled. " +
+                                "Without it, projects with JS or WasmJS targets cannot be added to the shared npm project."
+                    } else {
+                        "The shared npm project requires the '$KOTLIN_ECOSYSTEM_PLUGIN_ID' settings plugin. " +
+                                "Without it, the Kotlin Gradle plugin applies 'KotlinSharedNpmProjectPlugin' to the root project " +
+                                "from other projects, which is incompatible with Isolated Projects."
+                    }
+                }
+                .solution {
+                    "Apply the '$KOTLIN_ECOSYSTEM_PLUGIN_ID' plugin in settings.gradle.kts."
+                }
         }
     }
 

@@ -5,14 +5,15 @@
 
 package org.jetbrains.kotlin.syntax
 
+import org.jetbrains.kotlin.diagnostics.PositioningStrategyKind
+import org.jetbrains.kotlin.diagnostics.PsiPositioningStrategies
 import org.jetbrains.kotlin.diagnostics.PsiPositioningStrategy
-import org.jetbrains.kotlin.diagnostics.SourceElementPositioningStrategy
 
 object PsiParseTreeKind : ParseTreeKind() {
     override val isPsi: Boolean = true
 
     override val isKmp: Boolean = false
 
-    override val SourceElementPositioningStrategy.positioningStrategy: PsiPositioningStrategy<*>
-        get() = TODO("KT-91911")
+    override val PositioningStrategyKind.positioningStrategy: PsiPositioningStrategy<*>
+        get() = PsiPositioningStrategies[this]
 }
